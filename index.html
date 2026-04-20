@@ -17,6 +17,24 @@
   --radius:10px;--radius-sm:6px;
   --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
 }
+/* ナレッジベース用の追加スタイル */
+.card-answer {
+  display: none; /* 最初は隠す */
+}
+.subj-card.flipped .card-answer {
+  display: block; /* タップされたら表示 */
+}
+#knowledge-input-area input, #knowledge-input-area textarea {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--border2);
+  background: var(--card);
+  color: var(--text);
+  font-family: inherit;
+}
+  
 @media(prefers-color-scheme:dark){
   :root{
     --bg:#141412;--bg2:#1e1e1c;--bg3:#2a2a28;--card:#1e1e1c;
@@ -522,7 +540,78 @@ function render() {
   renderTasks();
   renderLogs();
 }
+  
+// ═══════════════════════════════════════════
+//  KNOWLEDGE BASE & FLASHCARDS
+// ═══════════════════════════════════════════
 
+function renderKnowledge() {
+  const listEl = document.getElementById('knowledge-list');
+  if (!state.knowledgeCards) state.knowledgeCards = [];
+  
+  if (state.knowledgeCards.length === 0) {
+    listEl.innerHTML = '<div class="empty">まだ知識が登録されていません</div>';
+    return;
+  }
+
+  listEl.innerHTML = state.knowledgeCards.map((card, idx) => `
+    <div class="subj-card" style="margin-bottom:10px; cursor:pointer;" onclick="this.classList.toggle('flipped')">
+      <div style="font-size:10px; color:var(--text3); margin-bottom:4px;">${escHtml(card.subject)}</div>
+      <div style="font-size:15px; font-weight:500; margin-bottom:8px;">${escHtml(card.term)}</div>
+      
+      <div class="card-answer" style="border-top:0.5px solid var(--border); pt-10; margin-top:8px; padding-top:8px;">
+        <div style="font-size:13px; color:var(--blue); font-weight:500;">💡 直感理解:</div>
+        <div style="font-size:13px; margin-bottom:8px;">${escHtml(card.concept)}</div>
+        ${card.detail ? `<div style="font-size:11px; color:var(--text2); background:var(--bg2); padding:8px; border-radius:6px;">${escHtml(card.detail)}</div>` : ''}
+        <button class="btn btn-sm" style="margin-top:10px; color:var(--red)" onclick="deleteCard(${idx}); event.stopPropagation();">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addKnowledgeCard() {
+  const subject = document.getElementById('card-subject').value || '未分類';
+  const term = document.getElementById('card-term').value;
+  const concept = document.getElementById('card-concept').value;
+  
+  if (!term || !concept) {
+    alert('用語と説明は必須です！');
+    return;
+  }
+
+  const newCard = {
+    id: Date.now(),
+    subject,
+    term,
+    concept,
+    detail: "" // 必要に応じて後で拡張
+  };
+
+  if (!state.knowledgeCards) state.knowledgeCards = [];
+  state.knowledgeCards.push(newCard);
+  
+  // 入力欄をクリア
+  document.getElementById('card-term').value = '';
+  document.getElementById('card-concept').value = '';
+  
+  pushState();
+  renderKnowledge();
+}
+
+function deleteCard(idx) {
+  if (!confirm('この知識を削除しますか？')) return;
+  state.knowledgeCards.splice(idx, 1);
+  pushState();
+  renderKnowledge();
+}
+
+// 既存の render() 関数を書き換えて、ナレッジの描画も追加する
+const originalRender = render;
+render = function() {
+  originalRender();
+  renderKnowledge();
+};
+  
 // ═══════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════
