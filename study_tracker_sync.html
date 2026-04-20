@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>院試・TOEIC 学習トラッカー</title>
+<style>
+:root {
+  --bg:#fafaf8;--bg2:#f2f0ea;--bg3:#e8e6df;--card:#fff;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.2);
+  --blue:#185fa5;--blue-bg:#e6f1fb;
+  --green:#3b6d11;--green-bg:#eaf3de;
+  --amber:#854f0b;--amber-bg:#faeeda;
+  --red:#a32d2d;--red-bg:#fcebeb;
+  --purple:#3c3489;--purple-bg:#eeedfe;
+  --radius:10px;--radius-sm:6px;
+  --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#141412;--bg2:#1e1e1c;--bg3:#2a2a28;--card:#1e1e1c;
+    --text:#e8e6df;--text2:#b4b2a9;--text3:#888780;
+    --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.18);
+    --blue:#85b7eb;--blue-bg:#0c447c;
+    --green:#c0dd97;--green-bg:#27500a;
+    --amber:#fac775;--amber-bg:#633806;
+    --red:#f09595;--red-bg:#791f1f;
+    --purple:#afa9ec;--purple-bg:#2a2460;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:860px;margin:0 auto;padding:1.5rem 1rem 5rem}
+
+/* ── SETUP SCREEN ── */
+#setup-screen{display:none;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:3rem 1rem}
+.setup-card{background:var(--card);border:0.5px solid var(--border2);border-radius:var(--radius);padding:2rem;max-width:560px;width:100%;box-shadow:var(--shadow)}
+.setup-title{font-size:17px;font-weight:500;margin-bottom:.4rem}
+.setup-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1.5rem}
+.step{display:flex;gap:12px;margin-bottom:1.1rem;align-items:flex-start}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--blue-bg);color:var(--blue);font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-body{font-size:13px;color:var(--text2);line-height:1.6}
+.step-body a{color:var(--blue);text-decoration:none}
+.step-body code{font-family:monospace;font-size:12px;background:var(--bg2);padding:1px 5px;border-radius:3px}
+.setup-input{width:100%;font-family:monospace;font-size:12px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);resize:vertical;margin-top:.8rem;min-height:120px}
+.setup-input:focus{outline:none;border-color:var(--blue)}
+.setup-err{font-size:12px;color:var(--red);margin-top:.5rem;display:none}
+.setup-actions{display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap}
+
+/* ── MAIN UI ── */
+#main-screen{display:none}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;gap:8px;flex-wrap:wrap}
+.header-left h1{font-size:17px;font-weight:500}
+.sync-status{font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.section-label{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin:1.5rem 0 .6rem}
+
+/* countdown */
+.cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cd-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
+.cd-days{font-size:26px;font-weight:500;line-height:1}
+.cd-name{font-size:12px;color:var(--text2);margin-top:3px}
+.cd-date{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* subjects */
+.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.subj-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+.subj-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.subj-name{font-size:13px;font-weight:500}
+.badge{font-size:10px;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.level-bar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.level-fill{height:100%;border-radius:3px;transition:width .3s}
+.level-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text3)}
+.slider-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.slider-row input[type=range]{flex:1;accent-color:var(--blue)}
+.pct-num{font-size:19px;font-weight:500;min-width:42px;text-align:right}
+textarea.note{width:100%;font-size:11px;color:var(--text2);background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;resize:none;margin-top:8px;font-family:inherit;line-height:1.5}
+textarea.note:focus{outline:none;border-color:var(--border2)}
+
+/* phases */
+.phase-tabs{display:flex;margin-bottom:10px;border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border2)}
+.phase-tab{flex:1;padding:9px 6px;background:var(--bg2);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);text-align:center;border-right:0.5px solid var(--border2);transition:all .15s;user-select:none}
+.phase-tab:last-child{border-right:none}
+.phase-tab.active{background:var(--card);color:var(--text)}
+.phase-tab .tab-sub{font-size:10px;color:var(--text3);font-weight:400;margin-top:2px}
+.phase-tab.active .tab-sub{color:var(--text2)}
+.phase-prog-track{height:5px;background:var(--bg2);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.phase-prog-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
+.phase-prog-label{font-size:11px;color:var(--text3);margin-bottom:10px}
+.task-list{display:flex;flex-direction:column;gap:4px}
+.task-item{display:flex;align-items:flex-start;gap:10px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:opacity .15s;user-select:none;box-shadow:var(--shadow)}
+.task-item.done{opacity:.45}
+.task-item.done .task-title{text-decoration:line-through;color:var(--text3)}
+.task-check{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.task-item.done .task-check{background:var(--green);border-color:var(--green)}
+.chk{display:none}
+.task-item.done .chk{display:block}
+.task-title{font-size:13px}
+.task-sub{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* log */
+.log-form{display:flex;gap:8px;margin-bottom:10px}
+.log-input{flex:1;font-size:13px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:inherit;box-shadow:var(--shadow)}
+.log-input:focus{outline:none;border-color:var(--border2)}
+.btn{font-size:12px;padding:8px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--card);color:var(--text2);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--blue-bg);color:var(--blue);border-color:transparent}
+.btn-sm{font-size:11px;padding:5px 10px}
+.log-list{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto}
+.log-item{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;box-shadow:var(--shadow)}
+.log-text{font-size:13px;flex:1;line-height:1.5}
+.log-meta{font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0;margin-top:2px}
+.log-del{font-size:11px;color:var(--text3);cursor:pointer;padding:2px 5px;border-radius:4px;flex-shrink:0}
+.log-del:hover{color:var(--red);background:var(--red-bg)}
+.empty{font-size:13px;color:var(--text3);text-align:center;padding:2rem 0}
+.footer{margin-top:2rem;padding-top:1rem;border-top:0.5px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.footer-label{font-size:11px;color:var(--text3);flex:1}
+
+@media(max-width:560px){
+  .cd-grid{grid-template-columns:repeat(2,1fr)}
+  .subj-grid{grid-template-columns:1fr}
+  .phase-tabs{flex-wrap:wrap}
+  .phase-tab{flex:1 1 40%}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ SETUP SCREEN ════ -->
+<div id="setup-screen">
+  <div class="setup-card">
+    <div class="setup-title">🔧 Firebase セットアップ</div>
+    <div class="setup-sub">初回のみ必要です。5〜10分で完了します。</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <a href="https://console.firebase.google.com/" target="_blank">console.firebase.google.com</a> を開いてGoogleアカウントでログイン。<br>
+        「プロジェクトを作成」→ 名前を入力（例: <code>study-tracker</code>）→ Analyticsはオフでも可 → 「プロジェクトを作成」
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        プロジェクトのトップ画面で「＜/＞」（ウェブアプリ）アイコンをクリック → アプリ名を入力 → 「アプリを登録」
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        表示された <code>firebaseConfig</code> のオブジェクト全体（<code>{ apiKey: "..."</code> から <code>}</code> まで）をコピーして下の欄に貼り付ける
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        左メニュー「構築」→「Realtime Database」→「データベースを作成」→ロケーションは <code>asia-southeast1</code>（シンガポール）が近い → <strong>テストモードで開始</strong>
+      </div>
+    </div>
+
+    <textarea class="setup-input" id="fb-config-input" placeholder='{
+  apiKey: "AIzaSy...",
+  authDomain: "study-tracker-xxxxx.firebaseapp.com",
+  databaseURL: "https://study-tracker-xxxxx-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "study-tracker-xxxxx",
+  storageBucket: "study-tracker-xxxxx.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+}'></textarea>
+    <div class="setup-err" id="setup-err"></div>
+
+    <div class="setup-actions">
+      <button class="btn btn-primary" onclick="saveConfig()">保存して接続</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MAIN SCREEN ════ -->
+<div id="main-screen">
+<div class="app">
+
+  <header>
+    <div class="header-left">
+      <h1>院試・TOEIC 学習トラッカー</h1>
+      <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">接続中...</span></div>
+    </div>
+    <button class="btn btn-sm" onclick="showSetup()">⚙ Firebase設定</button>
+  </header>
+
+  <div class="section-label">試験まであと</div>
+  <div class="cd-grid" id="countdown"></div>
+
+  <div class="section-label">科目別進捗</div>
+  <div class="subj-grid" id="subjects"></div>
+
+  <div class="section-label">フェーズ別タスク</div>
+  <div class="phase-tabs" id="phase-tabs"></div>
+  <div class="phase-prog-track"><div class="phase-prog-fill" id="phase-prog-fill"></div></div>
+  <div class="phase-prog-label" id="phase-prog-label"></div>
+  <div class="task-list" id="task-list"></div>
+
+  <div class="section-label">学習ログ</div>
+  <div class="log-form">
+    <input class="log-input" id="log-input" type="text" placeholder="今日やったこと（例: 微積演習20問、シャドーイング30分）" maxlength="200">
+    <button class="btn btn-primary" onclick="addLog()">追加</button>
+  </div>
+  <div class="log-list" id="log-list"></div>
+
+  <div class="footer">
+    <span class="footer-label">データはFirebaseにリアルタイム保存されます</span>
+    <button class="btn btn-sm" onclick="resetAll()">全リセット</button>
+  </div>
+
+</div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA DEFINITIONS
+// ═══════════════════════════════════════════
+const EXAMS = [
+  { name:'TOEIC',      date:'2026-05-17', color:'var(--amber)' },
+  { name:'NAIST',      date:'2026-07-01', color:'var(--blue)'  },
+  { name:'和歌山大',   date:'2026-08-10', color:'var(--purple)'},
+  { name:'神戸大・福工大', date:'2026-08-28', color:'var(--red)'  },
+];
+
+const SUBJECTS = [
+  { id:'linear',  name:'線形代数',           badge:'基礎あり',    bc:'b-green', def:35, color:'var(--green)' },
+  { id:'calc',    name:'微積分',             badge:'基礎あり',    bc:'b-green', def:35, color:'var(--green)' },
+  { id:'diffeq',  name:'微分方程式',         badge:'要開拓',      bc:'b-amber', def:5,  color:'var(--amber)' },
+  { id:'complex', name:'複素関数',           badge:'ゼロから',    bc:'b-red',   def:0,  color:'var(--red)'   },
+  { id:'algo',    name:'アルゴリズム & DS',  badge:'基本情報相当', bc:'b-amber', def:25, color:'var(--amber)' },
+  { id:'cs',      name:'コンピュータシステム', badge:'ITパス相当', bc:'b-amber', def:20, color:'var(--amber)' },
+];
+
+const PHASES = [
+  { id:'p1', name:'フェーズ1', dates:'〜5/17', tasks:[
+    { id:'toeic-p34',  title:'Part 3・4 先読み練習',       sub:'リスニング強化の核心' },
+    { id:'toeic-p5',   title:'Part 5 解法パターン習得',    sub:'品詞・時制・語彙の3種' },
+    { id:'toeic-vocab',title:'金のフレーズ 1000語',       sub:'毎日100語 × abceedアプリ' },
+    { id:'toeic-m1',   title:'公式問題集① 通し演習',      sub:'時間計測・弱点分析' },
+    { id:'toeic-m2',   title:'公式問題集② 通し演習',      sub:'本番直前の仕上げ' },
+  ]},
+  { id:'p2', name:'フェーズ2', dates:'5/18〜6/28', tasks:[
+    { id:'linear-d',   title:'線形代数 演習強化',          sub:'固有値・行列式・対角化' },
+    { id:'calc-d',     title:'微積分 演習強化',            sub:'多変数・偏微分・重積分' },
+    { id:'diffeq-b',   title:'微分方程式 基礎固め',        sub:'変数分離・1階線形・定数変化法' },
+    { id:'diffeq-s',   title:'微分方程式 標準問題',        sub:'2階線形・ラプラス変換' },
+    { id:'complex-b',  title:'複素関数 基礎固め',          sub:'コーシー・リーマン・留数定理' },
+    { id:'algo-b',     title:'アルゴリズム基礎強化',       sub:'計算量・ソート・探索・グラフ' },
+    { id:'cs-b',       title:'コンピュータシステム基礎',   sub:'CPU・メモリ・OS・ネットワーク' },
+  ]},
+  { id:'p3', name:'フェーズ3', dates:'6/29〜7/末', tasks:[
+    { id:'naist-doc',  title:'NAIST 研究計画書作成',       sub:'志望動機・研究テーマを具体化' },
+    { id:'naist-mock', title:'NAIST 模擬面接練習',         sub:'研究内容・志望理由を口頭で' },
+    { id:'algo-a',     title:'アルゴリズム 応用問題',      sub:'DP・木構造・ハッシュ' },
+    { id:'cs-a',       title:'コンピュータシステム 応用',  sub:'仮想メモリ・スケジューリング' },
+    { id:'math-sim',   title:'数学全範囲 模擬演習',        sub:'4科目を時間計測で通し' },
+  ]},
+  { id:'p4', name:'フェーズ4', dates:'8月〜8/末', tasks:[
+    { id:'kobe-past',  title:'神戸大 過去問 3年分',        sub:'数学・専門を本番形式で' },
+    { id:'fku-past',   title:'福工大 過去問 3年分',        sub:'数学・専門を本番形式で' },
+    { id:'weak-fix',   title:'弱点科目の集中補強',         sub:'過去問で露見した穴を埋める' },
+    { id:'final-mock', title:'最終模擬試験（全科目通し）', sub:'本番1週間前に実施' },
+  ]},
+];
+
+// ═══════════════════════════════════════════
+//  FIREBASE SETUP
+// ═══════════════════════════════════════════
+let db = null;
+let dbRef = null;
+let state = { subjects:{}, tasks:{}, logs:[], activePhase:'p1', notes:{} };
+let saveTimer = null;
+
+function getStoredConfig() {
+  try { return JSON.parse(localStorage.getItem('fb_config') || 'null'); } catch { return null; }
+}
+
+function parseConfig(raw) {
+  // Accept both JS object literal and JSON
+  raw = raw.trim();
+  // Convert JS object literal to JSON
+  let json = raw
+    .replace(/\/\/.*$/gm, '')            // remove // comments
+    .replace(/,\s*([}\]])/g, '$1')       // trailing commas
+    .replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g, '$1"$2"$3') // quote keys
+    .replace(/'/g, '"');                  // single → double quotes
+  // Wrap if not object
+  if (!json.startsWith('{')) json = '{' + json + '}';
+  return JSON.parse(json);
+}
+
+function saveConfig() {
+  // 画面からの入力を無視して、直接設定を流し込みます
+  const myConfig = {
+    apiKey: "AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",
+    authDomain: "study-tracker-5a35c.firebaseapp.com",
+    databaseURL: "https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "study-tracker-5a35c",
+    storageBucket: "study-tracker-5a35c.firebasestorage.app",
+    messagingSenderId: "1091326221496",
+    appId: "1:1091326221496:web:5bcd5ab27bdc6cca03e84d"
+  };
+  
+  localStorage.setItem('fb_config', JSON.stringify(myConfig));
+  initFirebase(myConfig);
+}
+
+function initFirebase(cfg) {
+  try {
+    if (firebase.apps.length) firebase.apps.forEach(a => a.delete());
+    const app = firebase.initializeApp(cfg);
+    db = firebase.database(app);
+    dbRef = db.ref('tracker');
+    
+    // 接続に成功しようが失敗しようが、まずはメイン画面を表示させる
+    showMain();
+    render();
+
+    setSyncStatus('syncing', '接続中...');
+
+    dbRef.on('value', snap => {
+      const remote = snap.val();
+      if (remote) { mergeState(remote); render(); }
+      setSyncStatus('ok', '同期済み · ' + new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}));
+    }, err => {
+      setSyncStatus('error', '同期エラー: ' + err.message);
+    });
+  } catch(e) {
+    console.error(e);
+    showMain(); render();
+  }
+}
+
+function mergeState(remote) {
+  if (remote.subjects) state.subjects = { ...state.subjects, ...remote.subjects };
+  if (remote.tasks)    state.tasks    = { ...state.tasks,    ...remote.tasks    };
+  if (remote.notes)    state.notes    = { ...state.notes,    ...remote.notes    };
+  if (remote.logs)     state.logs     = remote.logs;
+  if (remote.activePhase) state.activePhase = remote.activePhase;
+  SUBJECTS.forEach(s => { if (state.subjects[s.id] === undefined) state.subjects[s.id] = s.def; });
+}
+
+function pushState() {
+  if (!dbRef) return;
+  setSyncStatus('syncing', '保存中...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    dbRef.set(state)
+      .then(() => setSyncStatus('ok', '同期済み · ' + new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})))
+      .catch(e => setSyncStatus('error', '保存失敗'));
+  }, 600);
+}
+
+function setSyncStatus(type, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  if (!dot || !lbl) return;
+  dot.className = 'sync-dot' + (type === 'syncing' ? ' syncing' : type === 'error' ? ' error' : '');
+  lbl.textContent = msg;
+}
+
+// ═══════════════════════════════════════════
+//  SCREEN ROUTING
+// ═══════════════════════════════════════════
+function showMain()  { document.getElementById('setup-screen').style.display='none';  document.getElementById('main-screen').style.display='block'; }
+function showSetup() { document.getElementById('setup-screen').style.display='flex';  document.getElementById('main-screen').style.display='none'; }
+
+// ═══════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════
+function renderCountdown() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  document.getElementById('countdown').innerHTML = EXAMS.map(e => {
+    const d = new Date(e.date); d.setHours(0,0,0,0);
+    const diff = Math.max(0, Math.ceil((d - today)/86400000));
+    return `<div class="cd-card">
+      <div class="cd-days" style="color:${e.color}">${diff}</div>
+      <div class="cd-name">${e.name}</div>
+      <div class="cd-date">${e.date.slice(5).replace('-','/')}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSubjects() {
+  document.getElementById('subjects').innerHTML = SUBJECTS.map(s => {
+    const pct = state.subjects[s.id] ?? s.def;
+    const note = state.notes[s.id] || '';
+    return `<div class="subj-card">
+      <div class="subj-top"><span class="subj-name">${s.name}</span><span class="badge ${s.bc}">${s.badge}</span></div>
+      <div class="level-bar"><div class="level-fill" id="fill-${s.id}" style="width:${pct}%;background:${s.color}"></div></div>
+      <div class="level-labels"><span>現在</span><span>目標 75%</span></div>
+      <div class="slider-row">
+        <input type="range" min="0" max="100" step="5" value="${pct}"
+          oninput="onSlider('${s.id}',this.value)"
+          onchange="saveSlider('${s.id}',this.value)">
+        <span class="pct-num" id="pct-${s.id}" style="color:${s.color}">${pct}%</span>
+      </div>
+      <textarea class="note" rows="2" placeholder="メモ（参考書・気づき）"
+        onblur="saveNote('${s.id}',this.value)">${escHtml(note)}</textarea>
+    </div>`;
+  }).join('');
+}
+
+function onSlider(id, val) {
+  val = parseInt(val);
+  document.getElementById('fill-'+id).style.width = val+'%';
+  document.getElementById('pct-'+id).textContent  = val+'%';
+  state.subjects[id] = val;
+}
+function saveSlider(id, val) { state.subjects[id] = parseInt(val); pushState(); }
+function saveNote(id, val)   { state.notes[id] = val; pushState(); }
+
+function renderPhaseTabs() {
+  document.getElementById('phase-tabs').innerHTML = PHASES.map(p =>
+    `<div class="phase-tab${state.activePhase===p.id?' active':''}" onclick="switchPhase('${p.id}')">
+      ${p.name}<div class="tab-sub">${p.dates}</div>
+    </div>`).join('');
+}
+function switchPhase(id) { state.activePhase = id; pushState(); renderPhaseTabs(); renderTasks(); }
+
+function renderTasks() {
+  const phase = PHASES.find(p => p.id === state.activePhase);
+  if (!phase) return;
+  const done = phase.tasks.filter(t => state.tasks[t.id]).length;
+  const total = phase.tasks.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('phase-prog-fill').style.width = pct+'%';
+  document.getElementById('phase-prog-label').textContent = `${done} / ${total} 完了（${pct}%）`;
+  document.getElementById('task-list').innerHTML = phase.tasks.map(t => {
+    const d = !!state.tasks[t.id];
+    return `<div class="task-item${d?' done':''}" onclick="toggleTask('${t.id}')">
+      <div class="task-check">
+        <svg class="chk" width="8" height="8" viewBox="0 0 8 8" fill="none">
+          <path d="M1 4l2 2 4-4" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function toggleTask(id) { state.tasks[id] = !state.tasks[id]; pushState(); renderTasks(); }
+
+function renderLogs() {
+  const el = document.getElementById('log-list');
+  if (!state.logs.length) { el.innerHTML='<div class="empty">まだ記録がありません</div>'; return; }
+  el.innerHTML = [...state.logs].reverse().map((l, ri) => {
+    const realIdx = state.logs.length - 1 - ri;
+    return `<div class="log-item">
+      <div><div class="log-text">${escHtml(l.text)}</div><div class="log-meta">${l.date}</div></div>
+      <span class="log-del" onclick="deleteLog(${realIdx})">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function addLog() {
+  const inp = document.getElementById('log-input');
+  const text = inp.value.trim(); if (!text) return;
+  const now = new Date();
+  const date = now.toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}) + ' ' +
+               now.toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
+  state.logs.push({ text, date });
+  pushState(); inp.value=''; renderLogs();
+}
+function deleteLog(idx) {
+  if (!confirm('この記録を削除しますか？')) return;
+  state.logs.splice(idx,1); pushState(); renderLogs();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('log-input');
+  if (inp) inp.addEventListener('keydown', e => { if (e.key==='Enter') addLog(); });
+});
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function resetAll() {
+  if (!confirm('すべてのデータをリセットしますか？この操作は取り消せません。')) return;
+  state = { subjects:{}, tasks:{}, logs:[], activePhase:'p1', notes:{} };
+  SUBJECTS.forEach(s => { state.subjects[s.id] = s.def; });
+  pushState(); render();
+}
+
+function render() {
+  renderCountdown();
+  renderSubjects();
+  renderPhaseTabs();
+  renderTasks();
+  renderLogs();
+}
+
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+window.addEventListener('load', () => {
+  SUBJECTS.forEach(s => { if (state.subjects[s.id] === undefined) state.subjects[s.id] = s.def; });
+  const cfg = getStoredConfig();
+  if (cfg) { showMain(); render(); initFirebase(cfg); }
+  else      { showSetup(); }
+  setInterval(renderCountdown, 60000);
+});
+</script>
+</body>
+</html>
