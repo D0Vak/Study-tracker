@@ -3,309 +3,291 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>院試・TOEIC 学習トラッカー</title>
+<title>院試・TOEIC 戦略トラッカー</title>
 <style>
 :root {
-  --bg:#fafaf8;--bg2:#f2f0ea;--bg3:#e8e6df;--card:#fff;
+  --bg:#fafaf8;--bg2:#f2f0ea;--card:#fff;
   --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
-  --border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.2);
+  --border:rgba(0,0,0,.1);
   --blue:#185fa5;--blue-bg:#e6f1fb;
   --green:#3b6d11;--green-bg:#eaf3de;
   --amber:#854f0b;--amber-bg:#faeeda;
   --red:#a32d2d;--red-bg:#fcebeb;
-  --purple:#3c3489;--purple-bg:#eeedfe;
-  --radius:10px;--radius-sm:6px;
-  --shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.04);
+  --radius:12px;--shadow:0 4px 12px rgba(0,0,0,.05);
 }
-/* フラッシュカード用スタイル */
-.card-answer { display: none; padding-top: 10px; margin-top: 10px; border-top: 0.5px solid var(--border); }
-.subj-card.flipped .card-answer { display: block; }
-#knowledge-input-area input, #knowledge-input-area textarea {
-  width: 100%; margin-bottom: 8px; padding: 10px; border-radius: var(--radius-sm);
-  border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-family: inherit;
-}
-
 @media(prefers-color-scheme:dark){
-  :root{
-    --bg:#141412;--bg2:#1e1e1c;--bg3:#2a2a28;--card:#1e1e1c;
-    --text:#e8e6df;--text2:#b4b2a9;--text3:#888780;
-    --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.18);
-    --blue:#85b7eb;--blue-bg:#0c447c;
-    --green:#c0dd97;--green-bg:#27500a;
-    --amber:#fac775;--amber-bg:#633806;
-    --red:#f09595;--red-bg:#791f1f;
-    --purple:#afa9ec;--purple-bg:#2a2460;
-  }
+  :root{ --bg:#141412;--bg2:#1e1e1c;--card:#1e1e1c;--text:#e8e6df;--text2:#b4b2a9;--border:rgba(255,255,255,.1);--blue:#85b7eb;--blue-bg:#0c447c; }
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.app{max-width:860px;margin:0 auto;padding:1.5rem 1rem 5rem}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;}
+.app{max-width:600px;margin:0 auto;padding:1rem 1rem 5rem}
 
-/* ── SETUP SCREEN ── */
-#setup-screen{display:none;flex-direction:column;align-items:center;justify-content:flex-start;min-height:100vh;padding:3rem 1rem}
-.setup-card{background:var(--card);border:0.5px solid var(--border2);border-radius:var(--radius);padding:2rem;max-width:560px;width:100%;box-shadow:var(--shadow)}
-.setup-title{font-size:17px;font-weight:500;margin-bottom:.4rem}
-.setup-sub{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:1.5rem}
-.setup-input{width:100%;font-family:monospace;font-size:12px;background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);resize:vertical;margin-top:.8rem;min-height:120px}
-.btn{font-size:12px;padding:8px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--card);color:var(--text2);cursor:pointer;transition:all .15s}
-.btn-primary{background:var(--blue-bg);color:var(--blue);border-color:transparent; font-weight: 600;}
+/* ── HEADER & NAV ── */
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.nav-tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:var(--radius);margin-bottom:1.5rem}
+.nav-btn{flex:1;border:none;padding:10px;border-radius:8px;background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:0.2s}
+.nav-btn.active{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
 
-/* ── MAIN UI ── */
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
-.sync-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
-.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
-.sync-dot.syncing{background:var(--amber);animation:pulse .8s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.section-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;margin:1.5rem 0 .6rem;letter-spacing: .05em;}
+/* ── TODAY'S MISSION ── */
+.mission-card{background:linear-gradient(135deg, var(--blue), #4a90e2);color:white;padding:1.2rem;border-radius:var(--radius);margin-bottom:1.5rem;box-shadow:0 8px 20px rgba(24,95,165,0.2)}
+.mission-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.9}
+.mission-title{font-size:18px;font-weight:700;margin-top:4px}
 
-.cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.cd-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
-.cd-days{font-size:26px;font-weight:500;}
+/* ── COMMON CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.section-title{font-size:12px;font-weight:700;color:var(--text3);margin-bottom:1rem;display:flex;justify-content:space-between}
 
-.subj-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.subj-card{background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow); transition: transform 0.1s;}
-.subj-card:active{transform: scale(0.98);}
-.level-bar{height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;margin:10px 0 4px}
-.level-fill{height:100%;transition:width .3s}
+/* ── PROGRESS UI ── */
+.prog-row{margin-bottom:15px}
+.prog-info{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.prog-bar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;transition:width 0.5s ease-out}
 
-.phase-tabs{display:flex;margin-bottom:10px;border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border2)}
-.phase-tab{flex:1;padding:9px 6px;background:var(--bg2);cursor:pointer;font-size:12px;text-align:center;border-right:0.5px solid var(--border2)}
-.phase-tab.active{background:var(--card);font-weight:600;}
-.task-list{display:flex;flex-direction:column;gap:4px}
-.task-item{display:flex;gap:10px;background:var(--card);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;box-shadow:var(--shadow); cursor: pointer;}
-.task-item.done{opacity: 0.5;}
+/* ── KNOWLEDGE (FLASHCARDS) ── */
+.filter-tabs{display:flex;gap:5px;margin-bottom:1rem;overflow-x:auto;padding-bottom:5px}
+.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;background:var(--card);white-space:nowrap;cursor:pointer}
+.filter-btn.active{background:var(--text);color:var(--bg)}
+.k-card{border-left:4px solid var(--blue);padding:10px;margin-bottom:8px;background:var(--bg2);border-radius:0 var(--radius) var(--radius) 0;cursor:pointer}
+.k-ans{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:13px;color:var(--blue)}
+.k-card.open .k-ans{display:block}
 
-.log-form{display:flex;gap:8px;margin-bottom:10px}
-.log-input{flex:1;padding:8px 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--card);color:var(--text);}
-.log-list{display:flex;flex-direction:column;gap:5px;}
-.log-item{background:var(--card);border:0.5px solid var(--border);padding:10px;border-radius:var(--radius-sm);display:flex;justify-content:space-between;}
+/* ── INPUTS ── */
+input, textarea, select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);margin-bottom:10px;font-family:inherit}
+.btn-main{width:100%;padding:14px;border-radius:8px;border:none;background:var(--blue);color:white;font-weight:700;cursor:pointer}
 
-@media(max-width:560px){
-  .cd-grid{grid-template-columns:repeat(2,1fr)}
-  .subj-grid{grid-template-columns:1fr}
-}
+/* ── SCREENS ── */
+.screen{display:none}
+.screen.active{display:block}
 </style>
 </head>
 <body>
 
-<div id="setup-screen">
-  <div class="setup-card">
-    <div class="setup-title">🔧 Firebase 接続</div>
-    <textarea class="setup-input" id="fb-config-input" placeholder='Configを貼り付け'></textarea>
-    <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:10px; width:100%">保存して開始</button>
+<div class="app" id="main-app" style="display:none">
+  <header>
+    <div id="sync-status" style="font-size:11px; color:var(--text3)">● Connected</div>
+    <button onclick="localStorage.clear();location.reload()" style="font-size:10px; background:none; border:none; color:var(--text3)">Reset Config</button>
+  </header>
+
+  <div class="mission-card">
+    <div class="mission-label">Today's Focus</div>
+    <div id="mission-content" class="mission-title">読み込み中...</div>
+  </div>
+
+  <nav class="nav-tabs">
+    <button class="nav-btn active" onclick="switchTab('plan', this)">Plan</button>
+    <button class="nav-btn" onclick="switchTab('knowledge', this)">Knowledge</button>
+    <button class="nav-btn" onclick="switchTab('logs', this)">Logs</button>
+  </nav>
+
+  <div id="screen-plan" class="screen active">
+    <div class="card">
+      <div class="section-title"><span>COUNTDOWN</span></div>
+      <div id="countdown-list" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; text-align:center"></div>
+    </div>
+    <div class="card">
+      <div class="section-title"><span>SUBJECT PROGRESS</span></div>
+      <div id="subject-list"></div>
+    </div>
+  </div>
+
+  <div id="screen-knowledge" class="screen">
+    <div class="card">
+      <div class="section-title"><span>ADD KNOWLEDGE</span></div>
+      <select id="k-input-sub">
+        <option value="線形代数">線形代数</option>
+        <option value="微積分">微積分</option>
+        <option value="アルゴリズム">アルゴリズム</option>
+        <option value="TOEIC">TOEIC</option>
+        <option value="専門">専門</option>
+      </select>
+      <input type="text" id="k-input-term" placeholder="用語・概念名">
+      <textarea id="k-input-concept" rows="2" placeholder="自分なりの直感的な説明"></textarea>
+      <button class="btn-main" onclick="addKnowledge()">知識を刻む</button>
+    </div>
+    
+    <div class="filter-tabs" id="k-filters"></div>
+    <div id="k-list"></div>
+  </div>
+
+  <div id="screen-logs" class="screen">
+    <div class="card">
+      <div class="section-title"><span>DAILY LOG</span></div>
+      <input type="text" id="log-input" placeholder="今日進めた内容を入力">
+      <button class="btn-main" onclick="addLog()">記録を保存</button>
+    </div>
+    <div id="log-list"></div>
   </div>
 </div>
 
-<div id="main-screen" style="display:none">
-  <div class="app">
-    <header>
-      <div>
-        <h1 style="font-size:18px;">院試・TOEIC Tracker</h1>
-        <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">接続中...</span></div>
-      </div>
-      <button class="btn" onclick="showSetup()">⚙設定</button>
-    </header>
-
-    <div class="section-label">試験まで</div>
-    <div class="cd-grid" id="countdown"></div>
-
-    <div class="section-label">科目別進捗</div>
-    <div class="subj-grid" id="subjects"></div>
-
-    <div class="section-label">フェーズ別タスク</div>
-    <div class="phase-tabs" id="phase-tabs"></div>
-    <div class="task-list" id="task-list"></div>
-
-    <div class="section-label">🧠 院試ナレッジベース（暗記カード）</div>
-    <div id="knowledge-input-area">
-      <input type="text" id="card-subject" placeholder="科目 (例: 線形代数)">
-      <input type="text" id="card-term" placeholder="用語・公式名">
-      <textarea id="card-concept" rows="2" placeholder="直感的な理解を一言で"></textarea>
-      <button onclick="addKnowledgeCard()" class="btn btn-primary" style="width:100%">知識を保存</button>
-    </div>
-    <div id="knowledge-list" style="margin-top:15px;"></div>
-
-    <div class="section-label">学習ログ</div>
-    <div class="log-form">
-      <input class="log-input" id="log-input" type="text" placeholder="今日やったこと">
-      <button class="btn btn-primary" onclick="addLog()">追加</button>
-    </div>
-    <div class="log-list" id="log-list"></div>
-
-    <div style="margin-top:30px; text-align:center;">
-      <button class="btn" onclick="resetAll()" style="color:var(--red)">全データリセット</button>
-    </div>
-  </div>
+<div id="setup-screen" style="padding:2rem; text-align:center">
+  <h3>Firebase Setup</h3>
+  <textarea id="setup-cfg" placeholder="Paste Firebase Config here" style="height:200px; margin-top:1rem"></textarea>
+  <button class="btn-main" onclick="initFromSetup()">Start App</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
-// --- DATA ---
+// --- CONSTANTS ---
 const EXAMS = [
-  { name:'TOEIC', date:'2026-05-17', color:'var(--amber)' },
-  { name:'NAIST', date:'2026-07-01', color:'var(--blue)' },
-  { name:'神戸大', date:'2026-08-28', color:'var(--red)' }
-];
-const SUBJECTS = [
-  { id:'linear', name:'線形代数', color:'var(--green)' },
-  { id:'calc', name:'微積分', color:'var(--green)' },
-  { id:'algo', name:'アルゴリズム', color:'var(--amber)' }
-];
-const PHASES = [
-  { id:'p1', name:'〜5/17', tasks:[{id:'t1', title:'TOEIC単語', sub:'金フレ'}] },
-  { id:'p2', name:'〜6/末', tasks:[{id:'t2', title:'数学演習', sub:'基礎'}] }
+  { name:'TOEIC', date:'2026-05-17', color:'#f5a623' },
+  { name:'NAIST', date:'2026-07-01', color:'#185fa5' },
+  { name:'KOBE', date:'2026-08-28', color:'#d0021b' }
 ];
 
-// --- STATE ---
-let dbRef = null;
+const SUBJECTS = [
+  { id:'linear', name:'線形代数', color:'#4caf50' },
+  { id:'calc', name:'微積分', color:'#4caf50' },
+  { id:'algo', name:'アルゴリズム', color:'#ff9800' },
+  { id:'toeic', name:'TOEIC', color:'#2196f3' }
+];
+
+// --- APP STATE ---
+let dbRef;
 let state = {
-  subjects: {}, tasks: {}, logs: [], notes: {},
-  activePhase: 'p1', knowledgeCards: []
+  subjects: { linear:30, calc:30, algo:10, toeic:50 },
+  knowledge: [],
+  logs: [],
+  currentFilter: 'All'
 };
 
-// --- CORE FUNCTIONS ---
-function initFirebase(cfg) {
+// --- INITIALIZATION ---
+function initFromSetup() {
+  const cfgStr = document.getElementById('setup-cfg').value;
   try {
-    const app = firebase.initializeApp(cfg);
-    dbRef = firebase.database(app).ref('tracker_v2');
-    dbRef.on('value', snap => {
-      const data = snap.val();
-      if(data) {
-        state = {...state, ...data};
-        // 配列が消えないように保護
-        if(!state.knowledgeCards) state.knowledgeCards = [];
-        if(!state.logs) state.logs = [];
-      }
-      render();
-      setSyncStatus('ok', '同期済み');
-    });
-    showMain();
-  } catch(e) { console.error(e); showSetup(); }
+    const cfg = JSON.parse(cfgStr.includes('{') ? cfgStr : `{${cfgStr}}`);
+    localStorage.setItem('fb_cfg', JSON.stringify(cfg));
+    location.reload();
+  } catch(e) { alert('Configの形式が正しくありません'); }
 }
 
-function pushState() {
-  if(!dbRef) return;
-  setSyncStatus('syncing', '保存中...');
-  dbRef.set(state);
+window.onload = () => {
+  const savedCfg = localStorage.getItem('fb_cfg');
+  if(savedCfg) {
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    startFirebase(JSON.parse(savedCfg));
+  }
+};
+
+function startFirebase(cfg) {
+  const app = firebase.initializeApp(cfg);
+  dbRef = firebase.database(app).ref('v3_data');
+  dbRef.on('value', snap => {
+    if(snap.val()) state = snap.val();
+    if(!state.knowledge) state.knowledge = [];
+    if(!state.logs) state.logs = [];
+    render();
+  });
 }
 
+// --- CORE RENDER ---
 function render() {
-  renderCountdown();
-  renderSubjects();
-  renderTasks();
-  renderLogs();
+  renderMission();
+  renderPlan();
   renderKnowledge();
+  renderLogs();
 }
 
-// --- RENDERERS ---
-function renderCountdown() {
+function renderMission() {
+  // 日付に基づいた「今日やるべきこと」の簡易レコメンド
+  const today = new Date();
+  const toeicDate = new Date('2026-05-17');
+  const daysToToeic = Math.ceil((toeicDate - today)/(1000*60*60*24));
+  
+  let mission = "";
+  if(daysToToeic > 0 && daysToToeic < 30) {
+    mission = `TOEICまで${daysToToeic}日：公式問題集を解き、Part5の誤答をカード化せよ`;
+  } else {
+    mission = "線形代数：固有値問題の計算スピードを上げる演習を優先";
+  }
+  document.getElementById('mission-content').innerText = mission;
+}
+
+function renderPlan() {
+  // Countdown
   const now = new Date();
-  document.getElementById('countdown').innerHTML = EXAMS.map(e => {
+  document.getElementById('countdown-list').innerHTML = EXAMS.map(e => {
     const diff = Math.max(0, Math.ceil((new Date(e.date) - now)/86400000));
-    return `<div class="cd-card"><div class="cd-days" style="color:${e.color}">${diff}</div><div style="font-size:10px;">${e.name}</div></div>`;
+    return `<div><div style="font-size:20px; font-weight:800; color:${e.color}">${diff}</div><div style="font-size:10px; color:var(--text3)">${e.name}</div></div>`;
   }).join('');
-}
 
-function renderSubjects() {
-  document.getElementById('subjects').innerHTML = SUBJECTS.map(s => {
-    const p = state.subjects[s.id] || 0;
-    return `<div class="subj-card">
-      <div style="font-size:13px; font-weight:600;">${s.name}</div>
-      <div class="level-bar"><div class="level-fill" style="width:${p}%; background:${s.color}"></div></div>
-      <input type="range" style="width:100%" value="${p}" onchange="saveSubj('${s.id}', this.value)">
-    </div>`;
+  // Subjects
+  document.getElementById('subject-list').innerHTML = SUBJECTS.map(s => {
+    const val = state.subjects[s.id] || 0;
+    return `
+      <div class="prog-row">
+        <div class="prog-info"><span>${s.name}</span><b>${val}%</b></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${val}%; background:${s.color}"></div></div>
+        <input type="range" min="0" max="100" value="${val}" onchange="updateSubj('${s.id}', this.value)" style="margin:5px 0">
+      </div>`;
   }).join('');
-}
-
-function renderTasks() {
-  const p = PHASES.find(x => x.id === state.activePhase) || PHASES[0];
-  document.getElementById('phase-tabs').innerHTML = PHASES.map(x => 
-    `<div class="phase-tab ${state.activePhase===x.id?'active':''}" onclick="state.activePhase='${x.id}';render();pushState();">${x.name}</div>`
-  ).join('');
-  document.getElementById('task-list').innerHTML = p.tasks.map(t => 
-    `<div class="task-item ${state.tasks[t.id]?'done':''}" onclick="toggleTask('${t.id}')">
-      <div style="font-size:13px;">${t.title}</div>
-    </div>`
-  ).join('');
 }
 
 function renderKnowledge() {
-  const list = document.getElementById('knowledge-list');
-  if(!state.knowledgeCards || state.knowledgeCards.length === 0) {
-    list.innerHTML = '<div style="text-align:center; color:var(--text3); font-size:12px;">カードはまだありません</div>';
-    return;
-  }
-  list.innerHTML = state.knowledgeCards.map((c, i) => `
-    <div class="subj-card" onclick="this.classList.toggle('flipped')" style="cursor:pointer; margin-bottom:8px;">
-      <div style="font-size:10px; color:var(--text3)">${escHtml(c.subject)}</div>
-      <div style="font-size:15px; font-weight:600;">${escHtml(c.term)}</div>
-      <div class="card-answer">
-        <div style="font-size:13px; color:var(--blue)">💡 理解の核:</div>
-        <div style="font-size:13px;">${escHtml(c.concept)}</div>
-        <button class="btn" style="margin-top:10px; color:var(--red); border:none; padding:0;" onclick="deleteCard(${i}); event.stopPropagation();">削除</button>
-      </div>
+  // Filters
+  const subs = ['All', ...new Set(state.knowledge.map(k => k.sub))];
+  document.getElementById('k-filters').innerHTML = subs.map(s => 
+    `<button class="filter-btn ${state.currentFilter===s?'active':''}" onclick="state.currentFilter='${s}';renderKnowledge()">${s}</button>`
+  ).join('');
+
+  // List
+  const filtered = state.currentFilter === 'All' 
+    ? state.knowledge 
+    : state.knowledge.filter(k => k.sub === state.currentFilter);
+
+  document.getElementById('k-list').innerHTML = filtered.slice().reverse().map((k, i) => `
+    <div class="k-card" onclick="this.classList.toggle('open')">
+      <div style="font-size:10px; color:var(--text3)">${k.sub}</div>
+      <div style="font-weight:600">${esc(k.term)}</div>
+      <div class="k-ans">${esc(k.concept)}</div>
     </div>
   `).join('');
 }
 
 function renderLogs() {
-  document.getElementById('log-list').innerHTML = (state.logs || []).slice().reverse().map((l, i) => 
-    `<div class="log-item"><div style="font-size:13px;">${escHtml(l.text)}</div></div>`
-  ).join('');
+  document.getElementById('log-list').innerHTML = state.logs.slice().reverse().map(l => `
+    <div class="card" style="padding:10px; font-size:13px; margin-bottom:5px">
+      <span style="color:var(--text3); font-size:10px">${l.date}</span><br>${esc(l.text)}
+    </div>
+  `).join('');
 }
 
 // --- ACTIONS ---
-function saveSubj(id, val) { state.subjects[id] = val; pushState(); render(); }
-function toggleTask(id) { state.tasks[id] = !state.tasks[id]; pushState(); render(); }
+function switchTab(screenId, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screenId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function updateSubj(id, val) {
+  state.subjects[id] = parseInt(val);
+  dbRef.update({subjects: state.subjects});
+}
+
+function addKnowledge() {
+  const sub = document.getElementById('k-input-sub').value;
+  const term = document.getElementById('k-input-term').value;
+  const concept = document.getElementById('k-input-concept').value;
+  if(!term || !concept) return;
+  state.knowledge.push({sub, term, concept});
+  dbRef.update({knowledge: state.knowledge});
+  document.getElementById('k-input-term').value = '';
+  document.getElementById('k-input-concept').value = '';
+}
+
 function addLog() {
-  const val = document.getElementById('log-input').value;
-  if(!val) return;
-  state.logs.push({text: val, date: new Date().toISOString()});
+  const text = document.getElementById('log-input').value;
+  if(!text) return;
+  const date = new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  state.logs.push({text, date});
+  dbRef.update({logs: state.logs});
   document.getElementById('log-input').value = '';
-  pushState(); render();
 }
-function addKnowledgeCard() {
-  const sub = document.getElementById('card-subject').value || '共通';
-  const term = document.getElementById('card-term').value;
-  const concept = document.getElementById('card-concept').value;
-  if(!term || !concept) return alert('入力してください');
-  state.knowledgeCards.push({subject: sub, term, concept});
-  document.getElementById('card-term').value = '';
-  document.getElementById('card-concept').value = '';
-  pushState(); render();
-}
-function deleteCard(i) { if(confirm('削除しますか？')) { state.knowledgeCards.splice(i,1); pushState(); render(); } }
 
-// --- HELPERS ---
-function setSyncStatus(type, msg) {
-  const dot = document.getElementById('sync-dot');
-  dot.className = 'sync-dot ' + (type === 'syncing' ? 'syncing' : '');
-  document.getElementById('sync-label').innerText = msg;
-}
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
-function showMain() { document.getElementById('setup-screen').style.display='none'; document.getElementById('main-screen').style.display='block'; }
-function showSetup() { document.getElementById('setup-screen').style.display='flex'; document.getElementById('main-screen').style.display='none'; }
-function saveConfig() {
-  const cfg = {
-    apiKey: "AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",
-    authDomain: "study-tracker-5a35c.firebaseapp.com",
-    databaseURL: "https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "study-tracker-5a35c",
-    storageBucket: "study-tracker-5a35c.firebasestorage.app",
-    messagingSenderId: "1091326221496",
-    appId: "1:1091326221496:web:5bcd5ab27bdc6cca03e84d"
-  };
-  localStorage.setItem('fb_config', JSON.stringify(cfg));
-  initFirebase(cfg);
-}
-function resetAll() { if(confirm('全消去しますか？')) { state={subjects:{}, tasks:{}, logs:[], knowledgeCards:[]}; pushState(); } }
-
-window.onload = () => {
-  const cfg = localStorage.getItem('fb_config');
-  if(cfg) initFirebase(JSON.parse(cfg)); else showSetup();
-};
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 </script>
 </body>
 </html>
