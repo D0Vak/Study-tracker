@@ -206,6 +206,18 @@ textarea.note:focus{outline:none;border-color:var(--border2)}
   <div class="phase-prog-label" id="phase-prog-label"></div>
   <div class="task-list" id="task-list"></div>
 
+  <section class="card">
+    <h2>🧠 院試ナレッジベース</h2>
+    <div id="knowledge-input-area" style="margin-bottom: 15px;">
+      <input type="text" id="card-subject" placeholder="科目 (例: 数学)">
+      <input type="text" id="card-term" placeholder="用語">
+      <textarea id="card-concept" placeholder="直感的な理解・一言説明"></textarea>
+      <button onclick="addKnowledgeCard()" class="btn-primary">知識を刻む</button>
+    </div>
+    <div id="knowledge-list" class="grid-list">
+      </div>
+  </section>
+  
   <div class="section-label">学習ログ</div>
   <div class="log-form">
     <input class="log-input" id="log-input" type="text" placeholder="今日やったこと（例: 微積演習20問、シャドーイング30分）" maxlength="200">
@@ -282,7 +294,16 @@ const PHASES = [
 // ═══════════════════════════════════════════
 let db = null;
 let dbRef = null;
-let state = { subjects:{}, tasks:{}, logs:[], activePhase:'p1', notes:{} };
+let state = {
+  tasks: [],
+  logs: [],
+  subjectProgress: { math: 50, cs: 30, english: 70 },
+  // ↓ここを追加
+  knowledgeCards: [
+    { id: 1, subject: '線形代数', term: '固有値', concept: '写像で方向が変わらないベクトルの伸び率', detail: 'Av = λv (v≠0). 行列Aの性質を特徴づける最も重要な値。' },
+    { id: 2, subject: 'アルゴリズム', term: 'クイックソート', concept: '基準値(ピボット)で分割を繰り返す高速ソート', detail: '平均計算量 O(n log n). 最悪 O(n^2). 分割統治法を利用。' }
+  ]
+};
 let saveTimer = null;
 
 function getStoredConfig() {
