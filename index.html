@@ -3,291 +3,711 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>院試・TOEIC 戦略トラッカー</title>
+<title>StudyFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#fafaf8;--bg2:#f2f0ea;--card:#fff;
-  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
-  --border:rgba(0,0,0,.1);
-  --blue:#185fa5;--blue-bg:#e6f1fb;
-  --green:#3b6d11;--green-bg:#eaf3de;
-  --amber:#854f0b;--amber-bg:#faeeda;
-  --red:#a32d2d;--red-bg:#fcebeb;
-  --radius:12px;--shadow:0 4px 12px rgba(0,0,0,.05);
-}
-@media(prefers-color-scheme:dark){
-  :root{ --bg:#141412;--bg2:#1e1e1c;--card:#1e1e1c;--text:#e8e6df;--text2:#b4b2a9;--border:rgba(255,255,255,.1);--blue:#85b7eb;--blue-bg:#0c447c; }
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;}
-.app{max-width:600px;margin:0 auto;padding:1rem 1rem 5rem}
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0C0C0F;--bg2:#141418;--bg3:#1C1C22;--bg4:#24242C;
+    --border:#2E2E38;--border2:#3A3A48;
+    --text:#F0EFF8;--text2:#9B9AB0;--text3:#6B6A80;
+    --accent:#7C5FD4;--accent2:#9B7FF0;--accent3:#C4ADFF;
+    --green:#2ECC8A;--green2:#1A7A54;
+    --amber:#F0A830;--amber2:#7A5010;
+    --red:#E85050;--blue:#4A9EF0;
+    --radius:12px;--radius2:8px;--radius3:20px;
+  }
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-/* ── HEADER & NAV ── */
-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-.nav-tabs{display:flex;gap:4px;background:var(--bg2);padding:4px;border-radius:var(--radius);margin-bottom:1.5rem}
-.nav-btn{flex:1;border:none;padding:10px;border-radius:8px;background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;transition:0.2s}
-.nav-btn.active{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+  #app{max-width:900px;margin:0 auto;padding:24px 16px}
 
-/* ── TODAY'S MISSION ── */
-.mission-card{background:linear-gradient(135deg, var(--blue), #4a90e2);color:white;padding:1.2rem;border-radius:var(--radius);margin-bottom:1.5rem;box-shadow:0 8px 20px rgba(24,95,165,0.2)}
-.mission-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.9}
-.mission-title{font-size:18px;font-weight:700;margin-top:4px}
+  .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+  .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px}
+  .logo span{color:var(--accent2)}
+  .header-right{display:flex;align-items:center;gap:12px}
+  .streak-badge{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius3);padding:6px 14px;font-size:13px;font-weight:500}
+  .streak-fire{font-size:16px}
 
-/* ── COMMON CARD ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:1rem;box-shadow:var(--shadow)}
-.section-title{font-size:12px;font-weight:700;color:var(--text3);margin-bottom:1rem;display:flex;justify-content:space-between}
+  .tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:28px}
+  .tab{flex:1;padding:9px 12px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:var(--radius2);cursor:pointer;transition:all .2s;text-align:center}
+  .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(124,95,212,.35)}
+  .tab:hover:not(.active){background:var(--bg3);color:var(--text)}
 
-/* ── PROGRESS UI ── */
-.prog-row{margin-bottom:15px}
-.prog-info{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
-.prog-bar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden}
-.prog-fill{height:100%;transition:width 0.5s ease-out}
+  .panel{display:none}
+  .panel.active{display:block}
 
-/* ── KNOWLEDGE (FLASHCARDS) ── */
-.filter-tabs{display:flex;gap:5px;margin-bottom:1rem;overflow-x:auto;padding-bottom:5px}
-.filter-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:11px;background:var(--card);white-space:nowrap;cursor:pointer}
-.filter-btn.active{background:var(--text);color:var(--bg)}
-.k-card{border-left:4px solid var(--blue);padding:10px;margin-bottom:8px;background:var(--bg2);border-radius:0 var(--radius) var(--radius) 0;cursor:pointer}
-.k-ans{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:13px;color:var(--blue)}
-.k-card.open .k-ans{display:block}
+  /* PLAN TAB */
+  .section-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
 
-/* ── INPUTS ── */
-input, textarea, select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);margin-bottom:10px;font-family:inherit}
-.btn-main{width:100%;padding:14px;border-radius:8px;border:none;background:var(--blue);color:white;font-weight:700;cursor:pointer}
+  .subjects-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:28px}
+  .subject-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;transition:border-color .2s;position:relative;overflow:hidden}
+  .subject-card:hover{border-color:var(--border2)}
+  .subject-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius) var(--radius) 0 0}
+  .subject-card.linear-algebra::before{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .subject-card.calculus::before{background:linear-gradient(90deg,var(--green),#40DDAA)}
+  .subject-card.ml::before{background:linear-gradient(90deg,var(--blue),#80C0FF)}
+  .subject-card.prob::before{background:linear-gradient(90deg,var(--amber),#FFD080)}
 
-/* ── SCREENS ── */
-.screen{display:none}
-.screen.active{display:block}
+  .subject-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+  .subject-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:2px}
+  .subject-chapter{font-size:12px;color:var(--text3)}
+  .subject-pct{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
+
+  .prog-bar{height:5px;background:var(--bg4);border-radius:3px;margin-bottom:10px;overflow:hidden}
+  .prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
+  .linear-algebra .prog-fill{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .calculus .prog-fill{background:linear-gradient(90deg,var(--green),#40DDAA)}
+  .ml .prog-fill{background:linear-gradient(90deg,var(--blue),#80C0FF)}
+  .prob .prog-fill{background:linear-gradient(90deg,var(--amber),#FFD080)}
+
+  .subject-stats{display:flex;gap:16px}
+  .stat-item{font-size:11px;color:var(--text3)}
+  .stat-item strong{color:var(--text2);display:block;font-size:13px;font-weight:500}
+
+  .quiz-btn{width:100%;margin-top:12px;padding:8px;background:transparent;border:1px solid var(--border);border-radius:var(--radius2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .2s}
+  .quiz-btn:hover{background:var(--bg3);border-color:var(--border2);color:var(--text)}
+
+  .plan-section{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+  .plan-row{display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .plan-row:last-child{border-bottom:none}
+  .plan-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .plan-text{flex:1;font-size:13px}
+  .plan-tag{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:500;white-space:nowrap}
+  .tag-today{background:rgba(124,95,212,.2);color:var(--accent3)}
+  .tag-done{background:rgba(46,204,138,.15);color:var(--green)}
+  .tag-upcoming{background:var(--bg4);color:var(--text3)}
+  .tag-exam{background:rgba(240,168,48,.15);color:var(--amber)}
+
+  .exam-countdown{background:linear-gradient(135deg,rgba(124,95,212,.12),rgba(155,127,240,.06));border:1px solid rgba(124,95,212,.25);border-radius:var(--radius);padding:20px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between}
+  .countdown-label{font-size:12px;color:var(--text3);margin-bottom:4px}
+  .countdown-days{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent3);line-height:1}
+  .countdown-sub{font-size:12px;color:var(--text2);margin-top:4px}
+  .countdown-right{text-align:right}
+  .countdown-target{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text)}
+  .countdown-date{font-size:11px;color:var(--text3);margin-top:2px}
+
+  .overall-progress{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:28px}
+  .overall-bar{height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;margin:12px 0 8px}
+  .overall-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2),#C4A8FF);transition:width .8s ease}
+  .overall-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--text3)}
+
+  /* FLASHCARD TAB */
+  .fc-topics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:24px}
+  .fc-topic{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+  .fc-topic:hover{border-color:var(--border2);background:var(--bg3)}
+  .fc-topic.selected{border-color:var(--accent);background:rgba(124,95,212,.1)}
+  .fc-topic-icon{font-size:24px;margin-bottom:8px;font-family:'Syne',sans-serif;font-weight:800;color:var(--accent2)}
+  .fc-topic-name{font-size:13px;font-weight:500;margin-bottom:4px}
+  .fc-topic-count{font-size:11px;color:var(--text3)}
+
+  .fc-area{display:none}
+  .fc-area.active{display:block}
+
+  .fc-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;min-height:200px;display:flex;align-items:center;justify-content:center;padding:32px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+  .fc-card:hover{border-color:var(--border2)}
+  .fc-card.flipped{background:var(--bg3);border-color:var(--accent)}
+  .fc-card-hint{position:absolute;bottom:12px;right:14px;font-size:11px;color:var(--text3)}
+  .fc-q{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;line-height:1.4}
+  .fc-a{font-size:15px;color:var(--text2);line-height:1.7}
+  .fc-tag{display:inline-block;font-size:10px;padding:3px 10px;border-radius:10px;background:rgba(124,95,212,.15);color:var(--accent3);margin-bottom:14px;font-weight:500}
+  .fc-actions{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+  .fc-btn{padding:10px 20px;border-radius:var(--radius2);border:1px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;font-weight:500}
+  .fc-btn.wrong{color:#ff6b6b;border-color:rgba(232,80,80,.3)}
+  .fc-btn.wrong:hover{background:rgba(232,80,80,.12)}
+  .fc-btn.correct{color:var(--green);border-color:rgba(46,204,138,.3)}
+  .fc-btn.correct:hover{background:rgba(46,204,138,.1)}
+  .fc-btn.next{color:var(--text2);border-color:var(--border2)}
+  .fc-btn.next:hover{background:var(--bg3);color:var(--text)}
+  .fc-progress-line{font-size:12px;color:var(--text3);text-align:center}
+
+  /* LOG TAB */
+  .log-form{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .form-group{display:flex;flex-direction:column;gap:6px}
+  .form-label{font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;font-weight:500}
+  .form-input{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
+  .form-input:focus{border-color:var(--accent)}
+  .form-input option{background:var(--bg3)}
+  .form-note{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:9px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%;resize:vertical;min-height:72px;transition:border-color .2s}
+  .form-note:focus{border-color:var(--accent)}
+  .submit-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:var(--radius2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;margin-top:4px}
+  .submit-btn:hover{background:var(--accent2);transform:translateY(-1px)}
+
+  .log-list{display:flex;flex-direction:column;gap:10px}
+  .log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;gap:14px;align-items:flex-start;transition:border-color .2s}
+  .log-item:hover{border-color:var(--border2)}
+  .log-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .log-content{flex:1}
+  .log-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .log-subject{font-size:13px;font-weight:500}
+  .log-time{font-size:11px;color:var(--text3)}
+  .log-chapter{font-size:12px;color:var(--text2);margin-bottom:4px}
+  .log-note{font-size:12px;color:var(--text3);font-style:italic}
+  .log-duration{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--bg4);color:var(--text2);white-space:nowrap}
+
+  /* QUIZ MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800}
+  .modal-close{background:var(--bg3);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center}
+  .quiz-q{font-size:15px;line-height:1.6;margin-bottom:20px;color:var(--text)}
+  .quiz-options{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+  .quiz-option{padding:11px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);cursor:pointer;font-size:13px;text-align:left;color:var(--text2);transition:all .2s;font-family:'DM Sans',sans-serif}
+  .quiz-option:hover:not(:disabled){border-color:var(--accent);color:var(--text);background:rgba(124,95,212,.08)}
+  .quiz-option.correct{border-color:var(--green);background:rgba(46,204,138,.12);color:var(--green)}
+  .quiz-option.wrong{border-color:var(--red);background:rgba(232,80,80,.1);color:#ff8080}
+  .quiz-feedback{font-size:13px;color:var(--text2);background:var(--bg3);border-radius:var(--radius2);padding:12px;margin-bottom:16px;line-height:1.6;display:none}
+  .quiz-feedback.show{display:block}
+  .quiz-next{width:100%;padding:11px;background:var(--accent);border:none;border-radius:var(--radius2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:none}
+  .quiz-next.show{display:block}
+  .quiz-result{text-align:center;padding:20px 0}
+  .quiz-score{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--accent2)}
+  .quiz-score-label{font-size:14px;color:var(--text2);margin-top:4px}
+  .quiz-bar-wrap{margin:16px 0;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden}
+  .quiz-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s ease}
 </style>
 </head>
 <body>
 
-<div class="app" id="main-app" style="display:none">
-  <header>
-    <div id="sync-status" style="font-size:11px; color:var(--text3)">● Connected</div>
-    <button onclick="localStorage.clear();location.reload()" style="font-size:10px; background:none; border:none; color:var(--text3)">Reset Config</button>
-  </header>
-
-  <div class="mission-card">
-    <div class="mission-label">Today's Focus</div>
-    <div id="mission-content" class="mission-title">読み込み中...</div>
-  </div>
-
-  <nav class="nav-tabs">
-    <button class="nav-btn active" onclick="switchTab('plan', this)">Plan</button>
-    <button class="nav-btn" onclick="switchTab('knowledge', this)">Knowledge</button>
-    <button class="nav-btn" onclick="switchTab('logs', this)">Logs</button>
-  </nav>
-
-  <div id="screen-plan" class="screen active">
-    <div class="card">
-      <div class="section-title"><span>COUNTDOWN</span></div>
-      <div id="countdown-list" style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; text-align:center"></div>
-    </div>
-    <div class="card">
-      <div class="section-title"><span>SUBJECT PROGRESS</span></div>
-      <div id="subject-list"></div>
+<div id="app">
+  <div class="header">
+    <div class="logo">Study<span>Flow</span></div>
+    <div class="header-right">
+      <div class="streak-badge"><span class="streak-fire">🔥</span><span id="streak-count">0</span>日連続</div>
     </div>
   </div>
 
-  <div id="screen-knowledge" class="screen">
-    <div class="card">
-      <div class="section-title"><span>ADD KNOWLEDGE</span></div>
-      <select id="k-input-sub">
-        <option value="線形代数">線形代数</option>
-        <option value="微積分">微積分</option>
-        <option value="アルゴリズム">アルゴリズム</option>
-        <option value="TOEIC">TOEIC</option>
-        <option value="専門">専門</option>
-      </select>
-      <input type="text" id="k-input-term" placeholder="用語・概念名">
-      <textarea id="k-input-concept" rows="2" placeholder="自分なりの直感的な説明"></textarea>
-      <button class="btn-main" onclick="addKnowledge()">知識を刻む</button>
-    </div>
-    
-    <div class="filter-tabs" id="k-filters"></div>
-    <div id="k-list"></div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
+    <button class="tab" onclick="switchTab('cards')">🃏 フラッシュカード</button>
+    <button class="tab" onclick="switchTab('log')">📝 学習ログ</button>
   </div>
 
-  <div id="screen-logs" class="screen">
-    <div class="card">
-      <div class="section-title"><span>DAILY LOG</span></div>
-      <input type="text" id="log-input" placeholder="今日進めた内容を入力">
-      <button class="btn-main" onclick="addLog()">記録を保存</button>
+  <!-- PLAN PANEL -->
+  <div class="panel active" id="panel-plan">
+    <div class="exam-countdown">
+      <div>
+        <div class="countdown-label">NAIST 入試まで</div>
+        <div class="countdown-days" id="days-left">—</div>
+        <div class="countdown-sub">日</div>
+      </div>
+      <div class="countdown-right">
+        <div class="countdown-target">NAIST 大学院入試</div>
+        <div class="countdown-date">2025年7月上旬</div>
+        <div style="margin-top:8px;font-size:11px;color:var(--text3)">Sakti Sakriani 研究室</div>
+      </div>
     </div>
-    <div id="log-list"></div>
+
+    <div class="section-title">教科別 進捗</div>
+    <div class="subjects-grid" id="subjects-grid"></div>
+
+    <div class="overall-progress">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="section-title" style="margin:0">総合進捗</div>
+        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent2)" id="overall-pct">0%</div>
+      </div>
+      <div class="overall-bar"><div class="overall-fill" id="overall-bar" style="width:0%"></div></div>
+      <div class="overall-nums">
+        <span id="overall-done">完了 0章</span>
+        <span id="overall-total">全 0章</span>
+      </div>
+    </div>
+
+    <div class="section-title">学習スケジュール</div>
+    <div class="plan-section" id="plan-schedule"></div>
+
+    <div style="margin-top:20px">
+      <div class="section-title">今週の目標</div>
+      <div class="plan-section">
+        <div class="plan-row">
+          <div class="plan-dot" style="background:var(--accent)"></div>
+          <div class="plan-text" style="font-size:13px">線形代数：行列の演算・固有値まで完了</div>
+          <span class="plan-tag tag-today">今週</span>
+        </div>
+        <div class="plan-row">
+          <div class="plan-dot" style="background:var(--green)"></div>
+          <div class="plan-text" style="font-size:13px">微積分：極限・微分の基礎問題 30問</div>
+          <span class="plan-tag tag-today">今週</span>
+        </div>
+        <div class="plan-row">
+          <div class="plan-dot" style="background:var(--blue)"></div>
+          <div class="plan-text" style="font-size:13px">確率統計：確率の基本定理を復習</div>
+          <span class="plan-tag tag-upcoming">来週</span>
+        </div>
+        <div class="plan-row">
+          <div class="plan-dot" style="background:var(--amber)"></div>
+          <div class="plan-text" style="font-size:13px">過去問：NAIST 2022年度 数学</div>
+          <span class="plan-tag tag-exam">重要</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLASHCARD PANEL -->
+  <div class="panel" id="panel-cards">
+    <div class="section-title">分野を選択</div>
+    <div class="fc-topics" id="fc-topics"></div>
+    <div class="fc-area active" id="fc-main">
+      <div style="text-align:center;padding:40px;color:var(--text3)">上のカテゴリを選んでカードを開始してください</div>
+    </div>
+  </div>
+
+  <!-- LOG PANEL -->
+  <div class="panel" id="panel-log">
+    <div class="section-title">学習を記録する</div>
+    <div class="log-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">教科</label>
+          <select class="form-input" id="log-subject">
+            <option value="linear">線形代数</option>
+            <option value="calculus">微積分</option>
+            <option value="ml">機械学習</option>
+            <option value="prob">確率統計</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">学習時間 (分)</label>
+          <input type="number" class="form-input" id="log-duration" placeholder="60" min="1">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">章・トピック</label>
+          <input type="text" class="form-input" id="log-chapter" placeholder="例：第3章 固有値">
+        </div>
+        <div class="form-group">
+          <label class="form-label">理解度</label>
+          <select class="form-input" id="log-understanding">
+            <option value="3">よく理解できた</option>
+            <option value="2">まあまあ</option>
+            <option value="1">難しかった</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">メモ</label>
+        <textarea class="form-note" id="log-note" placeholder="今日気づいたこと、復習すべき点など…"></textarea>
+      </div>
+      <button class="submit-btn" onclick="addLog()">ログを保存</button>
+    </div>
+    <div class="section-title">学習履歴</div>
+    <div class="log-list" id="log-list">
+      <div style="text-align:center;padding:32px;color:var(--text3);font-size:13px">まだ記録がありません。最初のログを追加しましょう！</div>
+    </div>
   </div>
 </div>
 
-<div id="setup-screen" style="padding:2rem; text-align:center">
-  <h3>Firebase Setup</h3>
-  <textarea id="setup-cfg" placeholder="Paste Firebase Config here" style="height:200px; margin-top:1rem"></textarea>
-  <button class="btn-main" onclick="initFromSetup()">Start App</button>
+<!-- QUIZ MODAL -->
+<div class="modal-overlay" id="quiz-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="quiz-modal-title">章末テスト</div>
+      <button class="modal-close" onclick="closeQuiz()">✕</button>
+    </div>
+    <div id="quiz-body"></div>
+  </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, set, push, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-<script>
-// --- CONSTANTS ---
-const EXAMS = [
-  { name:'TOEIC', date:'2026-05-17', color:'#f5a623' },
-  { name:'NAIST', date:'2026-07-01', color:'#185fa5' },
-  { name:'KOBE', date:'2026-08-28', color:'#d0021b' }
-];
-
-const SUBJECTS = [
-  { id:'linear', name:'線形代数', color:'#4caf50' },
-  { id:'calc', name:'微積分', color:'#4caf50' },
-  { id:'algo', name:'アルゴリズム', color:'#ff9800' },
-  { id:'toeic', name:'TOEIC', color:'#2196f3' }
-];
-
-// --- APP STATE ---
-let dbRef;
-let state = {
-  subjects: { linear:30, calc:30, algo:10, toeic:50 },
-  knowledge: [],
-  logs: [],
-  currentFilter: 'All'
+const firebaseConfig = {
+  apiKey: "AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",
+  authDomain: "study-tracker-5a35c.firebaseapp.com",
+  databaseURL: "https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "study-tracker-5a35c",
+  storageBucket: "study-tracker-5a35c.firebasestorage.app",
+  messagingSenderId: "1091326221496",
+  appId: "1:1091326221496:web:5bcd5ab27bdc6cca03e84d"
 };
 
-// --- INITIALIZATION ---
-function initFromSetup() {
-  const cfgStr = document.getElementById('setup-cfg').value;
-  try {
-    const cfg = JSON.parse(cfgStr.includes('{') ? cfgStr : `{${cfgStr}}`);
-    localStorage.setItem('fb_cfg', JSON.stringify(cfg));
-    location.reload();
-  } catch(e) { alert('Configの形式が正しくありません'); }
-}
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-window.onload = () => {
-  const savedCfg = localStorage.getItem('fb_cfg');
-  if(savedCfg) {
-    document.getElementById('setup-screen').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    startFirebase(JSON.parse(savedCfg));
-  }
+// ===== DATA =====
+const SUBJECTS = {
+  linear: { name: '線形代数', color: 'linear-algebra', dot: '#7C5FD4', chapters: ['ベクトルと空間','行列と演算','行列式','固有値と固有ベクトル','線形変換','直交化と最小二乗法','特異値分解'] },
+  calculus: { name: '微積分', color: 'calculus', dot: '#2ECC8A', chapters: ['極限と連続','微分の基礎','微分の応用','積分の基礎','積分の応用','級数と収束','多変数関数','偏微分'] },
+  ml: { name: '機械学習', color: 'ml', dot: '#4A9EF0', chapters: ['線形回帰','勾配降下法','ニューラルネット基礎','活性化関数','正則化','カーネル法','変化点検出','深層学習'] },
+  prob: { name: '確率統計', color: 'prob', dot: '#F0A830', chapters: ['確率の基本','条件付き確率','確率変数','分布と期待値','正規分布','中心極限定理','推定と検定','ベイズ推定'] }
 };
 
-function startFirebase(cfg) {
-  const app = firebase.initializeApp(cfg);
-  dbRef = firebase.database(app).ref('v3_data');
-  dbRef.on('value', snap => {
-    if(snap.val()) state = snap.val();
-    if(!state.knowledge) state.knowledge = [];
-    if(!state.logs) state.logs = [];
-    render();
-  });
-}
+const FLASHCARDS = {
+  linear: [
+    { q:'行列の積 AB において、一般的に AB = BA は成り立つか？', a:'成り立たない。行列の積は非可換（non-commutative）であり、AB ≠ BA が一般的。ただし対角行列など特殊な場合は等しくなる。', tag:'行列演算' },
+    { q:'固有値 λ と固有ベクトル v の関係を式で表せ', a:'Av = λv　(A は正方行列)\n意味：行列 A を作用させても方向が変わらないベクトル v が固有ベクトル。スカラー倍されるだけ。', tag:'固有値' },
+    { q:'正規直交基底とは何か？', a:'互いに直交し（内積が 0）、それぞれのノルムが 1 のベクトルの集まり。グラム-シュミット法で任意の基底から作れる。', tag:'直交化' },
+    { q:'行列式 det(A) = 0 のとき、行列 A はどんな性質を持つか？', a:'正則でない（特異行列）。逆行列が存在しない。線形方程式 Ax = b が一意解を持たない場合がある。', tag:'行列式' },
+    { q:'SVD（特異値分解）を説明せよ', a:'任意の行列 A を A = UΣVᵀ と分解。U, V は直交行列、Σ は特異値を対角に持つ行列。次元削減・推薦システムに応用される。', tag:'SVD' },
+    { q:'ランク（rank）とは何か？', a:'行列の線形独立な行（または列）の最大数。行ランク = 列ランク（= 行列のランク）。ランクが低いほど情報が圧縮できる。', tag:'ランク' }
+  ],
+  calculus: [
+    { q:'連鎖律（chain rule）を説明し、式を書け', a:'合成関数の微分法則。y = f(g(x)) のとき\ndy/dx = (dy/du)·(du/dx)\n例：y = sin(x²) → dy/dx = cos(x²)·2x', tag:'微分' },
+    { q:'テイラー展開とは何か？', a:'滑らかな関数を多項式で近似する方法。\nf(x) = f(a) + f\'(a)(x-a) + f\'\'(a)(x-a)²/2! + ...\na=0 の場合はマクローリン展開と呼ぶ。', tag:'近似' },
+    { q:'定積分の意味を図形的に説明せよ', a:'∫[a,b] f(x)dx は x軸と曲線 y=f(x) で囲まれた面積を表す（f(x)<0 の部分は負の面積として計算）。', tag:'積分' },
+    { q:'偏微分 ∂f/∂x の意味は？', a:'多変数関数 f(x,y,...) において x 以外の変数を定数とみなして x で微分すること。\n勾配ベクトル ∇f の x 成分になる。', tag:'多変数' },
+    { q:'l\'Hôpital（ロピタル）の定理を述べよ', a:'0/0 または ∞/∞ 型の不定形に使用。\nlim f(x)/g(x) = lim f\'(x)/g\'(x)\n微分した比の極限で元の極限を求められる。', tag:'極限' },
+    { q:'ニュートン-ライプニッツの公式とは？', a:'微分と積分の関係を示す基本定理。\n∫[a,b] f(x)dx = F(b) - F(a)\n（F は f の原始関数）。機械学習の最適化で頻出。', tag:'微積分学基本定理' }
+  ],
+  ml: [
+    { q:'勾配降下法（Gradient Descent）とは何か？', a:'損失関数を最小化する最適化アルゴリズム。\nθ ← θ - η·∇L(θ)\nη は学習率。損失の勾配（下り坂の方向）に少しずつパラメータを更新。', tag:'最適化' },
+    { q:'カーネル関数の役割を説明せよ', a:'低次元では分離できないデータを、陰的に高次元空間に写像して分離可能にする関数。K(x,y) = φ(x)·φ(y)。内積だけ計算できれば高次元の計算が不要（カーネルトリック）。', tag:'カーネル法' },
+    { q:'過学習（overfitting）とは何か？対策は？', a:'訓練データに過剰適合して汎化性能が下がる現象。\n対策：正則化（L1/L2）、ドロップアウト、データ拡張、早期終了、交差検証。', tag:'正則化' },
+    { q:'変化点検出（Change Point Detection）の目的は？', a:'時系列データ中で統計的性質（平均・分散・相関など）が変化する時点を自動的に見つける技術。音楽構造解析・異常検知・金融データ分析に応用。', tag:'変化点検出' },
+    { q:'活性化関数 ReLU の定義と利点を述べよ', a:'ReLU(x) = max(0, x)\n利点：計算が単純、勾配消失問題を緩和、スパースな表現が得られる。\n欠点：Dying ReLU 問題（負入力で勾配ゼロ）。', tag:'ニューラルネット' },
+    { q:'交差エントロピー損失（Cross-Entropy Loss）とは？', a:'分類問題の損失関数。\nL = -Σ yᵢ log(ŷᵢ)\n予測確率が正解ラベルから遠いほど損失が大きくなる。ソフトマックスと組み合わせて多クラス分類に使用。', tag:'損失関数' }
+  ],
+  prob: [
+    { q:'ベイズの定理を式で書き、意味を説明せよ', a:'P(A|B) = P(B|A)·P(A) / P(B)\n事前確率 P(A) を新たな証拠 B で更新して事後確率 P(A|B) を得る。機械学習の基礎理論。', tag:'ベイズ' },
+    { q:'中心極限定理（CLT）を説明せよ', a:'独立同分布の確率変数の和は、n が大きくなると正規分布に近づく。\n標本平均は正規分布に従う（近似）。母分布の形状によらない強力な定理。', tag:'極限定理' },
+    { q:'期待値 E[X] と分散 Var(X) の定義は？', a:'E[X] = Σ xᵢP(xᵢ)（離散）または ∫xf(x)dx（連続）\nVar(X) = E[(X-μ)²] = E[X²] - (E[X])²\n分散は「ばらつき」の指標。', tag:'確率変数' },
+    { q:'正規分布 N(μ,σ²) の確率密度関数は？', a:'f(x) = (1/√(2πσ²))·exp(-(x-μ)²/(2σ²))\nμ は平均（分布の中心）、σ² は分散（広がり）。68-95-99.7 ルール。', tag:'分布' },
+    { q:'最尤推定（MLE）の考え方を説明せよ', a:'観測データの尤度（発生確率）を最大化するようにパラメータを推定する方法。\nθ̂ = argmax L(θ;X)\n機械学習モデルの訓練の基礎。', tag:'推定' },
+    { q:'条件付き独立とは何か？', a:'A と B が C を与えたとき条件付き独立 = P(A∩B|C) = P(A|C)·P(B|C)\nナイーブベイズの仮定。C を知ることで A と B の依存関係が消える状況。', tag:'確率論' }
+  ]
+};
 
-// --- CORE RENDER ---
-function render() {
-  renderMission();
-  renderPlan();
-  renderKnowledge();
+const QUIZZES = {
+  linear: [
+    { q:'2×2行列 [[1,2],[3,4]] の行列式は？', opts:['2','−2','10','−10'], ans:1, exp:'det([[a,b],[c,d]]) = ad - bc = 1×4 - 2×3 = 4 - 6 = −2' },
+    { q:'ベクトル v = [1,0,0] と w = [0,1,0] の内積は？', opts:['0','1','√2','不定'], ans:0, exp:'内積 = 1×0 + 0×1 + 0×0 = 0。この2ベクトルは直交している。' },
+    { q:'正方行列 A の固有値が 3, −1 のとき、trace(A) は？', opts:['3','-1','2','−3'], ans:2, exp:'trace = 固有値の和 = 3 + (−1) = 2。対角和 = 固有値の総和は重要な性質。' },
+    { q:'行列 [[2,0],[0,3]] の固有値は？', opts:['2と3','5と1','6と0','−2と−3'], ans:0, exp:'対角行列の固有値は対角成分そのもの。λ₁=2, λ₂=3。' },
+    { q:'直交行列 Q の性質として正しいものは？', opts:['Q² = I','QQᵀ = I','det(Q) = 0','Qᵀ = Q'], ans:1, exp:'直交行列は QQᵀ = QᵀQ = I を満たす。各列は正規直交基底を形成。' }
+  ],
+  calculus: [
+    { q:'f(x) = x³ の導関数 f\'(x) は？', opts:['3x²','x²','3x','x³/3'], ans:0, exp:'べき乗則：d/dx[xⁿ] = nxⁿ⁻¹ → d/dx[x³] = 3x²' },
+    { q:'∫₀¹ 2x dx の値は？', opts:['1','2','4','0'], ans:0, exp:'∫2x dx = x² + C。定積分：[x²]₀¹ = 1² - 0² = 1' },
+    { q:'f(x) = eˣ の導関数は？', opts:['eˣ','xeˣ⁻¹','eˣ⁺¹','e'], ans:0, exp:'eˣ は微分しても変わらない。この性質が機械学習の活性化関数 sigmoid に使われる。' },
+    { q:'極限 lim(x→0) sin(x)/x の値は？', opts:['0','1','∞','不定'], ans:1, exp:'sin(x)/x → 1 (x→0) は重要な極限。テイラー展開でも確認できる：sin(x) ≈ x - x³/6 ...、なので sin(x)/x ≈ 1。' },
+    { q:'f(x) = ln(x) の導関数は？', opts:['1/x','ln(x)/x','1/x²','x·ln(x)'], ans:0, exp:'d/dx[ln(x)] = 1/x。対数の微分は機械学習の損失関数計算で頻出。' }
+  ],
+  ml: [
+    { q:'L2正則化（Ridge）の罰則項は？', opts:['λΣ|wᵢ|','λΣwᵢ²','λmax|wᵢ|','λΣwᵢ'], ans:1, exp:'L2正則化は重みの二乗和を罰則として加える。パラメータを0に近づけるが完全に0にはしない。' },
+    { q:'バイアス・バリアンストレードオフで、高バイアスは何を示す？', opts:['過学習','未学習（underfitting）','完全な汎化','分散が大きい'], ans:1, exp:'高バイアス = モデルが単純すぎて訓練データさえうまく学習できていない（underfitting）状態。' },
+    { q:'ガウシアンカーネル K(x,y) = exp(-||x-y||²/(2σ²)) のσを大きくすると？', opts:['境界が複雑になる','境界がより滑らかになる','過学習する','変わらない'], ans:1, exp:'σが大きい = 広い範囲の点が影響する = 決定境界が滑らか = 偏り大・分散小（単純なモデル）。' },
+    { q:'変化点検出の PELT アルゴリズムの計算量は？', opts:['O(n)','O(n log n)','O(n²)','O(2ⁿ)'], ans:1, exp:'PELT（Pruned Exact Linear Time）は効率的な剪定により O(n log n) を実現。大規模時系列に実用的。' }
+  ],
+  prob: [
+    { q:'コインを3回投げて全て表になる確率は？（コインは公平）', opts:['1/8','1/4','1/6','3/8'], ans:0, exp:'独立試行。P = (1/2)³ = 1/8 = 0.125' },
+    { q:'標準正規分布 N(0,1) の平均と分散は？', opts:['平均0、分散1','平均1、分散0','平均0、分散0','平均1、分散1'], ans:0, exp:'標準正規分布は N(0,1)：平均μ=0、分散σ²=1（標準偏差σ=1）。' },
+    { q:'2つの独立なイベント A, B があるとき P(A∩B) は？', opts:['P(A)+P(B)','P(A)×P(B)','P(A|B)','P(B|A)'], ans:1, exp:'独立な事象では P(A∩B) = P(A)P(B)。これが独立性の定義。' },
+    { q:'分散 Var(X) の単位は元データの単位と比べて？', opts:['同じ','二乗','平方根','1/2乗'], ans:1, exp:'Var(X) = E[(X-μ)²] なので単位が二乗になる。標準偏差 SD = √Var(X) で元の単位に戻せる。' }
+  ]
+};
+
+// ===== STATE =====
+let quizData = { subject: null, questions: [], current: 0, score: 0, answered: false };
+let fcData = { topic: null, cards: [], current: 0, flipped: false, correct: 0 };
+let progressData = {};
+let logs = [];
+
+// ===== FIREBASE REFS =====
+const progressRef = ref(db, 'progress');
+const logsRef = ref(db, 'logs');
+const streakRef = ref(db, 'streak');
+
+onValue(progressRef, snap => {
+  progressData = snap.val() || {};
+  renderSubjects();
+  renderOverall();
+});
+
+onValue(logsRef, snap => {
+  const data = snap.val();
+  logs = data ? Object.values(data).reverse() : [];
   renderLogs();
+});
+
+onValue(streakRef, snap => {
+  const s = snap.val();
+  document.getElementById('streak-count').textContent = s ? (s.count || 0) : 0;
+});
+
+// ===== TABS =====
+window.switchTab = function(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', ['plan','cards','log'][i] === tab));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+};
+
+// ===== SUBJECTS =====
+function renderSubjects() {
+  const grid = document.getElementById('subjects-grid');
+  grid.innerHTML = '';
+  Object.entries(SUBJECTS).forEach(([key, sub]) => {
+    const prog = progressData[key] || { correct: 0, quizDone: 0 };
+    const chapsPct = Math.round((prog.quizDone || 0) / sub.chapters.length * 100);
+    const pct = prog.quizDone > 0 ? Math.round((prog.correct / (QUIZZES[key].length * prog.quizDone)) * 100) : 0;
+    const card = document.createElement('div');
+    card.className = 'subject-card ' + sub.color;
+    card.innerHTML = `
+      <div class="subject-header">
+        <div>
+          <div class="subject-name">${sub.name}</div>
+          <div class="subject-chapter">${sub.chapters[Math.min(prog.quizDone||0, sub.chapters.length-1)]}</div>
+        </div>
+        <div class="subject-pct">${chapsPct}%</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${chapsPct}%"></div></div>
+      <div class="subject-stats">
+        <div class="stat-item"><strong>${prog.quizDone||0}/${sub.chapters.length}</strong>章完了</div>
+        <div class="stat-item"><strong>${pct}%</strong>正答率</div>
+        <div class="stat-item"><strong>${prog.correct||0}</strong>正解</div>
+      </div>
+      <button class="quiz-btn" onclick="openQuiz('${key}')">章末テストを受ける →</button>
+    `;
+    grid.appendChild(card);
+  });
+  updateSchedule();
 }
 
-function renderMission() {
-  // 日付に基づいた「今日やるべきこと」の簡易レコメンド
-  const today = new Date();
-  const toeicDate = new Date('2026-05-17');
-  const daysToToeic = Math.ceil((toeicDate - today)/(1000*60*60*24));
-  
-  let mission = "";
-  if(daysToToeic > 0 && daysToToeic < 30) {
-    mission = `TOEICまで${daysToToeic}日：公式問題集を解き、Part5の誤答をカード化せよ`;
-  } else {
-    mission = "線形代数：固有値問題の計算スピードを上げる演習を優先";
-  }
-  document.getElementById('mission-content').innerText = mission;
+function renderOverall() {
+  let totalCorrect = 0, totalDone = 0;
+  const totalChaps = Object.values(SUBJECTS).reduce((a, s) => a + s.chapters.length, 0);
+  Object.entries(SUBJECTS).forEach(([key]) => {
+    const prog = progressData[key] || {};
+    totalCorrect += prog.correct || 0;
+    totalDone += prog.quizDone || 0;
+  });
+  const totalQuestions = Object.values(QUIZZES).reduce((a, q) => a + q.length, 0);
+  const pct = totalQuestions > 0 ? Math.min(100, Math.round((totalCorrect / (totalQuestions * Object.keys(SUBJECTS).length)) * 100)) : 0;
+  document.getElementById('overall-pct').textContent = pct + '%';
+  document.getElementById('overall-bar').style.width = pct + '%';
+  document.getElementById('overall-done').textContent = '完了 ' + totalDone + '章';
+  document.getElementById('overall-total').textContent = '全 ' + totalChaps + '章';
 }
 
-function renderPlan() {
-  // Countdown
-  const now = new Date();
-  document.getElementById('countdown-list').innerHTML = EXAMS.map(e => {
-    const diff = Math.max(0, Math.ceil((new Date(e.date) - now)/86400000));
-    return `<div><div style="font-size:20px; font-weight:800; color:${e.color}">${diff}</div><div style="font-size:10px; color:var(--text3)">${e.name}</div></div>`;
-  }).join('');
-
-  // Subjects
-  document.getElementById('subject-list').innerHTML = SUBJECTS.map(s => {
-    const val = state.subjects[s.id] || 0;
-    return `
-      <div class="prog-row">
-        <div class="prog-info"><span>${s.name}</span><b>${val}%</b></div>
-        <div class="prog-bar"><div class="prog-fill" style="width:${val}%; background:${s.color}"></div></div>
-        <input type="range" min="0" max="100" value="${val}" onchange="updateSubj('${s.id}', this.value)" style="margin:5px 0">
-      </div>`;
-  }).join('');
-}
-
-function renderKnowledge() {
-  // Filters
-  const subs = ['All', ...new Set(state.knowledge.map(k => k.sub))];
-  document.getElementById('k-filters').innerHTML = subs.map(s => 
-    `<button class="filter-btn ${state.currentFilter===s?'active':''}" onclick="state.currentFilter='${s}';renderKnowledge()">${s}</button>`
-  ).join('');
-
-  // List
-  const filtered = state.currentFilter === 'All' 
-    ? state.knowledge 
-    : state.knowledge.filter(k => k.sub === state.currentFilter);
-
-  document.getElementById('k-list').innerHTML = filtered.slice().reverse().map((k, i) => `
-    <div class="k-card" onclick="this.classList.toggle('open')">
-      <div style="font-size:10px; color:var(--text3)">${k.sub}</div>
-      <div style="font-weight:600">${esc(k.term)}</div>
-      <div class="k-ans">${esc(k.concept)}</div>
+function updateSchedule() {
+  const sched = document.getElementById('plan-schedule');
+  const entries = Object.entries(SUBJECTS).map(([key, sub]) => {
+    const prog = progressData[key] || {};
+    const done = prog.quizDone || 0;
+    const next = sub.chapters[Math.min(done, sub.chapters.length - 1)];
+    return { name: sub.name, next, done, total: sub.chapters.length, dot: sub.dot };
+  });
+  sched.innerHTML = entries.map(e => `
+    <div class="plan-row">
+      <div class="plan-dot" style="background:${e.dot}"></div>
+      <div class="plan-text">${e.name}：${e.done < e.total ? '次は「' + e.next + '」' : '全章完了！'}</div>
+      <span class="plan-tag ${e.done >= e.total ? 'tag-done' : 'tag-upcoming'}">${e.done}/${e.total}</span>
     </div>
   `).join('');
 }
+
+// ===== COUNTDOWN =====
+const target = new Date('2025-07-05');
+const days = Math.max(0, Math.ceil((target - new Date()) / 86400000));
+document.getElementById('days-left').textContent = days;
+
+// ===== QUIZ =====
+window.openQuiz = function(subject) {
+  quizData = { subject, questions: [...QUIZZES[subject]], current: 0, score: 0, answered: false };
+  document.getElementById('quiz-modal-title').textContent = SUBJECTS[subject].name + ' 章末テスト';
+  document.getElementById('quiz-modal').classList.add('open');
+  renderQuizQ();
+};
+
+window.closeQuiz = function() {
+  document.getElementById('quiz-modal').classList.remove('open');
+};
+
+function renderQuizQ() {
+  const body = document.getElementById('quiz-body');
+  if (quizData.current >= quizData.questions.length) {
+    const pct = Math.round(quizData.score / quizData.questions.length * 100);
+    saveProgress(quizData.subject, quizData.score, quizData.questions.length);
+    body.innerHTML = `
+      <div class="quiz-result">
+        <div class="quiz-score">${pct}%</div>
+        <div class="quiz-score-label">${quizData.score}/${quizData.questions.length} 問正解</div>
+        <div class="quiz-bar-wrap"><div class="quiz-bar-fill" style="width:${pct}%"></div></div>
+        <p style="font-size:13px;color:var(--text2);margin-top:12px">${pct >= 80 ? '素晴らしい！次の章に進みましょう 🎉' : pct >= 60 ? 'もう少し復習してから次へ進もう' : 'フラッシュカードで復習してから再挑戦！'}</p>
+        <button class="submit-btn" style="margin-top:16px" onclick="closeQuiz()">閉じる</button>
+      </div>
+    `;
+    return;
+  }
+  const q = quizData.questions[quizData.current];
+  body.innerHTML = `
+    <div style="font-size:11px;color:var(--text3);margin-bottom:14px">${quizData.current + 1} / ${quizData.questions.length}</div>
+    <div class="quiz-q">${q.q}</div>
+    <div class="quiz-options">
+      ${q.opts.map((o, i) => `<button class="quiz-option" onclick="answerQuiz(${i})">${o}</button>`).join('')}
+    </div>
+    <div class="quiz-feedback" id="qfb"></div>
+    <button class="quiz-next" id="qnext" onclick="nextQ()">次の問題 →</button>
+  `;
+}
+
+window.answerQuiz = function(idx) {
+  if (quizData.answered) return;
+  quizData.answered = true;
+  const q = quizData.questions[quizData.current];
+  const opts = document.querySelectorAll('.quiz-option');
+  const fb = document.getElementById('qfb');
+  const nxt = document.getElementById('qnext');
+  opts.forEach(o => o.disabled = true);
+  if (idx === q.ans) {
+    opts[idx].classList.add('correct');
+    quizData.score++;
+    fb.textContent = '✓ 正解！ ' + q.exp;
+    fb.style.borderLeft = '3px solid var(--green)';
+  } else {
+    opts[idx].classList.add('wrong');
+    opts[q.ans].classList.add('correct');
+    fb.textContent = '✕ 解説：' + q.exp;
+    fb.style.borderLeft = '3px solid var(--red)';
+  }
+  fb.classList.add('show');
+  nxt.classList.add('show');
+};
+
+window.nextQ = function() {
+  quizData.current++;
+  quizData.answered = false;
+  renderQuizQ();
+};
+
+async function saveProgress(subject, correct, total) {
+  const prog = progressData[subject] || { correct: 0, quizDone: 0 };
+  await set(ref(db, 'progress/' + subject), {
+    correct: (prog.correct || 0) + correct,
+    quizDone: (prog.quizDone || 0) + 1
+  });
+  await updateStreak();
+}
+
+async function updateStreak() {
+  const snap = await get(streakRef);
+  const streak = snap.val() || { count: 0, lastDate: '' };
+  const today = new Date().toDateString();
+  if (streak.lastDate !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    await set(streakRef, {
+      count: streak.lastDate === yesterday ? streak.count + 1 : 1,
+      lastDate: today
+    });
+  }
+}
+
+// ===== FLASHCARDS =====
+function renderTopics() {
+  const container = document.getElementById('fc-topics');
+  const icons = { linear: '𝐋', calculus: '∂', ml: '⚙', prob: 'P' };
+  const labels = { linear: '線形代数', calculus: '微積分', ml: '機械学習', prob: '確率統計' };
+  container.innerHTML = Object.keys(FLASHCARDS).map(key => `
+    <div class="fc-topic" onclick="startFC('${key}', this)">
+      <div class="fc-topic-icon">${icons[key]}</div>
+      <div class="fc-topic-name">${labels[key]}</div>
+      <div class="fc-topic-count">${FLASHCARDS[key].length}枚</div>
+    </div>
+  `).join('');
+}
+
+window.startFC = function(topic, el) {
+  document.querySelectorAll('.fc-topic').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  fcData = { topic, cards: [...FLASHCARDS[topic]], current: 0, flipped: false, correct: 0 };
+  renderFC();
+};
+
+function renderFC() {
+  const area = document.getElementById('fc-main');
+  const card = fcData.cards[fcData.current];
+  if (!card) {
+    const pct = Math.round(fcData.correct / fcData.cards.length * 100);
+    area.innerHTML = `
+      <div style="text-align:center;padding:32px">
+        <div style="font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--accent2)">${pct}%</div>
+        <div style="font-size:14px;color:var(--text2);margin:8px 0 20px">正答率（${fcData.correct}/${fcData.cards.length}枚）</div>
+        <button class="quiz-btn" style="max-width:200px;margin:0 auto;display:block;padding:10px" onclick="document.querySelectorAll('.fc-topic').forEach(t=>t.classList.remove('selected'));startFC('${fcData.topic}', document.querySelector('.fc-topic'))">もう一度</button>
+      </div>
+    `;
+    return;
+  }
+  area.innerHTML = `
+    <div class="fc-card ${fcData.flipped ? 'flipped' : ''}" onclick="flipFC()">
+      <div>
+        <div class="fc-tag">${card.tag}</div>
+        <div class="${fcData.flipped ? 'fc-a' : 'fc-q'}">${(fcData.flipped ? card.a : card.q).replace(/\n/g, '<br>')}</div>
+        <div class="fc-card-hint">${fcData.flipped ? '← 問題に戻る' : 'タップで答えを表示'}</div>
+      </div>
+    </div>
+    ${fcData.flipped ? `
+    <div class="fc-actions">
+      <button class="fc-btn wrong" onclick="fcAnswer(false)">✕ 不正解</button>
+      <button class="fc-btn next" onclick="fcAnswer(null)">→ スキップ</button>
+      <button class="fc-btn correct" onclick="fcAnswer(true)">✓ 正解</button>
+    </div>` : ''}
+    <div class="fc-progress-line">${fcData.current + 1} / ${fcData.cards.length}</div>
+  `;
+}
+
+window.flipFC = function() {
+  fcData.flipped = !fcData.flipped;
+  renderFC();
+};
+
+window.fcAnswer = function(correct) {
+  if (correct === true) fcData.correct++;
+  fcData.current++;
+  fcData.flipped = false;
+  renderFC();
+};
+
+// ===== LOG =====
+window.addLog = function() {
+  const subject = document.getElementById('log-subject').value;
+  const duration = parseInt(document.getElementById('log-duration').value) || 0;
+  const chapter = document.getElementById('log-chapter').value.trim();
+  const understanding = parseInt(document.getElementById('log-understanding').value);
+  const note = document.getElementById('log-note').value.trim();
+  if (!duration || !chapter) { alert('学習時間と章・トピックを入力してください'); return; }
+  push(logsRef, {
+    subject, duration, chapter, understanding, note,
+    timestamp: Date.now(),
+    date: new Date().toLocaleDateString('ja-JP')
+  });
+  document.getElementById('log-duration').value = '';
+  document.getElementById('log-chapter').value = '';
+  document.getElementById('log-note').value = '';
+  updateStreak();
+};
 
 function renderLogs() {
-  document.getElementById('log-list').innerHTML = state.logs.slice().reverse().map(l => `
-    <div class="card" style="padding:10px; font-size:13px; margin-bottom:5px">
-      <span style="color:var(--text3); font-size:10px">${l.date}</span><br>${esc(l.text)}
+  const list = document.getElementById('log-list');
+  if (!logs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text3);font-size:13px">まだ記録がありません。最初のログを追加しましょう！</div>';
+    return;
+  }
+  const uLabels = ['', '難しかった', 'まあまあ', 'よく理解できた'];
+  const uColors = ['', 'var(--red)', 'var(--amber)', 'var(--green)'];
+  list.innerHTML = logs.slice(0, 30).map(log => `
+    <div class="log-item">
+      <div class="log-dot" style="background:${SUBJECTS[log.subject]?.dot || '#888'}"></div>
+      <div class="log-content">
+        <div class="log-top">
+          <span class="log-subject">${SUBJECTS[log.subject]?.name || log.subject}</span>
+          <span class="log-duration">${log.duration}分</span>
+        </div>
+        <div class="log-chapter">${log.chapter}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
+          <span style="font-size:11px;color:${uColors[log.understanding]}">${uLabels[log.understanding]}</span>
+          <span class="log-time">${log.date}</span>
+        </div>
+        ${log.note ? `<div class="log-note">${log.note}</div>` : ''}
+      </div>
     </div>
   `).join('');
 }
 
-// --- ACTIONS ---
-function switchTab(screenId, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + screenId).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-function updateSubj(id, val) {
-  state.subjects[id] = parseInt(val);
-  dbRef.update({subjects: state.subjects});
-}
-
-function addKnowledge() {
-  const sub = document.getElementById('k-input-sub').value;
-  const term = document.getElementById('k-input-term').value;
-  const concept = document.getElementById('k-input-concept').value;
-  if(!term || !concept) return;
-  state.knowledge.push({sub, term, concept});
-  dbRef.update({knowledge: state.knowledge});
-  document.getElementById('k-input-term').value = '';
-  document.getElementById('k-input-concept').value = '';
-}
-
-function addLog() {
-  const text = document.getElementById('log-input').value;
-  if(!text) return;
-  const date = new Date().toLocaleDateString('ja-JP', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-  state.logs.push({text, date});
-  dbRef.update({logs: state.logs});
-  document.getElementById('log-input').value = '';
-}
-
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+// ===== INIT =====
+renderTopics();
 </script>
 </body>
 </html>
