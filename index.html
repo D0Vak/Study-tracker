@@ -1,1467 +1,229 @@
+<!--
+README:
+このファイルは学習支援Webアプリのプロトタイプです。主な機能：回答ログ保存、LLM類題生成、弱点分析ダッシュボード、ナレッジグラフ、忘却曲線スケジューラ、解答プロセス可視化、英語学習タブ。APIキーは埋め込まず実行時に入力します。
+使い方：ブラウザでこのHTMLを開いてください。ソースコードはGitHubへコピペして公開できます。下記には動作確認用のテストデータも含みます。
+-->
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v4 — NAIST 院試対策</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#F6F5F1;--bg2:#FFFFFF;--bg3:#EFEDE8;--bg4:#E5E3DC;
-  --border:#DDD9D0;--border2:#C4C0B5;
-  --text:#1A1916;--text2:#5A5850;--text3:#98958E;
-  --accent:#7C5FD4;--accent2:#9B7FF0;--alight:#F0ECFF;--aborder:#C4ADFF;
-  --green:#167A50;--gbg:#E6F4EE;--gborder:#8FD9B8;
-  --amber:#7A5200;--abg2:#FEF2D8;--aborder2:#F5C060;
-  --red:#9E2A2A;--rbg:#FBEBEB;--rborder:#F0BABA;
-  --blue:#145898;--bbg:#E4F0FB;--bborder:#A8CCF0;
-  --teal:#0C6A52;--tbg:#DFF2EC;--tborder:#8FD4BE;
-  --r:12px;--r2:8px;--r3:20px;
-  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
-  --sh2:0 4px 18px rgba(0,0,0,.09);
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-#app{max-width:960px;margin:0 auto;padding:24px 16px}
-
-/* HEADER */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
-.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px}
-.logo span{color:var(--accent)}
-.header-right{display:flex;align-items:center;gap:10px}
-.streak{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:6px 14px;font-size:13px;font-weight:500;box-shadow:var(--sh)}
-.db-count{font-size:11px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:4px 10px}
-
-/* TABS */
-.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
-.tab{flex:1;min-width:fit-content;padding:8px 10px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
-.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
-.tab:hover:not(.active){background:var(--bg3);color:var(--text)}
-.panel{display:none}.panel.active{display:block}
-.stitle{font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
-
-/* COUNTDOWN */
-.cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:580px){.cdown-grid{grid-template-columns:1fr}}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.cdown-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.cd-toeic::before{background:linear-gradient(90deg,#0C6A52,#2EC4B6)}
-.cd-naist::before{background:linear-gradient(90deg,#7C5FD4,#9B7FF0)}
-.cd-kobe::before{background:linear-gradient(90deg,#145898,#4A9EF0)}
-.cd-badge{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:10px}
-.cd-toeic .cd-badge{background:var(--tbg);color:var(--teal)}
-.cd-naist .cd-badge{background:var(--alight);color:#5C3FB8}
-.cd-kobe .cd-badge{background:var(--bbg);color:var(--blue)}
-.cd-days{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;line-height:1;margin-bottom:3px}
-.cd-toeic .cd-days{color:var(--teal)}.cd-naist .cd-days{color:var(--accent)}.cd-kobe .cd-days{color:var(--blue)}
-.cd-unit{font-size:11px;color:var(--text3);margin-bottom:7px}
-.cd-name{font-size:12px;font-weight:500;color:var(--text2)}
-.cd-date{font-size:11px;color:var(--text3);margin-top:2px}
-
-/* SUBJECT CARDS */
-.subj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:24px}
-.subj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:border-color .18s,box-shadow .18s}
-.subj-card:hover{border-color:var(--border2);box-shadow:var(--sh2)}
-.subj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sc-la::before{background:linear-gradient(90deg,#7C5FD4,#9B7FF0)}
-.sc-ca::before{background:linear-gradient(90deg,#167A50,#2ECC8A)}
-.sc-ml::before{background:linear-gradient(90deg,#145898,#4A9EF0)}
-.sc-pr::before{background:linear-gradient(90deg,#7A5200,#F0A830)}
-.sc-hd{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
-.sc-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:2px}
-.sc-chap{font-size:11px;color:var(--text3)}
-.sc-pct{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
-.sc-la .sc-pct{color:var(--accent)}.sc-ca .sc-pct{color:var(--green)}.sc-ml .sc-pct{color:var(--blue)}.sc-pr .sc-pct{color:var(--amber)}
-.prog-bar{height:4px;background:var(--bg4);border-radius:2px;margin-bottom:10px;overflow:hidden}
-.prog-fill{height:100%;border-radius:2px;transition:width .6s ease}
-.sc-la .prog-fill{background:linear-gradient(90deg,#7C5FD4,#9B7FF0)}
-.sc-ca .prog-fill{background:linear-gradient(90deg,#167A50,#2ECC8A)}
-.sc-ml .prog-fill{background:linear-gradient(90deg,#145898,#4A9EF0)}
-.sc-pr .prog-fill{background:linear-gradient(90deg,#7A5200,#F0A830)}
-.sc-stats{display:flex;gap:14px}
-.stat{font-size:11px;color:var(--text3)}.stat strong{color:var(--text2);display:block;font-size:12px;font-weight:500}
-.level-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:6px}
-.lv1{background:var(--gbg);color:var(--green)}.lv2{background:var(--abg2);color:var(--amber)}.lv3{background:var(--rbg);color:var(--red)}
-.quiz-btn{width:100%;margin-top:8px;padding:7px 12px;background:transparent;border:1px solid var(--border);border-radius:var(--r2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:space-between}
-.quiz-btn:hover{background:var(--bg3);border-color:var(--border2);color:var(--text)}
-
-/* OVERALL */
-.overall{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:24px;box-shadow:var(--sh)}
-.ov-bar{height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;margin:10px 0 7px}
-.ov-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s ease}
-.ov-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--text3)}
-
-/* PLAN */
-.plan-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
-.plan-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
-.plan-row:last-child{border-bottom:none}
-.pdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.ptxt{flex:1;font-size:13px}
-.ptag{font-size:10px;padding:3px 9px;border-radius:10px;font-weight:500;white-space:nowrap}
-.t-now{background:var(--alight);color:#5C3FB8}.t-done{background:var(--gbg);color:var(--green)}
-.t-next{background:var(--bg4);color:var(--text3)}.t-exam{background:var(--abg2);color:var(--amber)}
-
-/* CHIPS */
-.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.chip{padding:6px 14px;border:1px solid var(--border);border-radius:var(--r3);background:var(--bg2);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s;box-shadow:var(--sh)}
-.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 2px 8px rgba(124,95,212,.25)}
-.chip:hover:not(.active){background:var(--bg3);color:var(--text);border-color:var(--border2)}
-
-/* SESSION BAR */
-.sbar{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:11px 16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;box-shadow:var(--sh)}
-.ss{font-size:11px;color:var(--text3)}.ss strong{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;display:block}
-.ss .g{color:var(--green)}.ss .r{color:var(--red)}.ss .a{color:var(--accent)}
-.sdiv{width:1px;height:28px;background:var(--border);flex-shrink:0}
-
-/* FLASH CARDS */
-.fc-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:160px;display:flex;align-items:center;justify-content:center;padding:24px 28px;text-align:center;margin-bottom:14px;cursor:pointer;transition:all .22s;position:relative;overflow:hidden;box-shadow:var(--sh)}
-.fc-card:hover{border-color:var(--border2);box-shadow:var(--sh2)}
-.fc-card.flipped{background:var(--alight);border-color:var(--aborder)}
-.fc-hint{position:absolute;bottom:10px;right:12px;font-size:11px;color:var(--text3)}
-.fc-q{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;line-height:1.5;color:var(--text)}
-.fc-a{font-size:13.5px;color:var(--text2);line-height:1.9;white-space:pre-wrap;text-align:left}
-.fc-tag{display:inline-block;font-size:10px;padding:3px 10px;border-radius:10px;background:var(--alight);color:#5C3FB8;margin-bottom:10px;font-weight:500}
-.fc-acts{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
-.fc-btn{padding:9px 18px;border-radius:var(--r2);border:1px solid;background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .18s;font-weight:500}
-.fc-btn.wrong{color:var(--red);border-color:var(--rborder)}.fc-btn.wrong:hover{background:var(--rbg)}
-.fc-btn.ok{color:var(--green);border-color:var(--gborder)}.fc-btn.ok:hover{background:var(--gbg)}
-.fc-btn.skip{color:var(--text2);border-color:var(--border2)}.fc-btn.skip:hover{background:var(--bg3);color:var(--text)}
-.fc-prog{font-size:12px;color:var(--text3);text-align:center}
-
-/* FILL BLANK */
-.fill-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:14px;box-shadow:var(--sh)}
-.ex-num{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-bottom:10px}
-.fill-q{font-size:15px;line-height:2.3;margin-bottom:14px;color:var(--text)}
-.fill-in{display:inline-block;border:none;border-bottom:2px solid var(--accent);padding:2px 6px;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--accent);background:transparent;outline:none;min-width:60px;transition:all .18s;text-align:center;vertical-align:middle}
-.fill-in:focus{border-bottom-color:var(--accent2);background:var(--alight);border-radius:4px 4px 0 0}
-.fill-in.ci{border-color:var(--green);color:var(--green);background:var(--gbg);border-radius:4px;border-bottom-width:2px}
-.fill-in.wi{border-color:var(--red);color:var(--red);background:var(--rbg);border-radius:4px;border-bottom-width:2px}
-.f-acts{display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap}
-.btn-p{padding:8px 16px;border-radius:var(--r2);border:none;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
-.btn-p:hover{background:var(--accent2)}
-.btn-s{padding:8px 14px;border-radius:var(--r2);border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .18s}
-.btn-s:hover{background:var(--bg3)}
-.btn-n{margin-left:auto;padding:8px 16px;border-radius:var(--r2);border:1px solid var(--aborder);background:var(--alight);color:#5C3FB8;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
-.btn-n:hover{background:var(--accent);color:#fff}
-.fill-fb{font-size:13px;padding:10px 14px;border-radius:var(--r2);margin-top:10px;display:none;line-height:1.6;border-left:3px solid}
-.fill-fb.show{display:block}
-.fill-fb.cfb{background:var(--gbg);color:var(--green);border-color:var(--green)}
-.fill-fb.wfb{background:var(--rbg);color:var(--red);border-color:var(--red)}
-
-/* EXERCISES */
-.ex-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:12px;box-shadow:var(--sh)}
-.ex-q{font-size:14px;line-height:1.8;color:var(--text);margin-bottom:14px}
-.ex-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
-.ex-opt{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;font-size:13px;text-align:left;color:var(--text2);transition:all .18s;font-family:'DM Sans',sans-serif}
-.ex-opt:hover:not(:disabled){border-color:var(--accent);color:var(--text);background:var(--alight)}
-.ex-opt.correct{border-color:var(--green);background:var(--gbg);color:var(--green)}
-.ex-opt.wrong{border-color:var(--red);background:var(--rbg);color:var(--red)}
-.ex-exp{font-size:13px;padding:10px 14px;border-radius:var(--r2);display:none;line-height:1.6;background:var(--bg3);color:var(--text2);border-left:3px solid var(--accent)}
-.ex-exp.show{display:block}
-
-/* CONFIDENCE & TIMER */
-.conf-btns{display:flex;gap:7px;margin-bottom:12px;justify-content:center}
-.conf-btn{padding:7px 14px;border-radius:var(--r2);border:1px solid;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .18s}
-.conf-btn.high{color:var(--green);border-color:var(--gborder)}.conf-btn.high:hover,.conf-btn.high.sel{background:var(--gbg);font-weight:700}
-.conf-btn.mid{color:var(--amber);border-color:var(--aborder2)}.conf-btn.mid:hover,.conf-btn.mid.sel{background:var(--abg2);font-weight:700}
-.conf-btn.low{color:var(--red);border-color:var(--rborder)}.conf-btn.low:hover,.conf-btn.low.sel{background:var(--rbg);font-weight:700}
-.conf-label-sm{font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px}
-.timer-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text3);background:var(--bg4);padding:3px 8px;border-radius:6px;font-family:'Syne',sans-serif;font-weight:600}
-
-/* RESULTS */
-.res-card{background:var(--alight);border:1px solid var(--aborder);border-radius:var(--r);padding:24px;text-align:center;margin-bottom:14px}
-.res-score{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;color:var(--accent)}
-.res-sub{font-size:14px;color:var(--text2);margin-top:4px;margin-bottom:14px}
-.res-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
-.restart-btn{padding:8px 20px;border-radius:var(--r2);border:1px solid var(--aborder);background:var(--bg2);color:#5C3FB8;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
-.restart-btn:hover{background:var(--accent);color:#fff}
-
-/* LOG */
-.log-form{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px;box-shadow:var(--sh)}
-.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-@media(max-width:480px){.f-row{grid-template-columns:1fr}}
-.f-grp{display:flex;flex-direction:column;gap:5px}
-.f-lbl{font-size:11px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;font-weight:500}
-.f-inp{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .18s}
-.f-inp:focus{border-color:var(--accent)}
-.f-inp option{background:var(--bg2)}
-.f-note{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;width:100%;resize:vertical;min-height:64px;transition:border-color .18s}
-.f-note:focus{border-color:var(--accent)}
-.f-submit{width:100%;padding:10px;background:var(--accent);border:none;border-radius:var(--r2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .18s;margin-top:4px}
-.f-submit:hover{background:var(--accent2);transform:translateY(-1px)}
-.log-list{display:flex;flex-direction:column;gap:8px}
-.log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;box-shadow:var(--sh)}
-.ldot{width:9px;height:9px;border-radius:50%;margin-top:3px;flex-shrink:0}
-.lc{flex:1}
-.ltop{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
-.lsubj{font-size:13px;font-weight:500}
-.ldur{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--bg4);color:var(--text2);white-space:nowrap}
-.lchap{font-size:12px;color:var(--text2);margin-bottom:3px}
-.lnote{font-size:12px;color:var(--text3);font-style:italic}
-.ltime{font-size:11px;color:var(--text3)}
-
-/* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(18,16,12,.45);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
-.modal-ov.open{display:flex}
-.modal{background:var(--bg2);border:1px solid var(--border);border-radius:18px;padding:24px;max-width:540px;width:92%;max-height:82vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.14)}
-.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800}
-.modal-close{background:var(--bg3);border:1px solid var(--border);border-radius:7px;width:30px;height:30px;cursor:pointer;color:var(--text2);font-size:15px;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0}
-.q-lv-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 9px;border-radius:6px;margin-bottom:10px}
-.q-lv-tag.lv1{background:var(--gbg);color:var(--green)}
-.q-lv-tag.lv2{background:var(--abg2);color:var(--amber)}
-.q-lv-tag.lv3{background:var(--rbg);color:var(--red)}
-.quiz-q{font-size:15px;line-height:1.65;margin-bottom:18px;color:var(--text)}
-.quiz-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
-.quiz-opt{padding:10px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);cursor:pointer;font-size:13px;text-align:left;color:var(--text2);transition:all .18s;font-family:'DM Sans',sans-serif}
-.quiz-opt:hover:not(:disabled){border-color:var(--accent);color:var(--text);background:var(--alight)}
-.quiz-opt.correct{border-color:var(--green);background:var(--gbg);color:var(--green)}
-.quiz-opt.wrong{border-color:var(--red);background:var(--rbg);color:var(--red)}
-.quiz-fb{font-size:13px;background:var(--bg3);border-radius:var(--r2);padding:11px;margin-bottom:14px;line-height:1.65;display:none;border-left:3px solid transparent}
-.quiz-fb.show{display:block}
-.quiz-next{width:100%;padding:10px;background:var(--accent);border:none;border-radius:var(--r2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:none}
-.quiz-next.show{display:block}
-.quiz-res{text-align:center;padding:16px 0}
-.qr-score{font-family:'Syne',sans-serif;font-size:50px;font-weight:800;color:var(--accent)}
-.qr-label{font-size:14px;color:var(--text2);margin-top:4px}
-.qr-bar-w{margin:14px 0;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden}
-.qr-bar-f{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .8s ease}
-.qr-msg{font-size:13px;color:var(--text2);margin-top:10px;line-height:1.6}
-.qr-next-lv{margin-top:12px;padding:9px 18px;border-radius:var(--r2);border:none;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .18s}
-.qr-next-lv:hover{opacity:.88;transform:translateY(-1px)}
-.empty-s{text-align:center;padding:36px;color:var(--text3);font-size:13px}
-
-/* ── AI PANEL ── */
-.ai-desc{font-size:13px;color:var(--text2);background:var(--alight);border:1px solid var(--aborder);border-radius:var(--r);padding:13px 15px;margin-bottom:16px;line-height:1.7}
-.ai-config{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
-.ai-config-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:10px}
-.ai-gen-btn{width:100%;padding:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:var(--r2);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
-.ai-gen-btn:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 16px rgba(124,95,212,.35)}
-.ai-gen-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
-@keyframes spin{to{transform:rotate(360deg)}}
-.ai-spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
-.ai-spinner.show{display:block}
-.ai-result-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;box-shadow:var(--sh)}
-.ai-res-hd{background:linear-gradient(90deg,var(--alight),var(--bg2));padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.ai-res-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent)}
-.ai-res-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-.ai-chip{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;background:var(--abg2);color:var(--amber)}
-.ai-res-body{padding:16px;font-size:13.5px;line-height:1.9;color:var(--text2)}
-.ai-res-body h3{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin:14px 0 8px;padding-bottom:3px;border-bottom:1px solid var(--border)}
-.ai-res-body h3:first-child{margin-top:0}
-.ai-q-block{background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 var(--r2) var(--r2) 0;padding:11px 13px;margin:7px 0;font-size:14px;color:var(--text)}
-.ai-a-block{background:var(--gbg);border-left:3px solid var(--green);border-radius:0 var(--r2) var(--r2) 0;padding:11px 13px;margin:7px 0}
-.ai-hint-block{background:var(--abg2);border-left:3px solid var(--amber);border-radius:0 var(--r2) var(--r2) 0;padding:9px 13px;margin:6px 0;font-size:12.5px}
-.ai-res-footer{padding:11px 16px;border-top:1px solid var(--border);display:flex;gap:7px;flex-wrap:wrap}
-.ai-act{padding:5px 12px;border-radius:var(--r2);border:1px solid var(--border);background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;transition:all .18s}
-.ai-act:hover{background:var(--bg3)}
-.ai-act.save{border-color:var(--aborder);color:var(--accent)}.ai-act.save:hover{background:var(--alight)}
-.ai-hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;margin-bottom:7px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:11px}
-.ai-hist-item:hover{border-color:var(--border2);box-shadow:var(--sh)}
-.ai-hist-meta{flex:1}
-.ai-hist-label{font-size:13px;font-weight:500;margin-bottom:2px}
-.ai-hist-time{font-size:11px;color:var(--text3)}
-
-/* ── ANALYTICS ── */
-.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px}
-.ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--sh)}
-.ana-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;margin-bottom:3px}
-.ana-lbl{font-size:11px;color:var(--text3)}
-.tag-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
-.tag-row:last-child{border-bottom:none}
-.tag-name{font-size:12px;font-weight:500;width:110px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tag-bar-wrap{flex:1;height:7px;background:var(--bg4);border-radius:3px;overflow:hidden}
-.tag-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
-.tag-pct{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;width:36px;text-align:right;flex-shrink:0}
-.tag-count{font-size:10px;color:var(--text3);width:42px;text-align:right;flex-shrink:0}
-.time-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
-.time-row:last-child{border-bottom:none}
-.time-tag{font-size:12px;font-weight:500;width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.time-val{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;width:40px;flex-shrink:0}
-.time-bar-w{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
-.time-bar-f{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),#4A9EF0)}
-.conf-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border)}
-.conf-row:last-child{border-bottom:none}
-.conf-lbl2{font-size:12px;width:90px;flex-shrink:0}
-.conf-acc{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;width:42px;flex-shrink:0}
-.conf-bar-w{flex:1;height:5px;background:var(--bg4);border-radius:3px;overflow:hidden}
-.conf-bar-f{height:100%;border-radius:3px}
-.weak-card{background:var(--bg2);border:1px solid var(--rborder);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;box-shadow:var(--sh);display:flex;align-items:center;gap:13px}
-.weak-rank{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--red);width:26px;text-align:center;flex-shrink:0}
-.weak-info{flex:1;min-width:0}
-.weak-tag{font-size:13px;font-weight:600;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.weak-detail{font-size:11px;color:var(--text3)}
-.weak-score{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;color:var(--red);flex-shrink:0}
-.study-btn-sm{padding:5px 12px;border-radius:var(--r2);border:1px solid var(--aborder);background:var(--alight);color:#5C3FB8;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .18s;white-space:nowrap;flex-shrink:0}
-.study-btn-sm:hover{background:var(--accent);color:#fff}
-
-/* REVIEW QUEUE (Forgetting Curve preview) */
-.review-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;box-shadow:var(--sh);display:flex;align-items:center;gap:12px}
-.review-urgency{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.review-info{flex:1}
-.review-q{font-size:12px;font-weight:500;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.review-meta{font-size:11px;color:var(--text3)}
-.review-days{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;flex-shrink:0}
-</style>
+  <meta charset="UTF-8">
+  <title>StudyFlow 拡張版</title>
+  <!-- 外部ライブラリ (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:true});</script>
+  <style>
+    /* シンプルなスタイル */
+    body { font-family: Arial, sans-serif; margin:20px; background: #f5f5f5; }
+    .tabs button { margin-right:5px; }
+    section { margin-top:20px; }
+  </style>
 </head>
 <body>
-<div id="app">
-  <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3);font-family:'DM Sans',sans-serif">v4</span></div>
-    <div class="header-right">
-      <div class="db-count" id="db-count">📊 0問記録済み</div>
-      <div class="streak">🔥 <span id="streak-count">0</span>日連続</div>
-    </div>
-  </div>
-
+  <h1>StudyFlow 拡張版</h1>
+  <!-- タブ切替ボタン -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
-    <button class="tab" onclick="switchTab('study')">📚 演習</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 AI類題</button>
-    <button class="tab" onclick="switchTab('analytics')">📈 分析</button>
-    <button class="tab" onclick="switchTab('review')">🔁 復習キュー</button>
-    <button class="tab" onclick="switchTab('log')">📝 ログ</button>
+    <button onclick="showTab('tab-ai')">🤖 LLM類題</button>
+    <button onclick="showTab('tab-weak')">⚠️ 弱点分析</button>
+    <button onclick="showTab('tab-graph')">🌌 ナレッジグラフ</button>
+    <button onclick="showTab('tab-schedule')">⏰ 忘却スケジュール</button>
+    <button onclick="showTab('tab-process')">📊 解答プロセス</button>
+    <button onclick="showTab('tab-english')">🇬🇧 英語タブ</button>
   </div>
 
-  <!-- PLAN -->
-  <div class="panel active" id="panel-plan">
-    <div class="stitle">試験カウントダウン</div>
-    <div class="cdown-grid">
-      <div class="cdown-card cd-toeic"><div class="cd-badge">TOEIC</div><div class="cd-days" id="d-toeic">—</div><div class="cd-unit">日後</div><div class="cd-name">TOEIC 本番</div><div class="cd-date">2026年5月17日（日）</div></div>
-      <div class="cdown-card cd-naist"><div class="cd-badge">NAIST</div><div class="cd-days" id="d-naist">—</div><div class="cd-unit">日後</div><div class="cd-name">NAIST 大学院入試</div><div class="cd-date">2026年7月6日（月）</div></div>
-      <div class="cdown-card cd-kobe"><div class="cd-badge">神戸大</div><div class="cd-days" id="d-kobe">—</div><div class="cd-unit">日後</div><div class="cd-name">神戸大 大学院入試</div><div class="cd-date">2026年8月24日（月）</div></div>
+  <!-- 1. LLM類題生成 -->
+  <section id="tab-ai" style="display:none;">
+    <h2>LLM類題・解説生成</h2>
+    <div>
+      <label>教科:
+        <select id="ai-subj">
+          <option value="la">線形代数</option>
+          <option value="ca">微分積分</option>
+          <option value="ml">機械学習</option>
+          <option value="pr">確率統計</option>
+          <option value="cx">複素関数</option>
+          <option value="algo">アルゴリズム</option>
+          <option value="cs">コンピューターサイエンス</option>
+        </select>
+      </label>
+      <label>タグ: <input type="text" id="ai-tag" placeholder="例: 固有値"></label>
+      <label>難易度: 
+        <select id="ai-level">
+          <option value="基礎">基礎</option>
+          <option value="応用">応用</option>
+        </select>
+      </label>
     </div>
-    <div class="stitle">教科別 進捗</div>
-    <div class="subj-grid" id="subj-grid"></div>
-    <div class="overall">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="stitle" style="margin:0">総合進捗</div>
-        <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent)" id="ov-pct">0%</div>
-      </div>
-      <div class="ov-bar"><div class="ov-fill" id="ov-bar" style="width:0%"></div></div>
-      <div class="ov-nums"><span id="ov-done">完了 0章</span><span id="ov-total">全 0章</span></div>
-    </div>
-    <div class="stitle">次に学ぶ章</div>
-    <div class="plan-box" id="plan-sched"></div>
-    <div style="margin-top:18px">
-      <div class="stitle">今週の目標</div>
-      <div class="plan-box">
-        <div class="plan-row"><div class="pdot" style="background:#7C5FD4"></div><div class="ptxt">線形代数：行列の演算・固有値まで完了</div><span class="ptag t-now">今週</span></div>
-        <div class="plan-row"><div class="pdot" style="background:#167A50"></div><div class="ptxt">微積分：極限・微分の基礎問題 30問</div><span class="ptag t-now">今週</span></div>
-        <div class="plan-row"><div class="pdot" style="background:#145898"></div><div class="ptxt">確率統計：確率の基本定理を復習</div><span class="ptag t-next">来週</span></div>
-        <div class="plan-row"><div class="pdot" style="background:#F0A830"></div><div class="ptxt">過去問：NAIST 2022年度 数学</div><span class="ptag t-exam">重要</span></div>
-      </div>
-    </div>
-  </div>
+    <button onclick="generateAI()">生成</button>
+    <div id="ai-result"></div>
+  </section>
 
-  <!-- STUDY -->
-  <div class="panel" id="panel-study">
-    <div class="stitle">演習モード</div>
-    <div class="chips" id="mode-chips">
-      <button class="chip active" onclick="setMode('flash',this)">🃏 フラッシュカード</button>
-      <button class="chip" onclick="setMode('fill',this)">✏️ 穴埋め問題</button>
-      <button class="chip" onclick="setMode('exercise',this)">📝 基礎演習</button>
-      <button class="chip" onclick="setMode('aigenerated',this)">🤖 AI生成演習</button>
+  <!-- 2. タグベース弱点分析ダッシュボード -->
+  <section id="tab-weak" style="display:none;">
+    <h2>タグ別弱点分析ダッシュボード</h2>
+    <button onclick="renderWeakness()">チャート表示</button>
+    <canvas id="chart-tags" width="400" height="200"></canvas>
+    <canvas id="chart-confidence" width="400" height="200"></canvas>
+    <canvas id="chart-time" width="400" height="200"></canvas>
+  </section>
+
+  <!-- 3. 簡易ナレッジグラフ（Mermaid） -->
+  <section id="tab-graph" style="display:none;">
+    <h2>知識の銀河系 (ナレッジグラフ)</h2>
+    <div class="mermaid">
+graph TB
+  線形代数 --> 固有値
+  固有値 --> 行列式
+  線形代数 --> 対角化
+  微分積分 --> 積分
+  コンピューターサイエンス --> アルゴリズム
+  アルゴリズム --> データ構造
     </div>
-    <div class="stitle">教科</div>
-    <div class="chips" id="subj-chips">
-      <button class="chip active" onclick="setSubject('la',this)">線形代数</button>
-      <button class="chip" onclick="setSubject('ca',this)">微積分</button>
-      <button class="chip" onclick="setSubject('ml',this)">機械学習</button>
-      <button class="chip" onclick="setSubject('pr',this)">確率統計</button>
+  </section>
+
+  <!-- 4. 忘却曲線スケジューラ -->
+  <section id="tab-schedule" style="display:none;">
+    <h2>忘却曲線スケジューラ</h2>
+    <p>最新正答日時から次回復習日時を算出します（例: 正答から3日後を推奨）。</p>
+    <p>次回復習推奨日時: <span id="next-review">計算中…</span></p>
+  </section>
+
+  <!-- 5. 解答プロセス可視化 -->
+  <section id="tab-process" style="display:none;">
+    <h2>解答プロセスのタイムライン</h2>
+    <p>各問題への回答時間と経過を時系列で表示します。</p>
+    <canvas id="process-chart" width="600" height="150"></canvas>
+  </section>
+
+  <!-- 6. 英語学習タブ -->
+  <section id="tab-english" style="display:none;">
+    <h2>英語学習</h2>
+    <!-- TOEIC単語フラッシュカード -->
+    <div>
+      <button onclick="switchEnglish('TOEIC')">TOEIC</button>
+      <button onclick="switchEnglish('Daily')">日常英語</button>
+      <button onclick="switchEnglish('Custom')">自分メモ</button>
     </div>
-    <div id="study-content"></div>
-  </div>
-
-  <!-- AI -->
-  <div class="panel" id="panel-ai">
-    <div class="stitle">AI 類題・解説生成</div>
-    <div class="ai-desc">
-      教科・タグ・難易度を選んで生成すると、Claude が院試レベルの類題と詳細な解説をリアルタイムで作成します。生成した問題は「AI生成演習」モードでそのまま解くことができます。
+    <div id="english-mode">
+      <!-- それぞれのモードに応じた演習UIを実装 -->
+      <p>(TOEIC/日常/自分メモそれぞれのフラッシュカード・テスト機能をここに表示)</p>
     </div>
-    <div class="ai-config">
-      <div class="ai-config-row">
-        <div class="f-grp"><label class="f-lbl">教科</label>
-          <select class="f-inp" id="ai-subj">
-            <option value="la">線形代数</option><option value="ca">微積分</option>
-            <option value="ml">機械学習</option><option value="pr">確率統計</option>
-          </select></div>
-        <div class="f-grp"><label class="f-lbl">弱点タグ</label>
-          <select class="f-inp" id="ai-tag">
-            <optgroup label="線形代数"><option>固有値</option><option>行列演算</option><option>SVD</option><option>直交化</option><option>行列式</option><option>正定値行列</option><option>次元定理</option></optgroup>
-            <optgroup label="微積分"><option>微分</option><option>積分</option><option>極限</option><option>多変数</option><option>最適化</option><option>級数収束</option></optgroup>
-            <optgroup label="機械学習"><option>最適化</option><option>カーネル法</option><option>ニューラルネット</option><option>変化点検出</option><option>深層学習</option><option>正則化</option><option>評価指標</option></optgroup>
-            <optgroup label="確率統計"><option>ベイズ</option><option>分布</option><option>推定</option><option>極限定理</option><option>確率変数</option><option>不等式</option><option>確率過程</option></optgroup>
-          </select></div>
-        <div class="f-grp"><label class="f-lbl">難易度</label>
-          <select class="f-inp" id="ai-level">
-            <option value="基礎">基礎（定義・公式確認）</option>
-            <option value="応用" selected>応用（計算・証明）</option>
-            <option value="院試レベル">院試レベル（NAIST想定）</option>
-          </select></div>
-        <div class="f-grp"><label class="f-lbl">出力形式</label>
-          <select class="f-inp" id="ai-format">
-            <option value="quiz">選択問題（4択）</option>
-            <option value="open" selected>記述式 + 解説</option>
-            <option value="both">両方</option>
-          </select></div>
-      </div>
-      <div class="f-grp" style="margin-top:8px">
-        <label class="f-lbl">追加指示（任意）</label>
-        <input type="text" class="f-inp" id="ai-hint" placeholder="例：行列式の余因子展開を使う問題 / 変化点検出との絡み など">
-      </div>
-      <button class="ai-gen-btn" id="ai-gen-btn" onclick="generateAI()">
-        <span class="ai-spinner" id="ai-spin"></span>
-        <span id="ai-btn-text">✨ AI で類題を生成する</span>
-      </button>
-    </div>
-    <div id="ai-output"></div>
-    <div class="stitle" style="margin-top:20px">生成履歴（セッション内）</div>
-    <div id="ai-history-list"><div class="empty-s">まだ生成履歴がありません</div></div>
-  </div>
+  </section>
 
-  <!-- ANALYTICS -->
-  <div class="panel" id="panel-analytics">
-    <div class="stitle">弱点分析ダッシュボード</div>
-    <div class="ana-grid" id="ana-summary"></div>
-    <div class="stitle" style="margin-top:20px">タグ別 正答率 <span style="font-weight:400;color:var(--text3)">(低い順)</span></div>
-    <div class="plan-box" id="ana-tags"><div class="empty-s">データがありません</div></div>
-    <div class="stitle" style="margin-top:20px">応答時間 by タグ <span style="font-weight:400;color:var(--text3)">(遅い順)</span></div>
-    <div class="plan-box" id="ana-time"><div class="empty-s">データがありません</div></div>
-    <div class="stitle" style="margin-top:20px">自信度 vs 実際の正答率</div>
-    <div class="plan-box" id="ana-confidence"><div class="empty-s">データがありません</div></div>
-    <div class="stitle" style="margin-top:20px">⚠️ 要復習トピック TOP 5</div>
-    <div id="ana-weak"><div class="empty-s">データがありません</div></div>
-  </div>
+<script>
+// タブ切替関数
+function showTab(id) {
+  ['tab-ai','tab-weak','tab-graph','tab-schedule','tab-process','tab-english'].forEach(tab=>{
+    document.getElementById(tab).style.display = (tab===id ? 'block' : 'none');
+  });
+}
+// Englishタブ内切替（雛形）
+function switchEnglish(mode) {
+  const container = document.getElementById('english-mode');
+  container.innerHTML = `<p>${mode}モード（サンプル）</p>`;
+}
 
-  <!-- REVIEW QUEUE -->
-  <div class="panel" id="panel-review">
-    <div class="stitle">復習キュー（忘却曲線ベース）</div>
-    <div style="font-size:13px;color:var(--text2);background:var(--abg2);border:1px solid var(--aborder2);border-radius:var(--r);padding:12px 14px;margin-bottom:16px">
-      SM-2アルゴリズムに基づき、前回の回答から適切な復習タイミングを計算します。<br>
-      <span style="font-size:11px;color:var(--text3)">🔴 今日 / 🟡 2日以内 / 🟢 それ以降</span>
-    </div>
-    <div id="review-list"><div class="empty-s">演習を解くと復習キューに追加されます</div></div>
-  </div>
+// テストデータ: 忘却曲線計算例
+document.getElementById('next-review').innerText = new Date(Date.now() + 3*24*60*60*1000).toLocaleString();
 
-  <!-- LOG -->
-  <div class="panel" id="panel-log">
-    <div class="stitle">学習を記録する</div>
-    <div class="log-form">
-      <div class="f-row">
-        <div class="f-grp"><label class="f-lbl">教科</label>
-          <select class="f-inp" id="log-subj">
-            <option value="la">線形代数</option><option value="ca">微積分</option>
-            <option value="ml">機械学習</option><option value="pr">確率統計</option>
-          </select></div>
-        <div class="f-grp"><label class="f-lbl">学習時間 (分)</label>
-          <input type="number" class="f-inp" id="log-dur" placeholder="60" min="1"></div>
-      </div>
-      <div class="f-row">
-        <div class="f-grp"><label class="f-lbl">章・トピック</label>
-          <input type="text" class="f-inp" id="log-chap" placeholder="例：第3章 固有値"></div>
-        <div class="f-grp"><label class="f-lbl">理解度</label>
-          <select class="f-inp" id="log-und">
-            <option value="3">よく理解できた</option><option value="2">まあまあ</option><option value="1">難しかった</option>
-          </select></div>
-      </div>
-      <div class="f-grp" style="margin-bottom:10px"><label class="f-lbl">メモ</label>
-        <textarea class="f-note" id="log-note" placeholder="今日気づいたこと、復習すべき点など…"></textarea></div>
-      <button class="f-submit" onclick="addLog()">ログを保存</button>
-    </div>
-    <div class="stitle">学習履歴</div>
-    <div class="log-list" id="log-list"><div class="empty-s">まだ記録がありません。最初のログを追加しましょう！</div></div>
-  </div>
-</div>
-
-<!-- QUIZ MODAL -->
-<div class="modal-ov" id="quiz-modal">
-  <div class="modal">
-    <div class="modal-hd">
-      <div class="modal-title" id="quiz-modal-title">章末テスト</div>
-      <button class="modal-close" onclick="closeQuiz()">✕</button>
-    </div>
-    <div id="quiz-body"></div>
-  </div>
-</div>
-
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, push, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
-const FB = {apiKey:"AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",authDomain:"study-tracker-5a35c.firebaseapp.com",databaseURL:"https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"study-tracker-5a35c",storageBucket:"study-tracker-5a35c.firebasestorage.app",messagingSenderId:"1091326221496",appId:"1:1091326221496:web:5bcd5ab27bdc6cca03e84d"};
-const fbApp = initializeApp(FB);
-const db = getDatabase(fbApp);
-
-/* ══════════════════════════════════════
-   INDEXEDDB — Answer Log Persistence
-   Stores every answer with full metadata
-══════════════════════════════════════ */
+// IndexedDB初期化
+const DB_NAME='studyflow_v5', DB_VER=2;
 let idb;
-const IDB_NAME = 'studyflow_v4', IDB_VER = 2;
-const STORE_ANSWERS = 'answers'; // main answer log
-const STORE_SRS     = 'srs';     // spaced repetition state per question
-
-function openIDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(IDB_NAME, IDB_VER);
+function openIDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open(DB_NAME, DB_VER);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_ANSWERS)) {
-        const s = db.createObjectStore(STORE_ANSWERS, {keyPath:'id', autoIncrement:true});
-        s.createIndex('tag','tag',{unique:false});
-        s.createIndex('subj','subj',{unique:false});
-        s.createIndex('ts','ts',{unique:false});
-        s.createIndex('qId','qId',{unique:false});
-      }
-      if (!db.objectStoreNames.contains(STORE_SRS)) {
-        db.createObjectStore(STORE_SRS, {keyPath:'qId'});
+      if(!db.objectStoreNames.contains('answers')){
+        const store = db.createObjectStore('answers', {keyPath:'id', autoIncrement:true});
+        store.createIndex('tag','tag',{unique:false});
+        store.createIndex('ts','ts',{unique:false});
+        store.createIndex('questionId','questionId',{unique:false});
       }
     };
     req.onsuccess = e => { idb = e.target.result; res(idb); };
-    req.onerror   = e => rej(e);
+    req.onerror = e => rej(e);
   });
 }
-
-async function idbPut(store, obj) {
-  return new Promise((res,rej)=>{
-    const tx = idb.transaction(store,'readwrite');
-    const req = tx.objectStore(store).put(obj);
-    req.onsuccess = ()=>res(req.result);
-    req.onerror = ()=>rej(req.error);
-  });
+// IDB操作: オブジェクトを追加
+async function saveLog(log) {
+  const db = await openIDB();
+  const tx = db.transaction('answers','readwrite');
+  tx.objectStore('answers').add(log);
 }
 
-async function idbGetAll(store) {
-  return new Promise((res,rej)=>{
-    const tx = idb.transaction(store,'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = ()=>res(req.result);
-    req.onerror = ()=>rej(req.error);
-  });
-}
-
-async function idbGet(store, key) {
-  return new Promise((res,rej)=>{
-    const tx = idb.transaction(store,'readonly');
-    const req = tx.objectStore(store).get(key);
-    req.onsuccess = ()=>res(req.result);
-    req.onerror = ()=>rej(req.error);
-  });
-}
-
-/* ══════════════════════════════════════
-   SM-2 SPACED REPETITION
-   quality: 0-5 (0-2 = fail, 3-5 = pass)
-══════════════════════════════════════ */
-async function updateSRS(qId, quality) {
-  let srs = await idbGet(STORE_SRS, qId) || {
-    qId, interval:1, repetitions:0, ef:2.5, nextReview: Date.now()
-  };
-  if (quality >= 3) {
-    if (srs.repetitions === 0) srs.interval = 1;
-    else if (srs.repetitions === 1) srs.interval = 6;
-    else srs.interval = Math.round(srs.interval * srs.ef);
-    srs.repetitions++;
-  } else {
-    srs.repetitions = 0;
-    srs.interval = 1;
-  }
-  srs.ef = Math.max(1.3, srs.ef + 0.1 - (5-quality)*(0.08 + (5-quality)*0.02));
-  srs.nextReview = Date.now() + srs.interval * 86400000;
-  srs.lastQ = quality;
-  srs.lastQText = '';
-  await idbPut(STORE_SRS, srs);
-  return srs;
-}
-
-async function logAnswer({tag, subj, correct, ms, confidence, qText, qId}) {
-  const quality = correct
-    ? (confidence === 'high' ? 5 : confidence === 'mid' ? 4 : 3)
-    : (confidence === 'high' ? 1 : confidence === 'mid' ? 1 : 0);
-  const entry = {
-    tag: tag||'unknown', subj: subj||'unknown',
-    correct: correct?1:0, ms: ms||0,
-    confidence: confidence||'mid',
-    qText: (qText||'').slice(0,100),
-    qId: qId||('q_'+(Date.now())),
-    date: new Date().toLocaleDateString('ja-JP'),
-    ts: Date.now()
-  };
-  await idbPut(STORE_ANSWERS, entry);
-  if (qId) await updateSRS(qId, quality);
-  refreshDBCount();
-}
-
-async function refreshDBCount() {
-  const all = await idbGetAll(STORE_ANSWERS);
-  document.getElementById('db-count').textContent = `📊 ${all.length}問記録済み`;
-}
-
-/* ══════════════════════════════════════
-   CONFIDENCE & TIMER STATE
-══════════════════════════════════════ */
-let currentConf = 'mid';
-let qStartTime  = null;
-
-window.setConf = (val, el) => {
-  currentConf = val;
-  document.querySelectorAll('.conf-btn').forEach(b=>b.classList.remove('sel'));
-  el.classList.add('sel');
-};
-
-function confHTML() {
-  return `<div class="conf-label-sm">回答前に自信度を選んでください（分析に使用）</div><div class="conf-btns"><button class="conf-btn high" onclick="setConf('high',this)">💪 確信あり</button><button class="conf-btn mid sel" onclick="setConf('mid',this)">🤔 まあまあ</button><button class="conf-btn low" onclick="setConf('low',this)">😰 不安</button></div>`;
-}
-
-function startTimer() { currentConf='mid'; qStartTime = Date.now(); }
-function elapsed()    { return qStartTime ? Date.now()-qStartTime : 0; }
-
-/* ══════════════════════════════════════
-   STATIC DATA
-══════════════════════════════════════ */
-const SUBJECTS = {
-  la:{name:'線形代数',cls:'sc-la',dot:'#7C5FD4',chapters:['ベクトルと空間','行列と演算','行列式','固有値と固有ベクトル','線形変換','直交化と最小二乗法','特異値分解']},
-  ca:{name:'微積分',cls:'sc-ca',dot:'#167A50',chapters:['極限と連続','微分の基礎','微分の応用','積分の基礎','積分の応用','級数と収束','多変数関数','偏微分']},
-  ml:{name:'機械学習',cls:'sc-ml',dot:'#145898',chapters:['線形回帰','勾配降下法','ニューラルネット基礎','活性化関数','正則化','カーネル法','変化点検出','深層学習']},
-  pr:{name:'確率統計',cls:'sc-pr',dot:'#7A5200',chapters:['確率の基本','条件付き確率','確率変数','分布と期待値','正規分布','中心極限定理','推定と検定','ベイズ推定']}
-};
-
-const FC = {
-  la:[
-    {q:'行列の積 AB は一般的に AB=BA を満たすか？',a:'満たさない。行列積は非可換（non-commutative）。AB≠BA が一般的。\n例外：対角行列どうし・単位行列など特殊なケースのみ。',tag:'行列演算'},
-    {q:'固有値 λ と固有ベクトル v の関係式を書け',a:'Av = λv\nA を作用させても方向が変わらず λ 倍されるだけのベクトル v が固有ベクトル。\n特性方程式：det(A−λI) = 0 で λ を求める。',tag:'固有値'},
-    {q:'正規直交基底を定義せよ',a:'互いに直交し（内積＝0）、各ノルムが 1 のベクトルの集合。\nグラム-シュミット法で任意の基底から構成できる。',tag:'直交化'},
-    {q:'det(A)=0 のとき A はどんな行列か？',a:'特異行列（非正則行列）。逆行列が存在しない。\nAx=b が一意解を持たない。ランクが最大でない。',tag:'行列式'},
-    {q:'SVD（特異値分解）を定義・応用含めて答えよ',a:'A = UΣVᵀ（U, V：直交行列、Σ：特異値を対角に持つ行列）\n応用：次元削減・PCA・推薦システム・画像圧縮・低ランク近似',tag:'SVD'},
-    {q:'次元定理（Rank-Nullity Theorem）を述べよ',a:'rank(A) + nullity(A) = n（Aの列数）\n「列空間の次元」＋「零空間の次元」＝全次元\n連立方程式の解空間の次元を計算するのに使う。',tag:'次元定理'},
-    {q:'正定値行列の定義と重要性を述べよ',a:'∀x≠0: xᵀAx > 0 を満たす対称行列。全固有値が正。\n機械学習の共分散行列・凸最適化の判定に頻出。',tag:'正定値行列'},
-    {q:'直交行列の定義と性質を答えよ',a:'QQᵀ = QᵀQ = I（逆行列＝転置行列）、det(Q) = ±1\n各列が正規直交基底。回転・反射などの等長変換を表す。',tag:'行列演算'},
-    {q:'ケイリー-ハミルトンの定理を述べよ',a:'正方行列 A は自分自身の固有多項式 p(λ)=det(A−λI) を満たす。\np(A) = 0。高次のべき乗を低次の式で表すのに使える。',tag:'固有値'},
-  ],
-  ca:[
-    {q:'連鎖律（chain rule）の式を書け',a:'y = f(g(x)) のとき dy/dx = (dy/du)·(du/dx)\n例：y = sin(x²) → dy/dx = cos(x²)·2x',tag:'微分'},
-    {q:'テイラー展開の式（a の周り）',a:'f(x) = Σ f⁽ⁿ⁾(a)/n! · (x−a)ⁿ\na=0 のとき「マクローリン展開」。eˣ=1+x+x²/2!+...',tag:'微分'},
-    {q:'定積分の幾何学的意味を説明せよ',a:'∫[a,b] f(x)dx ＝ x軸と曲線で囲まれた「符号付き面積」。\nf(x)<0 の部分は負の面積として計算する。',tag:'積分'},
-    {q:'偏微分 ∂f/∂x の意味は？',a:'多変数関数で x 以外を定数とみなして x で微分。\n勾配ベクトル ∇f の x 成分を表す。損失関数最小化の基礎。',tag:'多変数'},
-    {q:'ロピタルの定理を述べよ',a:'0/0 または ∞/∞ 型の不定形に適用。\nlim f(x)/g(x) = lim f\'(x)/g\'(x)\n条件：g\'(x)≠0 かつ右辺の極限が存在すること。',tag:'極限'},
-    {q:'微積分学の基本定理を書け',a:'∫[a,b] f(x)dx = F(b) − F(a)（F は f の原始関数）\n微分と積分が逆演算であることを示す最重要定理。',tag:'積分'},
-    {q:'ヤコビアン（Jacobian）の役割は？',a:'多変数変換における局所的な面積・体積の拡大率。\n変数変換 (x,y)→(u,v) のとき J = ∂(u,v)/∂(x,y)。多重積分の変数変換に不可欠。',tag:'多変数'},
-    {q:'ラグランジュ乗数法の概要を述べよ',a:'制約 g(x,y)=0 のもとで f(x,y) を最適化。\n∇f = λ∇g を解く。機械学習の制約付き最適化・SVMの導出に応用。',tag:'最適化'},
-    {q:'ガウス積分 ∫₋∞^∞ e⁻ˣ² dx の値は？',a:'√π\n正規分布の正規化定数 1/√(2π) の根拠。機械学習・統計学の随所で登場する。',tag:'積分'},
-  ],
-  ml:[
-    {q:'勾配降下法の更新式を書け',a:'θ ← θ − η·∇L(θ)（η は学習率）\n損失の「下り坂方向」にパラメータを更新。\nSGD：1サンプル、Mini-batch：小バッチ、Batch：全データ。',tag:'最適化'},
-    {q:'カーネルトリックとは何か？',a:'低次元で分離不可能なデータを陰的に高次元空間に写像して分離可能にする。\nK(x,y) = φ(x)·φ(y)。内積だけ計算すれば高次元の明示的計算が不要。',tag:'カーネル法'},
-    {q:'過学習の対策を 5 つ以上挙げよ',a:'① 正則化（L1/L2）② ドロップアウト\n③ データ拡張 ④ 早期終了\n⑤ 交差検証（k-fold CV）⑥ バギング・ブースティング',tag:'正則化'},
-    {q:'変化点検出（CPD）の目的と主要手法は？',a:'時系列データ中で統計的性質（平均・分散・相関）が変化する時点を自動検出。\n主要手法：PELT、BOCPD、CUSUM\n応用：音楽構造解析・異常検知・金融（Sakriani研究室のトピック）',tag:'変化点検出'},
-    {q:'活性化関数 ReLU の定義と特性は？',a:'ReLU(x) = max(0, x)\n利点：計算が単純・勾配消失を緩和・スパース表現。\n欠点：Dying ReLU（負入力で勾配ゼロ）。改善版：Leaky ReLU, GeLU, Swish。',tag:'ニューラルネット'},
-    {q:'Attention 機構の計算式を答えよ',a:'score = QKᵀ / √d\nweight = softmax(score)\noutput = weight · V\nTransformer の基礎。位置依存しない情報の集約機構。',tag:'深層学習'},
-    {q:'バッチ正規化（BN）の効果は？',a:'各層の入力を正規化（平均0・分散1）→ 学習可能な γ, β で再スケール。\n効果：訓練の安定化・大きな学習率が使える・正則化効果あり。',tag:'ニューラルネット'},
-    {q:'混同行列の 4 要素と Precision/Recall を答えよ',a:'TP, TN, FP, FN\nPrecision = TP/(TP+FP)（正予測のうち正解）\nRecall = TP/(TP+FN)（正例のうち正しく検出）\nF1 = 2PR/(P+R)',tag:'評価指標'},
-    {q:'Adam オプティマイザーの特徴は？',a:'1次モーメント（勾配の平均）と2次モーメント（勾配の分散）を追跡。\n各パラメータの学習率を適応的に調整。AdaGrad + RMSPropの組み合わせ。',tag:'最適化'},
-  ],
-  pr:[
-    {q:'ベイズの定理を式・意味まで答えよ',a:'P(A|B) = P(B|A)·P(A) / P(B)\n事前確率 P(A) を証拠 B で更新して事後確率 P(A|B) を得る。\nP(B) = Σ P(B|Aᵢ)P(Aᵢ)（全確率の法則）',tag:'ベイズ'},
-    {q:'中心極限定理（CLT）を述べよ',a:'独立同分布の確率変数の和は n→∞ で正規分布に収束する。\n標本平均 X̄ ～ N(μ, σ²/n)。母分布の形状によらない。',tag:'極限定理'},
-    {q:'期待値 E[X] と分散 Var(X) の定義・関係式は？',a:'E[X] = Σ xᵢP(xᵢ)（離散）/ ∫xf(x)dx（連続）\nVar(X) = E[(X−μ)²] = E[X²] − (E[X])²\nσ = √Var(X)（標準偏差）',tag:'確率変数'},
-    {q:'正規分布 N(μ,σ²) の PDF と 68-95-99.7 則は？',a:'f(x) = (1/√(2πσ²))·exp(−(x−μ)²/(2σ²))\n68-95-99.7 ルール：μ±σ→68%、μ±2σ→95%、μ±3σ→99.7%',tag:'分布'},
-    {q:'最尤推定（MLE）の考え方は？',a:'観測データの尤度 L(θ) = Π p(xᵢ;θ) を最大化するθを推定。\n実用上は log-尤度 log L を最大化（数値的に安定）。',tag:'推定'},
-    {q:'ポアソン分布の定義と特性は？',a:'P(X=k) = e⁻λ·λᵏ/k!（k=0,1,2,...）\n平均 = 分散 = λ（特徴的な等式）\n応用：単位時間のイベント発生回数のモデル。',tag:'分布'},
-    {q:'マルコフ連鎖の定義を述べよ',a:'次の状態が現在の状態のみに依存する確率過程。\nP(Xₙ₊₁|X₀,...,Xₙ) = P(Xₙ₊₁|Xₙ)（マルコフ性）\n応用：HMM・強化学習・MCMC',tag:'確率過程'},
-    {q:'チェビシェフ不等式とマルコフ不等式を答えよ',a:'マルコフ：P(X≥a) ≤ E[X]/a（X≥0）\nチェビシェフ：P(|X−μ|≥kσ) ≤ 1/k²\nどんな分布でも成立する。k=2 → P≤25%。',tag:'不等式'},
-    {q:'モーメント母関数（MGF）の定義と用途は？',a:'M_X(t) = E[eᵗˣ]\nn次モーメントは M_X⁽ⁿ⁾(0)。\n独立変数の和の分布を求める・分布の特徴付けに使用。',tag:'分布'},
-  ]
-};
-
-const FILL = {
-  la:[
-    {qId:'la_fill_01',text:['固有値を求めるには特性方程式 det(A − ','I) = 0 を解く。'],blanks:[{ans:'λ',h:'固有値の記号'}],exp:'λ は det(A−λI)=0 の解（特性方程式）。',tag:'固有値'},
-    {qId:'la_fill_02',text:['逆行列 A⁻¹ が存在するための必要十分条件は det(A) ','0 であること。'],blanks:[{ans:'≠',h:'≠ か = か'}],exp:'det(A)≠0 ⟺ 正則行列 ⟺ 逆行列が存在する。',tag:'行列式'},
-    {qId:'la_fill_03',text:['固有値の積は ','(A) に、固有値の和は trace(A) に等しい。'],blanks:[{ans:'det',h:'行列式の関数名'}],exp:'固有値の積=行列式、固有値の和=トレース（対角成分の和）。',tag:'固有値'},
-    {qId:'la_fill_04',text:['v · w = 0 のとき、v と w は ','。'],blanks:[{ans:'直交する',h:'幾何学的関係'}],exp:'内積=|v||w|cosθ。直交するとき θ=90°。',tag:'行列演算'},
-    {qId:'la_fill_05',text:['グラム-シュミット法は一般の基底から ','直交基底を構成する手法である。'],blanks:[{ans:'正規',h:'「正規〇〇基底」'}],exp:'各ベクトルを直交化→ノルム1に正規化。',tag:'直交化'},
-    {qId:'la_fill_06',text:['行列 A の trace(A) は固有値の ','に等しい。'],blanks:[{ans:'和（Σλᵢ）',h:'和か積か'}],exp:'trace = 対角成分の和 = 固有値の和。',tag:'固有値'},
-    {qId:'la_fill_07',text:['SVD A = UΣVᵀ において Σ は ','行列で対角成分が特異値。'],blanks:[{ans:'対角',h:'行列の形状'}],exp:'特異値は非負の実数で大きい順。特異値 = √(AᵀA の固有値)。',tag:'SVD'},
-    {qId:'la_fill_08',text:['対称行列の固有ベクトルは異なる固有値に対して互いに ','。'],blanks:[{ans:'直交する',h:'幾何学的関係'}],exp:'スペクトル定理：実対称行列は直交行列で対角化可能。',tag:'固有値'},
-    {qId:'la_fill_09',text:['次元定理：rank(A) + nullity(A) = ','（A の列数）。'],blanks:[{ans:'n',h:'変数の数'}],exp:'列空間の次元 + 零空間の次元 = 総次元。',tag:'次元定理'},
-    {qId:'la_fill_10',text:['行列 A が正定値 ⟺ すべての固有値が ','。'],blanks:[{ans:'正（>0）',h:'正負'}],exp:'正定値↔全固有値>0↔任意の非零 x で xᵀAx>0。',tag:'正定値行列'},
-  ],
-  ca:[
-    {qId:'ca_fill_01',text:['f(x) = xⁿ の導関数は f\'(x) = ','。（べき乗則）'],blanks:[{ans:'nxⁿ⁻¹',h:'n と x を使う'}],exp:'べき乗則：d/dx[xⁿ]=nxⁿ⁻¹。',tag:'微分'},
-    {qId:'ca_fill_02',text:['sin(x) の導関数は ','、cos(x) の導関数は ','。'],blanks:[{ans:'cos(x)',h:'三角関数'},{ans:'-sin(x)',h:'符号に注意'}],exp:'sin→cos→-sin→-cos→sin の循環。',tag:'微分'},
-    {qId:'ca_fill_03',text:['eˣ の導関数は ','。（自己相似性）'],blanks:[{ans:'eˣ',h:'自分自身'}],exp:'eˣ は微分しても変わらない唯一の指数関数。',tag:'微分'},
-    {qId:'ca_fill_04',text:['∫ eˣ dx = ',' + C。'],blanks:[{ans:'eˣ',h:'同じ関数'}],exp:'eˣ は積分しても変わらない。',tag:'積分'},
-    {qId:'ca_fill_05',text:['極限 lim(x→0) sin(x)/x = ','。'],blanks:[{ans:'1',h:'数値'}],exp:'sin(x)≈x−x³/6+... なので sin(x)/x→1。重要な極限。',tag:'極限'},
-    {qId:'ca_fill_06',text:['ln(x) の導関数は ','。'],blanks:[{ans:'1/x',h:'x の逆数'}],exp:'d/dx[lnx]=1/x。機械学習の損失関数計算で頻出。',tag:'微分'},
-    {qId:'ca_fill_07',text:['∫[0,1] x² dx = ','。'],blanks:[{ans:'1/3',h:'分数'}],exp:'[x³/3]₀¹ = 1/3−0 = 1/3。',tag:'積分'},
-    {qId:'ca_fill_08',text:['偏微分 ∂/∂x[x²y + y³] = ','。'],blanks:[{ans:'2xy',h:'y を定数扱い'}],exp:'y を定数として x で微分。∂/∂x[x²y]=2xy、∂/∂x[y³]=0。',tag:'多変数'},
-    {qId:'ca_fill_09',text:['合成関数 (x²+1)⁵ の導関数は ','。（連鎖律）'],blanks:[{ans:'10x(x²+1)⁴',h:'外側×内側の微分'}],exp:'外側5(x²+1)⁴ × 内側2x = 10x(x²+1)⁴。',tag:'微分'},
-    {qId:'ca_fill_10',text:['ガウス積分 ∫₋∞^∞ e⁻ˣ² dx = ','。'],blanks:[{ans:'√π',h:'π の平方根'}],exp:'√π。正規分布の正規化定数の根拠。',tag:'積分'},
-  ],
-  ml:[
-    {qId:'ml_fill_01',text:['L2正則化のコスト関数 L = L₀ + λ·','（罰則項）。'],blanks:[{ans:'Σwᵢ²',h:'重みの2乗和'}],exp:'L2は重みの二乗和。L1（絶対値和）と異なりスパースにならない。',tag:'正則化'},
-    {qId:'ml_fill_02',text:['シグモイド関数 σ(x) = ','。'],blanks:[{ans:'1/(1+e⁻ˣ)',h:'分母に指数関数'}],exp:'出力は(0,1)。導関数は σ(x)(1−σ(x))。二値分類の出力層。',tag:'ニューラルネット'},
-    {qId:'ml_fill_03',text:['ソフトマックス softmax(zᵢ) = ','（クラス i の確率）。'],blanks:[{ans:'eᶻⁱ/Σeᶻʲ',h:'指数の比'}],exp:'全クラスの確率の和が1になる。多クラス分類の出力層の標準。',tag:'ニューラルネット'},
-    {qId:'ml_fill_04',text:['バックプロパゲーションは ','則を再帰的に適用して勾配を計算する。'],blanks:[{ans:'連鎖（チェーン）',h:'微積分の定理名'}],exp:'出力層→入力層へ連鎖律を使って逆向きに勾配を伝播する。',tag:'ニューラルネット'},
-    {qId:'ml_fill_05',text:['SVM の主目的はクラス間の ','を最大化することである。'],blanks:[{ans:'マージン',h:'余白・間隔'}],exp:'最大マージン分離超平面を求める。マージン=2/||w||。',tag:'カーネル法'},
-    {qId:'ml_fill_06',text:['精度 Precision = TP / (TP + ',')。'],blanks:[{ans:'FP',h:'偽陽性'}],exp:'Precision=正と予測したうちの正解。Recall=TP/(TP+FN)。',tag:'評価指標'},
-    {qId:'ml_fill_07',text:['ROC曲線の AUC が ','に近いほど性能が高い。'],blanks:[{ans:'1',h:'最大値'}],exp:'AUC=1.0が完璧。0.5はランダム。クラス不均衡でも有効。',tag:'評価指標'},
-    {qId:'ml_fill_08',text:['BOCPD は ','的フレームワークを使用する変化点検出手法。'],blanks:[{ans:'ベイズ',h:'推定の流派'}],exp:'Bayesian Online Changepoint Detection：ランレングスの事後分布を逐次更新。',tag:'変化点検出'},
-    {qId:'ml_fill_09',text:['ドロップアウトは学習時にニューロンを確率 p で ','する正則化手法。'],blanks:[{ans:'無効化',h:'止める・切る'}],exp:'アンサンブル効果。テスト時は全ニューロン使用。',tag:'正則化'},
-    {qId:'ml_fill_10',text:['k-means はクラスタの ','を繰り返し更新する。'],blanks:[{ans:'重心（セントロイド）',h:'中心点'}],exp:'①最近傍クラスタ割り当て→②重心再計算→収束まで繰り返す。',tag:'最適化'},
-  ],
-  pr:[
-    {qId:'pr_fill_01',text:['独立事象 A, B について P(A∩B) = P(A) × ','。'],blanks:[{ans:'P(B)',h:'もう一方の確率'}],exp:'独立性の定義：P(A∩B)=P(A)P(B)。',tag:'確率変数'},
-    {qId:'pr_fill_02',text:['N(0,1) の平均は ','、分散は ','。'],blanks:[{ans:'0',h:'平均値'},{ans:'1',h:'分散値'}],exp:'標準化：Z=(X−μ)/σ で任意の正規分布を N(0,1) に変換できる。',tag:'分布'},
-    {qId:'pr_fill_03',text:['二項分布 B(n,p) の平均は ','、分散は ','。'],blanks:[{ans:'np',h:'n と p の積'},{ans:'np(1-p)',h:'npと1-p'}],exp:'B(n,p)の平均=np、分散=np(1-p)。',tag:'分布'},
-    {qId:'pr_fill_04',text:['Var(X) = E[X²] − ','。'],blanks:[{ans:'(E[X])²',h:'期待値の2乗'}],exp:'計算に便利な公式。Var(X)=E[(X-μ)²]を展開すると導ける。',tag:'確率変数'},
-    {qId:'pr_fill_05',text:['マルコフ不等式：P(X ≥ a) ≤ ','/a。'],blanks:[{ans:'E[X]',h:'期待値'}],exp:'P(X≥a)≤E[X]/a（X≥0）。チェビシェフ不等式の導出に使う。',tag:'不等式'},
-    {qId:'pr_fill_06',text:['μ±2σ の範囲に全体の約 ','% が含まれる（正規分布）。'],blanks:[{ans:'95',h:'68-?-99.7'}],exp:'68-95-99.7 ルール。仮説検定の有意水準 5% と対応。',tag:'分布'},
-    {qId:'pr_fill_07',text:['ポアソン分布 P(λ) の期待値は ','、分散も ','。'],blanks:[{ans:'λ',h:'パラメータ'},{ans:'λ',h:'同じ'}],exp:'平均=分散=λ がポアソン分布の特徴。',tag:'分布'},
-    {qId:'pr_fill_08',text:['正規分布での μ の MLE は標本 ','に一致する。'],blanks:[{ans:'平均（x̄）',h:'統計量の名前'}],exp:'N(μ,σ²)の μ の MLE = 標本平均。σ²のMLEは（不偏でない）標本分散。',tag:'推定'},
-    {qId:'pr_fill_09',text:['チェビシェフ：P(|X−μ| ≥ kσ) ≤ ','。'],blanks:[{ans:'1/k²',h:'k の何乗かの逆数'}],exp:'k=2なら P≤25%。どんな分布でも成立する強力な不等式。',tag:'不等式'},
-    {qId:'pr_fill_10',text:['指数分布 Exp(λ) の pdf は f(x) = λ·','（x≥0）。'],blanks:[{ans:'e⁻ˡˣ',h:'指数関数'}],exp:'ポアソン過程の待ち時間の分布。平均=1/λ。無記憶性を持つ。',tag:'分布'},
-  ]
-};
-
-const EX = {
-  la:[
-    {qId:'la_ex_01',q:'[[3,1],[0,2]] の固有値をすべて求めよ。',tag:'固有値',opts:['λ=3, λ=2','λ=1, λ=6','λ=5, λ=0','λ=2, λ=2'],ans:0,exp:'上三角行列の固有値は対角成分。(3-λ)(2-λ)=0 → λ=3, 2。'},
-    {qId:'la_ex_02',q:'[[a,b],[c,d]] の行列式は？',tag:'行列式',opts:['ab-cd','ad-bc','ac+bd','a+d'],ans:1,exp:'2×2行列式 = ad-bc。例：[[1,2],[3,4]] → 4-6 = -2。'},
-    {qId:'la_ex_03',q:'A=[[2,0],[0,3]] のとき A² は？',tag:'行列演算',opts:['[[4,0],[0,9]]','[[4,0],[0,6]]','[[2,0],[0,9]]','[[4,9],[0,0]]'],ans:0,exp:'対角行列のべき乗は各対角成分をべき乗。[[4,0],[0,9]]。'},
-    {qId:'la_ex_04',q:'[1,0,0],[0,1,0],[0,0,1] の集合は？',tag:'直交化',opts:['正規直交基底','線形従属な集合','零空間の基底','固有ベクトルの集合'],ans:0,exp:'互いに直交・ノルム=1 → 正規直交基底（R³の標準基底）。'},
-    {qId:'la_ex_05',q:'3×3 行列で rank(A)=2 のとき nullity は？',tag:'次元定理',opts:['0','1','2','3'],ans:1,exp:'次元定理：rank+nullity=n(3) → nullity=1。'},
-    {qId:'la_ex_06',q:'Ax=b が一意解を持つ条件（正方行列）は？',tag:'行列演算',opts:['det(A)=0','rank(A)=n','A が対角行列','b=0'],ans:1,exp:'det≠0 ⟺ rank=n ⟺ 逆行列が存在 → 唯一の解 x=A⁻¹b。'},
-    {qId:'la_ex_07',q:'trace(A) と固有値の関係は？',tag:'固有値',opts:['trace=固有値の積','trace=固有値の和','trace=最大固有値','trace=最小固有値'],ans:1,exp:'trace=Σλᵢ。det=Πλᵢ。両方重要な不変量。'},
-    {qId:'la_ex_08',q:'SVD で AᵀA の固有値と Σ の関係は？',tag:'SVD',opts:['固有値=対角成分','固有値=対角成分²','固有値=√Σ','無関係'],ans:1,exp:'特異値σᵢ=√(AᵀAの固有値λᵢ)。AᵀAの固有値=σᵢ²。'},
-    {qId:'la_ex_09',q:'v=[3,4] のノルム ||v|| は？',tag:'行列演算',opts:['5','7','12','25'],ans:0,exp:'||v||=√(9+16)=√25=5。3-4-5の直角三角形。'},
-    {qId:'la_ex_10',q:'正定値行列の条件として正しいのは？',tag:'正定値行列',opts:['全固有値が負','全固有値が正','det=0','対称でない'],ans:1,exp:'正定値↔全固有値>0↔∀x≠0: xᵀAx>0。半正定値は≥0。'},
-    {qId:'la_ex_11',q:'A=[[0,1],[-1,0]] の固有値は？',tag:'固有値',opts:['±1','±i','0と1','実数のみ'],ans:1,exp:'det(A-λI)=λ²+1=0 → λ=±i。実対称行列でないので複素固有値を持つ。'},
-    {qId:'la_ex_12',q:'半正定値行列 A の固有値はすべて？',tag:'正定値行列',opts:['正','負','ゼロ以上','ゼロ以下'],ans:2,exp:'半正定値（PSD）：∀x: xᵀAx≥0 ⟺ 全固有値≥0。'},
-  ],
-  ca:[
-    {qId:'ca_ex_01',q:'f(x)=x³ の導関数は？',tag:'微分',opts:['3x²','x²','3x','x³/3'],ans:0,exp:'べき乗則：d/dx[xⁿ]=nxⁿ⁻¹ → 3x²。'},
-    {qId:'ca_ex_02',q:'∫₀¹ 2x dx の値は？',tag:'積分',opts:['1','2','4','0'],ans:0,exp:'[x²]₀¹ = 1-0 = 1。'},
-    {qId:'ca_ex_03',q:'f(x)=eˣ の導関数は？',tag:'微分',opts:['eˣ','xeˣ⁻¹','eˣ⁺¹','e'],ans:0,exp:'eˣ は微分しても変わらない唯一の関数。'},
-    {qId:'ca_ex_04',q:'lim(x→0) sin(x)/x = ?',tag:'極限',opts:['0','1','∞','不定'],ans:1,exp:'テイラー展開より sin(x)/x → 1。'},
-    {qId:'ca_ex_05',q:'f(x)=ln(x) の導関数は？',tag:'微分',opts:['1/x','ln(x)/x','1/x²','x·ln(x)'],ans:0,exp:'d/dx[lnx]=1/x。'},
-    {qId:'ca_ex_06',q:'積の微分法則 (fg)\' は？',tag:'微分',opts:['f\'g\'','f\'g + fg\'','f\'g - fg\'','(f\'+g\')/fg'],ans:1,exp:'ライプニッツ則：(fg)\'=f\'g+fg\'。'},
-    {qId:'ca_ex_07',q:'∫ 1/x dx =（x>0）',tag:'積分',opts:['ln x + C','x⁻²+C','1+C','eˣ+C'],ans:0,exp:'∫(1/x)dx=ln|x|+C。べき乗則の例外。'},
-    {qId:'ca_ex_08',q:'f(x,y)=x²y³ のとき ∂f/∂y は？',tag:'多変数',opts:['2xy³','3x²y²','x²y²','2xy²'],ans:1,exp:'x を定数として y で微分：x²·3y²=3x²y²。'},
-    {qId:'ca_ex_09',q:'ガウス積分 ∫₋∞^∞ e⁻ˣ² dx の値は？',tag:'積分',opts:['1','π','√π','2π'],ans:2,exp:'√π。正規分布の正規化定数の根拠。'},
-    {qId:'ca_ex_10',q:'ロールの定理が成立する条件は？',tag:'微分',opts:['f が単調増加','f が連続かつ f(a)=f(b)','f(a)>f(b)','f が定数'],ans:1,exp:'ロールの定理：[a,b]で連続・(a,b)で微分可能・f(a)=f(b) → ある c で f\'(c)=0。'},
-    {qId:'ca_ex_11',q:'f(x) = x·sin(x) の導関数は？',tag:'微分',opts:['sin(x)','cos(x)','sin(x)+x·cos(x)','x·cos(x)'],ans:2,exp:'積の微分則：(fg)\'=f\'g+fg\' → sin(x)+x·cos(x)。'},
-    {qId:'ca_ex_12',q:'∫ x·eˣ dx を求めよ。',tag:'積分',opts:['eˣ+C','(x-1)eˣ+C','(x+1)eˣ+C','xeˣ+C'],ans:1,exp:'部分積分：∫xeˣdx = xeˣ - ∫eˣdx = xeˣ - eˣ = (x-1)eˣ+C。'},
-  ],
-  ml:[
-    {qId:'ml_ex_01',q:'L2正則化（Ridge）の罰則項は？',tag:'正則化',opts:['λΣ|wᵢ|','λΣwᵢ²','λmax|wᵢ|','λΣwᵢ'],ans:1,exp:'L2は二乗和。L1（Lasso）は絶対値和でスパース解を生む。'},
-    {qId:'ml_ex_02',q:'高バイアスが示す問題は？',tag:'正則化',opts:['過学習','underfitting（未学習）','分散が大きい','訓練誤差が小さい'],ans:1,exp:'高バイアス=モデルが単純すぎてデータを学習できない underfitting。'},
-    {qId:'ml_ex_03',q:'ガウシアンカーネルの σ を大きくすると？',tag:'カーネル法',opts:['境界が複雑','境界が滑らか','過学習する','変わらない'],ans:1,exp:'σ大=広い影響範囲=滑らかな境界=高バイアス・低バリアンス。'},
-    {qId:'ml_ex_04',q:'PELT アルゴリズムの計算量は？',tag:'変化点検出',opts:['O(n)','O(n log n)','O(n²)','O(2ⁿ)'],ans:1,exp:'剪定（Pruning）により O(n log n) を実現。'},
-    {qId:'ml_ex_05',q:'ランダムフォレストの手法は？',tag:'正則化',opts:['ブースティング','バギング+ランダム特徴量','グラジェントブースティング','スタッキング'],ans:1,exp:'バギング（ブートストラップ）＋各分岐でランダム特徴量サブセットを使用。'},
-    {qId:'ml_ex_06',q:'バッチ正規化（BN）の主な効果は？',tag:'ニューラルネット',opts:['過学習を増やす','学習の安定化・高速化','モデルを小さくする','学習率を固定'],ans:1,exp:'各層の入力を正規化→内部共変量シフト軽減→学習安定化+大きな学習率が使える。'},
-    {qId:'ml_ex_07',q:'Transformer の Attention スコア計算式は？',tag:'深層学習',opts:['Q·K/d','QKᵀ/√d','Q+K/d','||Q-K||/d'],ans:1,exp:'Scaled Dot-Product Attention: QKᵀ/√d。√dで割ることで勾配消失を防ぐ。'},
-    {qId:'ml_ex_08',q:'FP（False Positive）とは？',tag:'評価指標',opts:['正を正と予測','負を負と予測','負を正と予測','正を負と予測'],ans:2,exp:'FP（偽陽性）：実際は陰性なのに陽性と予測。例：スパムでない→スパム判定。'},
-    {qId:'ml_ex_09',q:'勾配降下法で学習率 η が大きすぎると？',tag:'最適化',opts:['収束が遅くなる','発散する可能性がある','過学習する','正則化が不要になる'],ans:1,exp:'η が大きすぎると損失が振動・発散する。小さすぎると収束が遅い。'},
-    {qId:'ml_ex_10',q:'BOCPD の「ランレングス（Run Length）」とは？',tag:'変化点検出',opts:['モデルのパラメータ数','最後の変化点からの時刻数','ハイパーパラメータ','ウィンドウサイズ'],ans:1,exp:'ランレングス r_t = 最後の変化点から時刻 t までの時間。BOCPDはこの事後分布を逐次更新する。'},
-    {qId:'ml_ex_11',q:'CUSUM 統計量の更新式は？',tag:'変化点検出',opts:['Sₜ = Sₜ₋₁ + xₜ','Sₜ = max(0, Sₜ₋₁ + xₜ − k)','Sₜ = Sₜ₋₁ · xₜ','Sₜ = min(Sₜ₋₁, xₜ)'],ans:1,exp:'CUSUM: Sₜ=max(0, Sₜ₋₁+xₜ−k)。k は基準値。Sₜ がしきい値を超えると変化点と判定。'},
-    {qId:'ml_ex_12',q:'VC次元とは何を表すか？',tag:'カーネル法',opts:['訓練データ数','モデルが完全に分離できる点の最大数','隠れ層のニューロン数','カーネルの次元'],ans:1,exp:'VC次元：モデルが任意の配置で「粉砕（shatter）」できる点の最大数。汎化誤差の理論的上界に使われる。'},
-  ],
-  pr:[
-    {qId:'pr_ex_01',q:'コインを3回投げて全て表の確率は？',tag:'確率変数',opts:['1/8','1/4','1/6','3/8'],ans:0,exp:'独立試行。P=(1/2)³=1/8。'},
-    {qId:'pr_ex_02',q:'N(0,1) の平均と分散は？',tag:'分布',opts:['平均0・分散1','平均1・分散0','平均0・分散2','平均1・分散1'],ans:0,exp:'標準正規分布：μ=0、σ²=1。'},
-    {qId:'pr_ex_03',q:'独立な A, B において P(A∩B) は？',tag:'確率変数',opts:['P(A)+P(B)','P(A)×P(B)','P(A|B)','P(A)+P(B)-P(A∪B)'],ans:1,exp:'独立の定義：P(A∩B)=P(A)P(B)。'},
-    {qId:'pr_ex_04',q:'Var(X) の単位は元データと比べて？',tag:'確率変数',opts:['同じ','二乗','平方根','1/2乗'],ans:1,exp:'E[(X-μ)²]→単位が二乗。σ=√Var(X)で元の単位に戻る。'},
-    {qId:'pr_ex_05',q:'ベイズ推定での「事後確率」とは？',tag:'ベイズ',opts:['実験前の信念','観測後に更新された確率','最尤推定量','周辺確率'],ans:1,exp:'P(θ|X) ∝ P(X|θ)·P(θ)（尤度×事前確率）。'},
-    {qId:'pr_ex_06',q:'二項分布 B(n,p) の平均は？',tag:'分布',opts:['np(1-p)','np','n/p','√np'],ans:1,exp:'平均=np、分散=np(1-p)。コイン10回(p=0.5)→平均5回。'},
-    {qId:'pr_ex_07',q:'チェビシェフ P(|X-μ|≥kσ) ≤ ?',tag:'不等式',opts:['k²','1/k','1/k²','k/2'],ans:2,exp:'1/k²。k=2なら P≤25%。どんな分布でも成立。'},
-    {qId:'pr_ex_08',q:'一様分布 U(a,b) の期待値は？',tag:'確率変数',opts:['(a+b)/2','(b-a)/2','ab','(b-a)²/12'],ans:0,exp:'(a+b)/2（中点）。分散=(b-a)²/12。'},
-    {qId:'pr_ex_09',q:'CLT で n を大きくすると標本平均の分布は？',tag:'極限定理',opts:['一様分布','元の分布と同じ','正規分布に近づく','指数分布'],ans:2,exp:'X̄ ～ N(μ, σ²/n)。母分布の形状によらない。'},
-    {qId:'pr_ex_10',q:'尤度比検定の漸近分布は（大標本）？',tag:'推定',opts:['F分布','カイ二乗分布','t分布','ベータ分布'],ans:1,exp:'-2log(尤度比)→χ²(k)（Wilksの定理）。モデル選択・仮説検定に使用。'},
-    {qId:'pr_ex_11',q:'CLT で n=100、μ=5、σ=2 のとき X̄ の標準偏差は？',tag:'極限定理',opts:['2','0.2','20','0.02'],ans:1,exp:'標本平均の標準偏差 = σ/√n = 2/√100 = 0.2。'},
-    {qId:'pr_ex_12',q:'KL ダイバージェンス KL(P||Q) の定義は？',tag:'ベイズ',opts:['Σpᵢlog(pᵢ/qᵢ)','Σ|pᵢ-qᵢ|','√Σ(pᵢ-qᵢ)²','ΣpᵢqI'],ans:0,exp:'KL(P||Q)=Σpᵢlog(pᵢ/qᵢ)。非対称。P=Qのとき0。交差エントロピーH(P,Q)=H(P)+KL(P||Q)。'},
-  ]
-};
-
-const QUIZZES = {
-  la:{
-    lv1:{label:'Lv.1 基礎',questions:[
-      {q:'[[1,2],[3,4]] の行列式は？',tag:'行列式',opts:['2','−2','10','−10'],ans:1,exp:'ad-bc = 1×4-2×3 = -2。'},
-      {q:'v=[1,0,0] と w=[0,1,0] の内積は？',tag:'行列演算',opts:['0','1','√2','不定'],ans:0,exp:'1×0+0×1+0×0=0。直交している。'},
-      {q:'固有値が 3, -1 のとき trace(A) は？',tag:'固有値',opts:['3','-1','2','-3'],ans:2,exp:'trace = 3+(−1) = 2。'},
-      {q:'[[2,0],[0,3]] の固有値は？',tag:'固有値',opts:['2と3','5と1','6と0','-2と-3'],ans:0,exp:'対角行列の固有値は対角成分。'},
-      {q:'直交行列 Q の性質は？',tag:'行列演算',opts:['Q²=I','QQᵀ=I','det(Q)=0','Qᵀ=Q'],ans:1,exp:'QQᵀ=QᵀQ=I。'},
-    ]},
-    lv2:{label:'Lv.2 応用',questions:[
-      {q:'3×3 行列 A の rank=2 のとき det(A) は？',tag:'行列式',opts:['0','1','2','不定'],ans:0,exp:'rank<n → det(A)=0（特異行列）。'},
-      {q:'A の固有値が 2, 3, 5 のとき det(A) は？',tag:'固有値',opts:['10','30','15','不定'],ans:1,exp:'det = 固有値の積 = 2×3×5 = 30。'},
-      {q:'SVD で A の階数（rank）は何で決まる？',tag:'SVD',opts:['U の列数','正の特異値の数','V の列数','Σ の行数'],ans:1,exp:'rank(A) = 正の特異値（非零特異値）の数。'},
-      {q:'n×n 対称行列の固有ベクトルは常に？',tag:'固有値',opts:['複素数になる','直交基底をなす','1つしかない','ゼロになる'],ans:1,exp:'スペクトル定理：実対称行列は直交行列で対角化可能。'},
-      {q:'v=[1,1]/√2, w=[1,-1]/√2 の内積は？',tag:'行列演算',opts:['0','1','√2','2'],ans:0,exp:'(1×1+1×(-1))/2 = 0/2 = 0。正規直交ベクトル。'},
-    ]},
-    lv3:{label:'Lv.3 難問',questions:[
-      {q:'A=[[0,1],[-1,0]] の固有値は？',tag:'固有値',opts:['±1','±i','0と1','1と-1'],ans:1,exp:'det(A-λI)=λ²+1=0 → λ=±i。実対称行列でないので複素固有値を持つ。'},
-      {q:'行列 A のすべての特異値が等しい σ のとき ||A||_F は？',tag:'SVD',opts:['σ','σ√r（r=rank）','σr','σ²r'],ans:1,exp:'フロベニウスノルム ||A||_F = √(Σσᵢ²) = σ√r。'},
-      {q:'A,B が可換（AB=BA）なら A,B は同時に？',tag:'固有値',opts:['逆行列を持つ','対角化可能','直交行列','対角化可能（同一基底で）'],ans:3,exp:'AB=BA ⟺ A と B は同時対角化可能（同じ固有ベクトルを持つ）。'},
-      {q:'半正定値行列の固有値はすべて？',tag:'正定値行列',opts:['正','負','ゼロ以上','実数'],ans:2,exp:'半正定値（PSD）：∀x: xᵀAx≥0 ⟺ 全固有値≥0。'},
-      {q:'擬似逆行列 A⁺ はどのような行列に使われるか？',tag:'SVD',opts:['正則行列のみ','非正則行列・非正方行列','対称行列のみ','直交行列のみ'],ans:1,exp:'擬似逆行列（Moore-Penrose逆行列）はランクが低い行列・非正方行列の「最小ノルム最小二乗解」を求めるのに使う。'},
-    ]},
-  },
-  ca:{
-    lv1:{label:'Lv.1 基礎',questions:[
-      {q:'f(x)=x³ の導関数は？',tag:'微分',opts:['3x²','x²','3x','x³/3'],ans:0,exp:'べき乗則：3x²。'},
-      {q:'∫₀¹ 2x dx の値は？',tag:'積分',opts:['1','2','4','0'],ans:0,exp:'[x²]₀¹=1。'},
-      {q:'eˣ の導関数は？',tag:'微分',opts:['eˣ','xeˣ⁻¹','eˣ⁺¹','e'],ans:0,exp:'eˣ は微分しても変わらない。'},
-      {q:'lim(x→0) sin(x)/x = ?',tag:'極限',opts:['0','1','∞','不定'],ans:1,exp:'テイラー展開より1。'},
-      {q:'ln(x) の導関数は？',tag:'微分',opts:['1/x','ln(x)/x','1/x²','x·ln(x)'],ans:0,exp:'d/dx[lnx]=1/x。'},
-    ]},
-    lv2:{label:'Lv.2 応用',questions:[
-      {q:'f(x) = x·sin(x) の導関数は？',tag:'微分',opts:['sin(x)','cos(x)','sin(x)+x·cos(x)','x·cos(x)'],ans:2,exp:'積の微分則 → sin(x)+x·cos(x)。'},
-      {q:'∫ x·eˣ dx を求めよ。',tag:'積分',opts:['eˣ+C','(x-1)eˣ+C','(x+1)eˣ+C','xeˣ+C'],ans:1,exp:'部分積分：xeˣ - eˣ = (x-1)eˣ+C。'},
-      {q:'f(x)=ln(x²+1) の導関数は？',tag:'微分',opts:['1/(x²+1)','2x/(x²+1)','2/(x²+1)','x²/(x²+1)'],ans:1,exp:'連鎖律：(1/u)×2x = 2x/(x²+1)。'},
-      {q:'y = e^(sin x) の dy/dx は？',tag:'微分',opts:['e^(sin x)','cos(x)·e^(sin x)','sin(x)·e^(sin x)','e^(cos x)'],ans:1,exp:'連鎖律：e^(sinx) × cos(x)。'},
-      {q:'f(x,y)=xy のとき ∂²f/∂x∂y は？',tag:'多変数',opts:['0','1','x','y'],ans:1,exp:'∂/∂x[xy]=y → ∂/∂y[y]=1。混合偏微分。'},
-    ]},
-    lv3:{label:'Lv.3 難問',questions:[
-      {q:'∫₀^∞ e⁻ˣ dx の値は？',tag:'積分',opts:['0','1','∞','e'],ans:1,exp:'[-e⁻ˣ]₀^∞ = 0 - (-1) = 1。指数分布の正規化定数。'},
-      {q:'eˣ ≈ 1+x+x²/2! の近似の誤差オーダーは？',tag:'微分',opts:['O(x)','O(x²)','O(x³)','O(x⁴)'],ans:2,exp:'2次近似なので残差は x³/3! のオーダー。O(x³)。'},
-      {q:'∇²f（ラプラシアン）の定義は？',tag:'多変数',opts:['∂f/∂x + ∂f/∂y','(∂f/∂x)² + (∂f/∂y)²','∂²f/∂x² + ∂²f/∂y²','∂²f/∂x∂y'],ans:2,exp:'ラプラシアン = ∂²f/∂x² + ∂²f/∂y²（2変数の場合）。'},
-      {q:'制約 x²+y²=1 のもとで f(x,y)=x²+y² の最小値は？',tag:'最適化',opts:['0（不可）','1（全点同値）','1/2','存在しない'],ans:1,exp:'制約 x²+y²=1 上では f=x²+y²=1 で常に1。'},
-      {q:'スティルチェス積分の用途は？',tag:'積分',opts:['複素積分','離散と連続を統一した積分','行列の積分','極座標変換'],ans:1,exp:'∫f dg：g が離散・連続・混合いずれの場合も統一的に扱える積分。確率論の基礎。'},
-    ]},
-  },
-  ml:{
-    lv1:{label:'Lv.1 基礎',questions:[
-      {q:'L2正則化の罰則項は？',tag:'正則化',opts:['λΣ|wᵢ|','λΣwᵢ²','λmax|wᵢ|','λΣwᵢ'],ans:1,exp:'L2は重みの二乗和。'},
-      {q:'高バイアスが示す問題は？',tag:'正則化',opts:['過学習','underfitting','分散が大きい','訓練誤差が小さい'],ans:1,exp:'高バイアス=underfitting。'},
-      {q:'ガウシアンカーネルの σ を大きくすると？',tag:'カーネル法',opts:['境界が複雑','境界が滑らか','過学習','変わらない'],ans:1,exp:'σ大=滑らかな境界=高バイアス・低バリアンス。'},
-      {q:'PELT の計算量は？',tag:'変化点検出',opts:['O(n)','O(n log n)','O(n²)','O(2ⁿ)'],ans:1,exp:'O(n log n)。'},
-      {q:'FP（False Positive）とは？',tag:'評価指標',opts:['正を正と予測','負を負と予測','負を正と予測','正を負と予測'],ans:2,exp:'実際は陰性なのに陽性と予測。'},
-    ]},
-    lv2:{label:'Lv.2 応用',questions:[
-      {q:'勾配降下法で学習率 η が大きすぎると？',tag:'最適化',opts:['収束が遅くなる','発散する可能性がある','過学習する','正則化が不要になる'],ans:1,exp:'η が大きすぎると損失が振動・発散する。'},
-      {q:'Leaky ReLU の定義は？',tag:'ニューラルネット',opts:['max(x,0)','max(αx, x)','min(αx, x)','|x|'],ans:1,exp:'Leaky ReLU(x)=x(x>0), αx(x≤0)。Dying ReLU を防ぐ。'},
-      {q:'バッチ正規化はどの位置に挿入するのが一般的か？',tag:'ニューラルネット',opts:['入力層の前','Linear/Conv層の後・活性化前','出力層の後','損失関数の後'],ans:1,exp:'一般的にLinear/Conv の後・ReLUなどの前（または後）に挿入。'},
-      {q:'アンサンブル学習でバリアンスを下げる方法は？',tag:'正則化',opts:['ブースティング','バギング（Bagging）','スタッキング','L2正則化'],ans:1,exp:'バギング：独立した複数モデルの平均でバリアンスを低減。'},
-      {q:'BOCPD の「ランレングス」とは？',tag:'変化点検出',opts:['モデルのパラメータ数','最後の変化点からの時刻数','ハイパーパラメータ','ウィンドウサイズ'],ans:1,exp:'r_t = 最後の変化点から時刻 t までの時間。BOCPDはこの事後分布を逐次更新する。'},
-    ]},
-    lv3:{label:'Lv.3 難問',questions:[
-      {q:'VC次元とは何を表すか？',tag:'カーネル法',opts:['訓練データ数','モデルが完全に分離できる点の最大数','隠れ層のニューロン数','カーネルの次元'],ans:1,exp:'VC次元：モデルが任意の配置で「粉砕（shatter）」できる点の最大数。汎化誤差の理論的上界に使われる。'},
-      {q:'カーネル SVM の双対問題の目的関数は？',tag:'カーネル法',opts:['重み w の最小化','ラグランジュ乗数 α の最大化','マージンの最小化','損失の最小化'],ans:1,exp:'双対問題：max Σαᵢ - (1/2)Σαᵢαⱼyᵢyⱼκ(xᵢ,xⱼ)。αᵢ>0のサンプルがサポートベクター。'},
-      {q:'CUSUM 統計量の更新式は？',tag:'変化点検出',opts:['Sₜ = Sₜ₋₁ + xₜ','Sₜ = max(0, Sₜ₋₁ + xₜ − k)','Sₜ = Sₜ₋₁ · xₜ','Sₜ = min(Sₜ₋₁, xₜ)'],ans:1,exp:'CUSUM: Sₜ=max(0, Sₜ₋₁+xₜ−k)。k は基準値。Sₜ がしきい値を超えると変化点と判定。'},
-      {q:'Transformer Self-Attention の計算量は？',tag:'深層学習',opts:['O(n)','O(n log n)','O(n²)','O(n²d)'],ans:3,exp:'n=系列長、d=次元。QKᵀ の計算が O(n²d)。長い系列が非効率な理由。'},
-      {q:'エントロピー H(X) の最大値は？（n クラス）',tag:'ベイズ',opts:['0','log n','n','1'],ans:1,exp:'H(X) = -Σpᵢlogpᵢ。最大値はpᵢ=1/n（一様分布）のとき log n。'},
-    ]},
-  },
-  pr:{
-    lv1:{label:'Lv.1 基礎',questions:[
-      {q:'コインを3回投げて全て表の確率は？',tag:'確率変数',opts:['1/8','1/4','1/6','3/8'],ans:0,exp:'(1/2)³=1/8。'},
-      {q:'N(0,1) の平均と分散は？',tag:'分布',opts:['平均0・分散1','平均1・分散0','平均0・分散2','平均1・分散1'],ans:0,exp:'標準正規分布：μ=0、σ²=1。'},
-      {q:'独立な A, B において P(A∩B) は？',tag:'確率変数',opts:['P(A)+P(B)','P(A)×P(B)','P(A|B)','P(A)+P(B)-P(A∪B)'],ans:1,exp:'P(A∩B)=P(A)P(B)。'},
-      {q:'Var(X) の単位は元データと比べて？',tag:'確率変数',opts:['同じ','二乗','平方根','1/2乗'],ans:1,exp:'E[(X-μ)²]→単位が二乗。'},
-      {q:'ベイズの「事後確率」とは？',tag:'ベイズ',opts:['実験前の信念','観測後に更新された確率','最尤推定量','周辺確率'],ans:1,exp:'P(θ|X) ∝ P(X|θ)·P(θ)。'},
-    ]},
-    lv2:{label:'Lv.2 応用',questions:[
-      {q:'n=100、μ=5、σ=2 のとき X̄ の標準偏差は？',tag:'極限定理',opts:['2','0.2','20','0.02'],ans:1,exp:'σ/√n = 2/√100 = 0.2。'},
-      {q:'Cov(X,Y) = 0 とは何を意味するか？',tag:'確率変数',opts:['X, Y は独立','X, Y は無相関','X, Y は同分布','X, Y は従属'],ans:1,exp:'Cov=0 → 無相関。ただし無相関≠独立（独立なら無相関だが逆は成り立たない）。'},
-      {q:'N(μ,σ²) で P(X>μ+2σ) ≈ ?',tag:'分布',opts:['0.16','0.025','0.05','0.32'],ans:1,exp:'P(X>μ+2σ) ≈ 0.025（両側5%の片側）。'},
-      {q:'一致推定量（consistent estimator）の定義は？',tag:'推定',opts:['不偏推定量','n→∞ で真の値に収束する推定量','最尤推定量','最小分散推定量'],ans:1,exp:'一致性：n→∞ で推定量が確率収束して真のパラメータに近づく性質。'},
-      {q:'BIC（ベイズ情報量基準）の式は？',tag:'推定',opts:['-2logL + k','logL - k·log n','-2logL + k·log n','AIC/2'],ans:2,exp:'BIC = -2logL + k·log n（k=パラメータ数、n=データ数）。AICよりペナルティが大きい。'},
-    ]},
-    lv3:{label:'Lv.3 難問',questions:[
-      {q:'KL ダイバージェンス KL(P||Q) の定義は？',tag:'ベイズ',opts:['Σpᵢlog(pᵢ/qᵢ)','Σ|pᵢ-qᵢ|','√Σ(pᵢ-qᵢ)²','Σpᵢqᵢ'],ans:0,exp:'KL(P||Q)=Σpᵢlog(pᵢ/qᵢ)。非対称。P=Qのとき0。H(P,Q)=H(P)+KL(P||Q)。'},
-      {q:'MCMC の目的は？',tag:'ベイズ',opts:['最尤推定','分布からのサンプリング','確率変数の変換','仮説検定'],ans:1,exp:'解析的に積分できない複雑な事後分布からサンプルを得るためにマルコフ連鎖を利用。'},
-      {q:'フィッシャー情報量 I(θ) の定義は？',tag:'推定',opts:['E[logL]','E[(∂logL/∂θ)²]','Var(θ̂)','E[L(θ)]'],ans:1,exp:'I(θ)=E[(∂logL/∂θ)²]=-E[∂²logL/∂θ²]。クラメール-ラオ下界 Var(θ̂)≥1/I(θ) の根拠。'},
-      {q:'EM アルゴリズムの E ステップで何を求めるか？',tag:'推定',opts:['パラメータの最大化','潜在変数の事後期待値（Q関数）','尤度の微分','事前確率の更新'],ans:1,exp:'E ステップ：θ_old のもとで潜在変数 Z の事後分布を計算し Q(θ|θ_old)=E[logP(X,Z|θ)] を求める。'},
-      {q:'ガウス過程（GP）を一言で表すと？',tag:'ベイズ',opts:['関数の分布','点の分布','ベクトルの分布','行列の分布'],ans:0,exp:'GP は「関数の分布」。任意の有限集合の点での関数値が同時多変量正規分布に従う。'},
-    ]},
-  }
-};
-
-/* ══════════════════════════════════════
-   APP STATE
-══════════════════════════════════════ */
-let mode='flash', subj='la';
-let quizData={};
-let fc={}, fi={}, ex={}, aiEx={};
-let progressData={}, logEntries=[];
-let aiHistory=[];
-let aiGeneratedQuestions=[]; // pool of AI-generated questions for aigenerated mode
-const LEVELS=['lv1','lv2','lv3'];
-const LV_LABELS={lv1:'Lv.1 基礎',lv2:'Lv.2 応用',lv3:'Lv.3 難問'};
-
-/* ══════════════════════════════════════
-   FIREBASE LISTENERS
-══════════════════════════════════════ */
-const progressRef = ref(db,'progress');
-const logsRef     = ref(db,'logs');
-const streakRef   = ref(db,'streak');
-
-onValue(progressRef, s => { progressData=s.val()||{}; renderSubjects(); renderOverall(); });
-onValue(logsRef, s => { const d=s.val(); logEntries=d?Object.values(d).reverse():[]; renderLogs(); });
-onValue(streakRef, s => { const v=s.val(); document.getElementById('streak-count').textContent=v?(v.count||0):0; });
-
-/* ══════════════════════════════════════
-   COUNTDOWN
-══════════════════════════════════════ */
-function daysUntil(str){
-  const now=new Date(); now.setHours(0,0,0,0);
-  const t=new Date(str); t.setHours(0,0,0,0);
-  return Math.max(0,Math.ceil((t-now)/86400000));
-}
-document.getElementById('d-toeic').textContent=daysUntil('2026-05-17');
-document.getElementById('d-naist').textContent=daysUntil('2026-07-06');
-document.getElementById('d-kobe').textContent =daysUntil('2026-08-24');
-
-/* ══════════════════════════════════════
-   TABS
-══════════════════════════════════════ */
-window.switchTab = tab => {
-  const tabs=['plan','study','ai','analytics','review','log'];
-  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===tab));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  if(tab==='analytics') renderAnalytics();
-  if(tab==='review')    renderReview();
-  if(tab==='ai')        renderAIHistory();
-};
-
-/* ══════════════════════════════════════
-   PLAN — SUBJECTS
-══════════════════════════════════════ */
-function getCurrentLevel(k){
-  const c=(progressData[k]||{}).lvClears||{};
-  if(c.lv3) return null;
-  if(c.lv2) return 'lv3';
-  if(c.lv1) return 'lv2';
-  return 'lv1';
-}
-function getTotalClears(k){
-  const c=(progressData[k]||{}).lvClears||{};
-  return LEVELS.filter(l=>c[l]).length;
-}
-
-function renderSubjects(){
-  const g=document.getElementById('subj-grid'); g.innerHTML='';
-  Object.entries(SUBJECTS).forEach(([key,sub])=>{
-    const prog=progressData[key]||{correct:0,quizDone:0,lvClears:{}};
-    const done=prog.quizDone||0;
-    const cp=Math.round(done/sub.chapters.length*100);
-    const clears=getTotalClears(key);
-    const curLv=getCurrentLevel(key);
-    const lvBadge=curLv?`<div class="level-badge ${curLv}">${LV_LABELS[curLv]} に挑戦中</div>`:`<div class="level-badge lv3" style="background:var(--alight);color:#5C3FB8">全レベルクリア！</div>`;
-    const c=document.createElement('div');
-    c.className='subj-card '+sub.cls;
-    c.innerHTML=`<div class="sc-hd"><div><div class="sc-name">${sub.name}</div><div class="sc-chap">${sub.chapters[Math.min(done,sub.chapters.length-1)]}</div></div><div class="sc-pct">${cp}%</div></div><div class="prog-bar"><div class="prog-fill" style="width:${cp}%"></div></div><div class="sc-stats"><div class="stat"><strong>${done}/${sub.chapters.length}</strong>章完了</div><div class="stat"><strong>${clears}/3</strong>テスト</div></div>${lvBadge}${curLv?`<button class="quiz-btn" onclick="openQuiz('${key}')"><span>章末テスト ${LV_LABELS[curLv]}</span><span>→</span></button>`:''}`;
-    g.appendChild(c);
-  });
-  updateSchedule();
-}
-
-function renderOverall(){
-  let tc=0,td=0;
-  const tch=Object.values(SUBJECTS).reduce((a,s)=>a+s.chapters.length,0);
-  Object.entries(SUBJECTS).forEach(([k])=>{const p=progressData[k]||{};tc+=p.correct||0;td+=p.quizDone||0;});
-  const totalLvQ=Object.values(QUIZZES).reduce((a,sq)=>a+Object.values(sq).reduce((b,lv)=>b+lv.questions.length,0),0);
-  const pct=totalLvQ>0?Math.min(100,Math.round(tc/totalLvQ*100)):0;
-  document.getElementById('ov-pct').textContent=pct+'%';
-  document.getElementById('ov-bar').style.width=pct+'%';
-  document.getElementById('ov-done').textContent='完了 '+td+'章';
-  document.getElementById('ov-total').textContent='全 '+tch+'章';
-}
-
-function updateSchedule(){
-  const s=document.getElementById('plan-sched');
-  s.innerHTML=Object.entries(SUBJECTS).map(([k,sub])=>{
-    const done=(progressData[k]||{}).quizDone||0;
-    const next=sub.chapters[Math.min(done,sub.chapters.length-1)];
-    return`<div class="plan-row"><div class="pdot" style="background:${sub.dot}"></div><div class="ptxt">${sub.name}：${done<sub.chapters.length?'次は「'+next+'」':'全章完了！'}</div><span class="ptag ${done>=sub.chapters.length?'t-done':'t-next'}">${done}/${sub.chapters.length}</span></div>`;
-  }).join('');
-}
-
-/* ══════════════════════════════════════
-   STUDY PANEL
-══════════════════════════════════════ */
-window.setMode = (m,el)=>{
-  mode=m;
-  document.querySelectorAll('#mode-chips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  fc={}; fi={}; ex={}; aiEx={};
-  renderStudy();
-};
-window.setSubject = (s,el)=>{
-  subj=s;
-  document.querySelectorAll('#subj-chips .chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  fc={}; fi={}; ex={}; aiEx={};
-  renderStudy();
-};
-function renderStudy(){
-  if(mode==='flash')        renderFlash();
-  else if(mode==='fill')    renderFill();
-  else if(mode==='exercise') renderExercise();
-  else                      renderAIExercise();
-}
-
-/* FLASH */
-function renderFlash(){
-  if(!fc.s||fc.s!==subj) fc={s:subj,cards:[...FC[subj]],cur:0,flip:false,ok:0};
-  const ct=document.getElementById('study-content');
-  if(fc.cur>=fc.cards.length){
-    const p=Math.round(fc.ok/fc.cards.length*100);
-    ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${fc.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="r">${fc.cards.length-fc.ok}</strong>不正解</div></div><div class="res-card"><div class="res-score">${p}%</div><div class="res-sub">${fc.ok}/${fc.cards.length} 枚正解</div><div class="res-actions"><button class="restart-btn" onclick="resetFC()">もう一度</button></div></div>`;return;
-  }
-  const card=fc.cards[fc.cur];
-  ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${fc.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="a">${fc.cur+1}/${fc.cards.length}</strong>枚目</div></div><div class="fc-card ${fc.flip?'flipped':''}" onclick="flipFC()"><div><div class="fc-tag">${card.tag}</div><div class="${fc.flip?'fc-a':'fc-q'}">${(fc.flip?card.a:card.q).replace(/\n/g,'<br>')}</div><div class="fc-hint">${fc.flip?'← 問題に戻る':'タップで答えを表示'}</div></div></div>${fc.flip?`<div class="fc-acts"><button class="fc-btn wrong" onclick="fcAns(false)">✕ 不正解</button><button class="fc-btn skip" onclick="fcAns(null)">→ スキップ</button><button class="fc-btn ok" onclick="fcAns(true)">✓ 正解</button></div>`:''}<div class="fc-prog">${fc.cur+1} / ${fc.cards.length}</div>`;
-}
-window.flipFC=()=>{fc.flip=!fc.flip;renderFlash();};
-window.fcAns=ok=>{if(ok===true)fc.ok++;fc.cur++;fc.flip=false;renderFlash();};
-window.resetFC=()=>{fc={};renderFlash();};
-
-/* FILL */
-function renderFill(){
-  if(!fi.s||fi.s!==subj) fi={s:subj,items:[...FILL[subj]],cur:0,ok:0};
-  const ct=document.getElementById('study-content');
-  if(fi.cur>=fi.items.length){
-    const p=Math.round(fi.ok/fi.items.length*100);
-    ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${fi.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="r">${fi.items.length-fi.ok}</strong>不正解</div></div><div class="res-card"><div class="res-score">${p}%</div><div class="res-sub">${fi.ok}/${fi.items.length} 問正解</div><div class="res-actions"><button class="restart-btn" onclick="resetFI()">もう一度</button></div></div>`;return;
-  }
-  const item=fi.items[fi.cur];
-  let qh='';
-  item.text.forEach((part,i)=>{
-    qh+=part;
-    if(i<item.blanks.length){
-      const w=Math.max(60,item.blanks[i].ans.length*13)+'px';
-      qh+=`<input class="fill-in" id="b${i}" placeholder="${item.blanks[i].h}" style="width:${w}" onkeydown="if(event.key==='Enter')checkFI()">`;
-    }
-  });
-  ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${fi.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="a">${fi.cur+1}/${fi.items.length}</strong>問目</div><div class="sdiv"></div><div class="ss"><span class="timer-badge" id="fi-timer">0.0s</span></div></div><div class="fill-card"><div class="ex-num">穴埋め ${fi.cur+1}/${fi.items.length} <span style="color:var(--accent);font-size:10px">${item.tag}</span></div>${confHTML()}<div class="fill-q">${qh}</div><div class="f-acts"><button class="btn-p" onclick="checkFI()">答え合わせ</button><button class="btn-s" onclick="revealFI()">答えを見る</button><button class="btn-n" onclick="nextFI()">次の問題 →</button></div><div class="fill-fb" id="fi-fb"></div></div>`;
-  const inp=document.getElementById('b0'); if(inp)inp.focus();
-  startTimer();
-  fi._int=setInterval(()=>{const el=document.getElementById('fi-timer');if(el)el.textContent=((Date.now()-qStartTime)/1000).toFixed(1)+'s';},100);
-}
-window.checkFI=()=>{
-  clearInterval(fi._int);
-  const item=fi.items[fi.cur]; let ok=true;
-  const ms=elapsed();
-  item.blanks.forEach((b,i)=>{
-    const inp=document.getElementById('b'+i);if(!inp)return;
-    inp.disabled=true;
-    const ua=inp.value.trim().replace(/\s/g,'').toLowerCase();
-    const ca=b.ans.trim().replace(/\s/g,'').toLowerCase().replace(/[（）()]/g,'');
-    if(ua===ca||ca.includes(ua)&&ua.length>1||ua.includes(ca)&&ca.length>1){inp.classList.add('ci');}
-    else{inp.classList.add('wi');inp.value=b.ans;ok=false;}
-  });
-  if(ok) fi.ok++;
-  const fb=document.getElementById('fi-fb');
-  fb.className='fill-fb show '+(ok?'cfb':'wfb');
-  fb.textContent=(ok?`✓ 正解！（${(ms/1000).toFixed(1)}秒）　`:'解説：')+item.exp;
-  logAnswer({tag:item.tag,subj,correct:ok,ms,confidence:currentConf,qText:item.text.join('_'),qId:item.qId});
-};
-window.revealFI=()=>{
-  clearInterval(fi._int);
-  const item=fi.items[fi.cur];
-  item.blanks.forEach((b,i)=>{const inp=document.getElementById('b'+i);if(!inp)return;inp.disabled=true;inp.value=b.ans;inp.classList.add('ci');});
-  const fb=document.getElementById('fi-fb');fb.className='fill-fb show wfb';fb.textContent='解説：'+item.exp;
-};
-window.nextFI=()=>{clearInterval(fi._int);fi.cur++;renderFill();};
-window.resetFI=()=>{clearInterval(fi._int);fi={};renderFill();};
-
-/* EXERCISE */
-function renderExercise(){
-  if(!ex.s||ex.s!==subj) ex={s:subj,items:[...EX[subj]],cur:0,ok:0,ans:false};
-  const ct=document.getElementById('study-content');
-  if(ex.cur>=ex.items.length){
-    const p=Math.round(ex.ok/ex.items.length*100);
-    ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${ex.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="r">${ex.items.length-ex.ok}</strong>不正解</div></div><div class="res-card"><div class="res-score">${p}%</div><div class="res-sub">${ex.ok}/${ex.items.length} 問正解</div><div class="res-actions"><button class="restart-btn" onclick="resetEX()">もう一度</button></div></div>`;return;
-  }
-  const q=ex.items[ex.cur];
-  ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${ex.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="a">${ex.cur+1}/${ex.items.length}</strong>問目</div><div class="sdiv"></div><div class="ss"><span class="timer-badge" id="ex-timer">0.0s</span></div></div><div class="ex-card"><div class="ex-num">基礎演習 ${ex.cur+1}/${ex.items.length} <span style="color:var(--accent);font-size:10px">${q.tag}</span></div>${confHTML()}<div class="ex-q">${q.q}</div><div class="ex-opts">${q.opts.map((o,i)=>`<button class="ex-opt" onclick="ansEX(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="ex-exp" id="ex-exp"></div></div>`;
-  startTimer();
-  ex._int=setInterval(()=>{const el=document.getElementById('ex-timer');if(el)el.textContent=((Date.now()-qStartTime)/1000).toFixed(1)+'s';},100);
-}
-window.ansEX=idx=>{
-  if(ex.ans)return; ex.ans=true;
-  clearInterval(ex._int);
-  const ms=elapsed(), q=ex.items[ex.cur];
-  document.querySelectorAll('.ex-opt').forEach(o=>o.disabled=true);
-  const ok=idx===q.ans;
-  document.querySelectorAll('.ex-opt')[idx].classList.add(ok?'correct':'wrong');
-  if(!ok) document.querySelectorAll('.ex-opt')[q.ans].classList.add('correct');
-  else ex.ok++;
-  const ep=document.getElementById('ex-exp');
-  ep.textContent=(ok?`✓ 正解！（${(ms/1000).toFixed(1)}秒）　`:'解説：')+q.exp; ep.classList.add('show');
-  logAnswer({tag:q.tag,subj,correct:ok,ms,confidence:currentConf,qText:q.q,qId:q.qId});
-  setTimeout(()=>{ex.cur++;ex.ans=false;renderExercise();},2400);
-};
-window.resetEX=()=>{clearInterval(ex._int);ex={};renderExercise();};
-
-/* AI GENERATED EXERCISE MODE */
-function renderAIExercise(){
-  const ct=document.getElementById('study-content');
-  if(!aiGeneratedQuestions.length){
-    ct.innerHTML=`<div class="plan-box" style="text-align:center;padding:32px">
-      <div style="font-size:32px;margin-bottom:12px">🤖</div>
-      <div style="font-size:14px;font-weight:600;margin-bottom:8px">AI生成問題がありません</div>
-      <div style="font-size:13px;color:var(--text3);margin-bottom:16px">「AI類題」タブで問題を生成してください。<br>生成後、ここで解くことができます。</div>
-      <button class="btn-p" onclick="switchTab('ai')">AI類題タブへ →</button>
-    </div>`;
-    return;
-  }
-  if(!aiEx.items) aiEx={items:[...aiGeneratedQuestions],cur:0,ok:0,ans:false};
-  if(aiEx.cur>=aiEx.items.length){
-    const p=Math.round(aiEx.ok/aiEx.items.length*100);
-    ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${aiEx.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="r">${aiEx.items.length-aiEx.ok}</strong>不正解</div></div><div class="res-card"><div class="res-score">${p}%</div><div class="res-sub">${aiEx.ok}/${aiEx.items.length} 問正解</div><div class="res-actions"><button class="restart-btn" onclick="resetAIEx()">もう一度</button><button class="btn-s" onclick="aiEx={};aiGeneratedQuestions=[];renderAIExercise()">クリア</button></div></div>`;return;
-  }
-  const q=aiEx.items[aiEx.cur];
-  ct.innerHTML=`<div class="sbar"><div class="ss"><strong class="g">${aiEx.ok}</strong>正解</div><div class="sdiv"></div><div class="ss"><strong class="a">${aiEx.cur+1}/${aiEx.items.length}</strong>問目</div><div class="sdiv"></div><div class="ss"><span class="timer-badge" id="ai-ex-timer">0.0s</span></div></div><div class="ex-card"><div class="ex-num">🤖 AI生成 <span style="color:var(--accent);font-size:10px">${q.tag||'AI生成'}</span></div>${confHTML()}<div class="ex-q">${q.q}</div><div class="ex-opts">${q.opts.map((o,i)=>`<button class="ex-opt" onclick="ansAIEx(${i})">${String.fromCharCode(65+i)}. ${o}</button>`).join('')}</div><div class="ex-exp" id="ai-ex-exp"></div></div>`;
-  startTimer();
-  aiEx._int=setInterval(()=>{const el=document.getElementById('ai-ex-timer');if(el)el.textContent=((Date.now()-qStartTime)/1000).toFixed(1)+'s';},100);
-}
-window.ansAIEx=idx=>{
-  if(aiEx.ans)return; aiEx.ans=true;
-  clearInterval(aiEx._int);
-  const ms=elapsed(), q=aiEx.items[aiEx.cur];
-  document.querySelectorAll('.ex-opt').forEach(o=>o.disabled=true);
-  const ok=idx===q.ans;
-  document.querySelectorAll('.ex-opt')[idx].classList.add(ok?'correct':'wrong');
-  if(!ok) document.querySelectorAll('.ex-opt')[q.ans].classList.add('correct');
-  else aiEx.ok++;
-  const ep=document.getElementById('ai-ex-exp');
-  ep.textContent=(ok?`✓ 正解！（${(ms/1000).toFixed(1)}秒）　`:'解説：')+(q.exp||'');ep.classList.add('show');
-  logAnswer({tag:q.tag||'AI生成',subj:q.subj||subj,correct:ok,ms,confidence:currentConf,qText:q.q,qId:'ai_'+Date.now()});
-  setTimeout(()=>{aiEx.cur++;aiEx.ans=false;renderAIExercise();},2400);
-};
-window.resetAIEx=()=>{clearInterval(aiEx._int);aiEx={};renderAIExercise();};
-
-/* ══════════════════════════════════════
-   QUIZ MODAL — Tiered + Timer + Confidence
-══════════════════════════════════════ */
-window.openQuiz = subjKey => {
-  const curLv=getCurrentLevel(subjKey);
-  if(!curLv){alert('全レベルクリア済みです！素晴らしい 🎉');return;}
-  const lvData=QUIZZES[subjKey][curLv];
-  quizData={subjKey,curLv,questions:[...lvData.questions],cur:0,score:0,ans:false};
-  document.getElementById('quiz-modal-title').textContent=SUBJECTS[subjKey].name+'　'+lvData.label;
-  document.getElementById('quiz-modal').classList.add('open');
-  renderQuizQ();
-};
-window.closeQuiz = () => {
-  clearInterval(quizData._int);
-  document.getElementById('quiz-modal').classList.remove('open');
-};
-
-function renderQuizQ(){
-  const body=document.getElementById('quiz-body');
-  if(quizData.cur>=quizData.questions.length){
-    const pct=Math.round(quizData.score/quizData.questions.length*100);
-    const passed=pct>=60;
-    const nextLv=LEVELS[LEVELS.indexOf(quizData.curLv)+1];
-    if(passed) saveProgress(quizData.subjKey,quizData.score,quizData.curLv);
-    const msg=passed
-      ?(nextLv?`クリア！次は <strong>${QUIZZES[quizData.subjKey][nextLv].label}</strong> に挑戦しよう 🎉`:'全レベルクリア！完璧です 🏆')
-      :'惜しい！60% 以上でクリア。フラッシュカードで復習してから再挑戦しよう。';
-    const nextBtn=passed&&nextLv
-      ?`<button class="qr-next-lv" onclick="closeQuiz();openQuiz('${quizData.subjKey}')">次のレベルに挑戦 →</button>`
-      :passed&&!nextLv?'':`<button class="qr-next-lv" style="background:var(--amber);color:#fff" onclick="closeQuiz()">復習してから再挑戦</button>`;
-    body.innerHTML=`<div class="quiz-res"><div class="qr-score">${pct}%</div><div class="qr-label">${quizData.score}/${quizData.questions.length} 問正解　${passed?'✓ クリア':'✕ 再挑戦'}</div><div class="qr-bar-w"><div class="qr-bar-f" style="width:${pct}%"></div></div><div class="qr-msg">${msg}</div>${nextBtn}<br><button class="restart-btn" style="margin-top:12px" onclick="closeQuiz()">閉じる</button></div>`;return;
-  }
-  const q=quizData.questions[quizData.cur];
-  const lvTag=`<div class="q-lv-tag ${quizData.curLv}">${LV_LABELS[quizData.curLv]}</div>`;
-  body.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px;display:flex;justify-content:space-between"><span>${quizData.cur+1} / ${quizData.questions.length}</span><span class="timer-badge" id="q-timer">0.0s</span></div>${lvTag}${confHTML()}<div class="quiz-q">${q.q}</div><div class="quiz-opts">${q.opts.map((o,i)=>`<button class="quiz-opt" onclick="ansQuiz(${i})">${o}</button>`).join('')}</div><div class="quiz-fb" id="qfb"></div><button class="quiz-next" id="qnxt" onclick="nextQ()">次の問題 →</button>`;
-  startTimer();
-  quizData._int=setInterval(()=>{const el=document.getElementById('q-timer');if(el)el.textContent=((Date.now()-qStartTime)/1000).toFixed(1)+'s';},100);
-}
-window.ansQuiz=idx=>{
-  if(quizData.ans)return; quizData.ans=true;
-  clearInterval(quizData._int);
-  const ms=elapsed(), q=quizData.questions[quizData.cur];
-  document.querySelectorAll('.quiz-opt').forEach(o=>o.disabled=true);
-  const ok=idx===q.ans;
-  document.querySelectorAll('.quiz-opt')[idx].classList.add(ok?'correct':'wrong');
-  if(!ok) document.querySelectorAll('.quiz-opt')[q.ans].classList.add('correct');
-  else quizData.score++;
-  const fb=document.getElementById('qfb'),nxt=document.getElementById('qnxt');
-  fb.textContent=(ok?`✓ 正解！（${(ms/1000).toFixed(1)}秒）　`:'✕ 解説：')+q.exp;
-  fb.style.borderLeftColor=ok?'var(--green)':'var(--red)';
-  fb.classList.add('show'); nxt.classList.add('show');
-  logAnswer({tag:q.tag||quizData.curLv,subj:quizData.subjKey,correct:ok,ms,confidence:currentConf,qText:q.q,qId:'qz_'+quizData.subjKey+'_'+quizData.curLv+'_'+quizData.cur});
-};
-window.nextQ=()=>{clearInterval(quizData._int);quizData.cur++;quizData.ans=false;renderQuizQ();};
-
-async function saveProgress(subjKey,score,level){
-  const prog=progressData[subjKey]||{correct:0,quizDone:0,lvClears:{}};
-  const newClears={...(prog.lvClears||{}),[level]:true};
-  await set(ref(db,'progress/'+subjKey),{correct:(prog.correct||0)+score,quizDone:(prog.quizDone||0)+1,lvClears:newClears});
-  await updateStreak();
-}
-async function updateStreak(){
-  const snap=await get(streakRef); const s=snap.val()||{count:0,lastDate:''};
-  const today=new Date().toDateString();
-  if(s.lastDate!==today){const y=new Date(Date.now()-86400000).toDateString();await set(streakRef,{count:s.lastDate===y?s.count+1:1,lastDate:today});}
-}
-
-/* ══════════════════════════════════════
-   AI 類題生成 — Claude API
-   Format: 'quiz' = parseable 4択, 'open' = 記述式解説
-══════════════════════════════════════ */
-async function generateAI(){
-  const ai_subj   = document.getElementById('ai-subj').value;
-  const ai_tag    = document.getElementById('ai-tag').value;
-  const ai_level  = document.getElementById('ai-level').value;
-  const ai_format = document.getElementById('ai-format').value;
-  const ai_hint   = document.getElementById('ai-hint').value.trim();
-  const subjName  = SUBJECTS[ai_subj]?.name||ai_subj;
-
-  const btn=document.getElementById('ai-gen-btn');
-  const btnText=document.getElementById('ai-btn-text');
-  const spin=document.getElementById('ai-spin');
-  btn.disabled=true; btnText.textContent='生成中…'; spin.classList.add('show');
-
-  const output=document.getElementById('ai-output');
-  output.innerHTML=`<div style="text-align:center;padding:28px;color:var(--text3)"><div style="font-size:28px;margin-bottom:10px">🤖</div>Claude が類題を生成しています…<br><span style="font-size:12px">（10〜25秒かかります）</span></div>`;
-
-  // Build system prompt based on format
-  let formatInstructions = '';
-  if(ai_format==='quiz'||ai_format==='both'){
-    formatInstructions += `
-【選択問題フォーマット】（このセクションは必須）
-問題ごとに以下のJSONブロックを含めること：
-<quiz>
-{"q":"問題文","opts":["選択肢A","選択肢B","選択肢C","選択肢D"],"ans":正解のインデックス(0-3),"exp":"解説","tag":"${ai_tag}"}
-</quiz>
-`;
-  }
-  if(ai_format==='open'||ai_format==='both'){
-    formatInstructions += `
-【記述式フォーマット】
-### 問題N
-**[問題文]** （実際の問題文）
-**[ヒント]** （考え方のヒント1〜2文）
-**[解答]** （ステップ付き詳細解答）
-**[ポイント]** （院試で問われるポイント・関連知識）
----
-`;
-  }
-
-  const sysPrompt = `あなたは大学院入試（特にNAIST・神戸大）の数学・機械学習の専門家講師です。
-学生の弱点に合わせた類題と詳細な解説を日本語で作成してください。
-${formatInstructions}`;
-
-  const userPrompt = `教科: ${subjName}
-タグ（弱点）: ${ai_tag}
-難易度: ${ai_level}
-問題数: 3問
-${ai_hint?'追加指示: '+ai_hint:''}
-
-この条件で院試対策の類題を作成してください。各問題は NAIST の院試スタイルに合わせてください。`;
-
-  try {
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:2500,
-        system:sysPrompt,
-        messages:[{role:'user',content:userPrompt}]
-      })
-    });
-    const data=await res.json();
-    const text=data.content?.map(c=>c.text||'').join('')||'生成に失敗しました。';
-
-    // Parse quiz blocks if format includes quiz
-    if(ai_format==='quiz'||ai_format==='both'){
-      const quizMatches=[...text.matchAll(/<quiz>([\s\S]*?)<\/quiz>/g)];
-      quizMatches.forEach(m=>{
-        try{
-          const q=JSON.parse(m[1].trim());
-          q.subj=ai_subj; q.tag=q.tag||ai_tag;
-          aiGeneratedQuestions.push(q);
-        }catch(e){}
+// 弱点分析チャート描画
+async function renderWeakness() {
+  const db = await openIDB();
+  const tx = db.transaction('answers','readonly');
+  const store = tx.objectStore('answers');
+  const allReq = store.getAll();
+  allReq.onsuccess = e => {
+    const logs = e.target.result;
+    // タグ別正答率計算
+    const stats = {};
+    logs.forEach(l=>{
+      l.tags.forEach(tag=>{
+        if(!stats[tag]) stats[tag] = {correct:0,total:0};
+        stats[tag].total++;
+        if(l.correct) stats[tag].correct++;
       });
-      if(aiGeneratedQuestions.length){
-        output.innerHTML+=`<div style="background:var(--gbg);border:1px solid var(--gborder);border-radius:var(--r);padding:12px 14px;margin-top:12px;font-size:13px;color:var(--green)">✅ ${quizMatches.length}問を「AI生成演習」モードに追加しました！「📚 演習」タブ → 「AI生成演習」で解けます。</div>`;
-      }
-    }
-
-    // Render formatted response
-    const rendered=formatAIRes(text.replace(/<quiz>[\s\S]*?<\/quiz>/g,''));
-    const now=new Date().toLocaleString('ja-JP');
-    const histItem={subj:subjName,tag:ai_tag,level:ai_level,format:ai_format,text,ts:now};
-    aiHistory.unshift(histItem); if(aiHistory.length>15) aiHistory.pop();
-
-    output.innerHTML=`<div class="ai-result-wrap"><div class="ai-res-hd"><div class="ai-res-title">🤖 ${subjName} / ${ai_tag}</div><div class="ai-res-meta"><span class="ai-chip">${ai_level}</span><span style="font-size:11px;color:var(--text3)">${now}</span></div></div><div class="ai-res-body">${rendered}</div><div class="ai-res-footer"><button class="ai-act save" onclick="copyAI()">📋 コピー</button><button class="ai-act" onclick="document.getElementById('ai-output').innerHTML=''">✕ 閉じる</button></div></div>`+(aiGeneratedQuestions.length?`<div style="background:var(--gbg);border:1px solid var(--gborder);border-radius:var(--r);padding:12px 14px;margin-top:10px;font-size:13px;color:var(--green)">✅ 選択問題 ${aiGeneratedQuestions.length}問を「AI生成演習」モードに追加済み</div>`:'');
-    window._lastAIText=text;
-    renderAIHistory();
-  }catch(e){
-    output.innerHTML=`<div class="plan-box" style="border-color:var(--rborder);color:var(--red);padding:14px"><strong>エラー:</strong> ${e.message}</div>`;
-  }
-  btn.disabled=false; btnText.textContent='✨ AI で類題を生成する'; spin.classList.remove('show');
-}
-
-function formatAIRes(text){
-  return text
-    .replace(/### (問題\d+)/g,'<h3>$1</h3>')
-    .replace(/\*\*\[問題文\]\*\*/g,'<div class="ai-q-block">📝 問題</div>')
-    .replace(/\*\*\[ヒント\]\*\*/g,'<div class="ai-hint-block">💡 ヒント</div>')
-    .replace(/\*\*\[解答\]\*\*/g,'<div class="ai-a-block">✅ 解答</div>')
-    .replace(/\*\*\[ポイント\]\*\*/g,'<div style="margin-top:8px;font-size:12px;color:var(--text3)">🎯 ポイント</div>')
-    .replace(/---/g,'<hr style="border:none;border-top:1px solid var(--border);margin:14px 0">')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-}
-
-window.copyAI=()=>{
-  if(window._lastAIText) navigator.clipboard.writeText(window._lastAIText).then(()=>alert('クリップボードにコピーしました！')).catch(()=>alert('コピーに失敗しました'));
-};
-
-function renderAIHistory(){
-  const list=document.getElementById('ai-history-list'); if(!list)return;
-  if(!aiHistory.length){list.innerHTML='<div class="empty-s">まだ生成履歴がありません</div>';return;}
-  list.innerHTML=aiHistory.map((h,i)=>`<div class="ai-hist-item" onclick="restoreAI(${i})"><div style="font-size:18px">🤖</div><div class="ai-hist-meta"><div class="ai-hist-label">${h.subj} / ${h.tag} — ${h.level}</div><div class="ai-hist-time">${h.ts}</div></div><span style="font-size:11px;color:var(--text3)">クリックで再表示</span></div>`).join('');
-}
-window.restoreAI=i=>{
-  const h=aiHistory[i]; if(!h)return;
-  document.getElementById('ai-output').innerHTML=`<div class="ai-result-wrap"><div class="ai-res-hd"><div class="ai-res-title">🤖 ${h.subj} / ${h.tag}</div><div class="ai-res-meta"><span class="ai-chip">${h.level}</span><span style="font-size:11px;color:var(--text3)">${h.ts}</span></div></div><div class="ai-res-body">${formatAIRes(h.text.replace(/<quiz>[\s\S]*?<\/quiz>/g,''))}</div><div class="ai-res-footer"><button class="ai-act save" onclick="window._lastAIText=aiHistory[${i}].text;copyAI()">📋 コピー</button></div></div>`;
-  window._lastAIText=h.text;
-};
-window.generateAI=generateAI;
-
-/* ══════════════════════════════════════
-   ANALYTICS DASHBOARD
-   Reads from IndexedDB answerLog
-══════════════════════════════════════ */
-async function renderAnalytics(){
-  const allLogs=await idbGetAll(STORE_ANSWERS);
-  if(!allLogs.length){
-    ['ana-summary','ana-tags','ana-time','ana-confidence','ana-weak'].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el) el.innerHTML='<div class="empty-s">演習を解いてデータを蓄積しましょう！（基礎演習・穴埋め問題・章末テスト全てが対象）</div>';
     });
-    return;
-  }
+    const labels = [], acc = [];
+    Object.keys(stats).forEach(tag=>{
+      labels.push(tag);
+      acc.push(Math.round(stats[tag].correct/stats[tag].total*100));
+    });
+    // Chart.jsで描画
+    new Chart(document.getElementById('chart-tags'), {
+      type: 'bar',
+      data: { labels: labels, datasets:[{label:'正答率 (%)', data:acc, backgroundColor:'lightblue'}] },
+      options:{ scales:{ y:{ beginAtZero:true, max:100 } } }
+    });
+    // 自信度分布（ダミー例）
+    new Chart(document.getElementById('chart-confidence'), {
+      type: 'bar',
+      data: { labels:['低','中','高'], datasets:[{label:'回答数', data:[2,5,3], backgroundColor:'lightgreen'}] }
+    });
+    // 応答時間分布（ダミー例）
+    new Chart(document.getElementById('chart-time'), {
+      type: 'bar',
+      data: { labels:['0-5秒','6-10秒','11-15秒'], datasets:[{label:'回答数', data:[4,4,2], backgroundColor:'orange'}] }
+    });
+  };
+}
 
-  // Summary
-  const total=allLogs.length;
-  const correct=allLogs.filter(l=>l.correct).length;
-  const acc=Math.round(correct/total*100);
-  const avgMs=Math.round(allLogs.reduce((a,l)=>a+(l.ms||0),0)/total);
-  const sessions=[...new Set(allLogs.map(l=>l.date))].length;
-  const summaryEl=document.getElementById('ana-summary');
-  summaryEl.innerHTML=[
-    {val:total+'問',lbl:'総解答数',color:'var(--accent)'},
-    {val:acc+'%',lbl:'総合正答率',color:acc>=80?'var(--green)':acc>=60?'var(--amber)':'var(--red)'},
-    {val:(avgMs/1000).toFixed(1)+'s',lbl:'平均応答時間',color:'var(--blue)'},
-    {val:sessions+'日',lbl:'学習日数',color:'var(--teal)'},
-    {val:correct+'問',lbl:'累計正解数',color:'var(--green)'},
-  ].map(s=>`<div class="ana-card"><div class="ana-val" style="color:${s.color}">${s.val}</div><div class="ana-lbl">${s.lbl}</div></div>`).join('');
-
-  // Tag breakdown
-  const tagMap={};
-  allLogs.forEach(l=>{
-    const tag=l.tag||'unknown';
-    if(!tagMap[tag]) tagMap[tag]={total:0,correct:0,ms:[]};
-    tagMap[tag].total++;
-    if(l.correct) tagMap[tag].correct++;
-    if(l.ms) tagMap[tag].ms.push(l.ms);
+// LLM類題生成（OpenAI API呼び出し例）
+async function generateAI() {
+  const subj = document.getElementById('ai-subj').value;
+  const tag = document.getElementById('ai-tag').value;
+  const level = document.getElementById('ai-level').value;
+  const promptKey = prompt('OpenAI APIキーを入力してください:');
+  const system = {role:'system', content:'あなたは院試問題作成AIです。'};
+  const user = {
+    role:'user',
+    content: `教科: ${subj}, タグ: ${tag}, 難易度: ${level}。これらに合う類題と解説を作成してください。`
+  };
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json', 'Authorization': 'Bearer '+promptKey },
+    body: JSON.stringify({model:'gpt-3.5-turbo', messages:[system,user]})
   });
-  const tags=Object.entries(tagMap)
-    .map(([tag,d])=>({tag,acc:Math.round(d.correct/d.total*100),total:d.total,avgMs:d.ms.length?Math.round(d.ms.reduce((a,b)=>a+b,0)/d.ms.length):0}))
-    .sort((a,b)=>a.acc-b.acc);
-
-  const tagsEl=document.getElementById('ana-tags');
-  tagsEl.innerHTML=tags.map(t=>{
-    const color=t.acc>=80?'var(--green)':t.acc>=60?'var(--amber)':'var(--red)';
-    return`<div class="tag-row"><div class="tag-name">${t.tag}</div><div class="tag-bar-wrap"><div class="tag-bar-fill" style="width:${t.acc}%;background:${color}"></div></div><div class="tag-pct" style="color:${color}">${t.acc}%</div><div class="tag-count">${t.total}問</div></div>`;
-  }).join('');
-
-  // Response time
-  const maxMs=Math.max(...tags.map(t=>t.avgMs),1);
-  const timeEl=document.getElementById('ana-time');
-  timeEl.innerHTML=[...tags].sort((a,b)=>b.avgMs-a.avgMs).map(t=>`<div class="time-row"><div class="time-tag">${t.tag}</div><div class="time-val">${(t.avgMs/1000).toFixed(1)}s</div><div class="time-bar-w"><div class="time-bar-f" style="width:${Math.round(t.avgMs/maxMs*100)}%"></div></div></div>`).join('');
-
-  // Confidence
-  const confMap={high:{total:0,correct:0},mid:{total:0,correct:0},low:{total:0,correct:0}};
-  allLogs.forEach(l=>{const k=l.confidence||'mid';if(confMap[k]){confMap[k].total++;if(l.correct)confMap[k].correct++;}});
-  const confLabels={high:'💪 確信あり',mid:'🤔 まあまあ',low:'😰 不安'};
-  const confColors={high:'var(--green)',mid:'var(--amber)',low:'var(--red)'};
-  const confEl=document.getElementById('ana-confidence');
-  confEl.innerHTML=Object.entries(confMap).map(([k,d])=>{
-    if(!d.total)return'';
-    const a=Math.round(d.correct/d.total*100);
-    return`<div class="conf-row"><div class="conf-lbl2">${confLabels[k]}</div><div class="conf-acc" style="color:${confColors[k]}">${a}%</div><div class="conf-bar-w"><div class="conf-bar-f" style="width:${a}%;background:${confColors[k]}"></div></div><div style="font-size:11px;color:var(--text3);width:36px;text-align:right">${d.total}問</div></div>`;
-  }).join('');
-
-  // Weak topics
-  const weakEl=document.getElementById('ana-weak');
-  const weakList=tags.filter(t=>t.total>=2).sort((a,b)=>a.acc-b.acc).slice(0,5);
-  if(!weakList.length){weakEl.innerHTML='<div class="empty-s">まだ十分なデータがありません（各タグ2問以上必要）</div>';return;}
-  weakEl.innerHTML=weakList.map((t,i)=>`<div class="weak-card"><div class="weak-rank">${i+1}</div><div class="weak-info"><div class="weak-tag">${t.tag}</div><div class="weak-detail">${t.total}問解答・平均${(t.avgMs/1000).toFixed(1)}秒</div></div><div class="weak-score">${t.acc}%</div><button class="study-btn-sm" onclick="switchTab('ai');setTimeout(()=>{const el=document.getElementById('ai-tag');if(el){const opts=[...el.options];const match=opts.find(o=>o.value==='${t.tag}');if(match)el.value=match.value;}},200)">AI類題</button></div>`).join('');
+  const data = await res.json();
+  document.getElementById('ai-result').innerText = data.choices?.[0]?.message?.content || '生成に失敗しました';
 }
 
-/* ══════════════════════════════════════
-   REVIEW QUEUE — SM-2 based
-══════════════════════════════════════ */
-async function renderReview(){
-  const srsAll=await idbGetAll(STORE_SRS);
-  const answers=await idbGetAll(STORE_ANSWERS);
-  // Create qText lookup from answers
-  const qTextMap={};
-  answers.forEach(a=>{if(a.qId)qTextMap[a.qId]=a.qText||a.qId;});
+// 解答プロセス可視化（タイムライン例、ダミーデータ）
+new Chart(document.getElementById('process-chart'), {
+  type: 'line',
+  data: {
+    labels: ['問題1','問題2','問題3','問題4'],
+    datasets: [{ label:'解答時間 (秒)', data:[12, 8, 15, 9], borderColor:'blue', fill:false }]
+  },
+  options:{ scales:{ y:{ beginAtZero:true } } }
+});
 
-  const now=Date.now();
-  const sorted=srsAll
-    .map(s=>({...s,daysUntil:Math.ceil((s.nextReview-now)/86400000),qText:qTextMap[s.qId]||s.qId}))
-    .sort((a,b)=>a.nextReview-b.nextReview)
-    .slice(0,30);
-
-  const list=document.getElementById('review-list');
-  if(!sorted.length){list.innerHTML='<div class="empty-s">演習を解くと復習キューに追加されます</div>';return;}
-
-  list.innerHTML=sorted.map(s=>{
-    const due=s.daysUntil<=0;
-    const soon=s.daysUntil<=2;
-    const color=due?'var(--red)':soon?'var(--amber)':'var(--green)';
-    const label=due?'今日！':soon?`${s.daysUntil}日後`:`${s.daysUntil}日後`;
-    return`<div class="review-item"><div class="review-urgency" style="background:${color}"></div><div class="review-info"><div class="review-q">${(s.qText||'').slice(0,60)}</div><div class="review-meta">前回の品質: ${s.lastQ||'—'}/5　間隔: ${s.interval}日　繰り返し: ${s.repetitions}回</div></div><div class="review-days" style="color:${color}">${label}</div></div>`;
-  }).join('');
-}
-
-/* ══════════════════════════════════════
-   LOG
-══════════════════════════════════════ */
-window.addLog = () => {
-  const subje=document.getElementById('log-subj').value;
-  const dur=parseInt(document.getElementById('log-dur').value)||0;
-  const chap=document.getElementById('log-chap').value.trim();
-  const und=parseInt(document.getElementById('log-und').value);
-  const note=document.getElementById('log-note').value.trim();
-  if(!dur||!chap){alert('学習時間と章・トピックを入力してください');return;}
-  push(logsRef,{subject:subje,duration:dur,chapter:chap,understanding:und,note,timestamp:Date.now(),date:new Date().toLocaleDateString('ja-JP')});
-  document.getElementById('log-dur').value='';
-  document.getElementById('log-chap').value='';
-  document.getElementById('log-note').value='';
-  updateStreak();
-};
-function renderLogs(){
-  const list=document.getElementById('log-list');
-  if(!logEntries.length){list.innerHTML='<div class="empty-s">まだ記録がありません。最初のログを追加しましょう！</div>';return;}
-  const uL=['','難しかった','まあまあ','よく理解できた'];
-  const uC=['','var(--red)','var(--amber)','var(--green)'];
-  list.innerHTML=logEntries.slice(0,30).map(l=>`<div class="log-item"><div class="ldot" style="background:${SUBJECTS[l.subject]?.dot||'#999'}"></div><div class="lc"><div class="ltop"><span class="lsubj">${SUBJECTS[l.subject]?.name||l.subject}</span><span class="ldur">${l.duration}分</span></div><div class="lchap">${l.chapter}</div><div style="display:flex;align-items:center;gap:8px;margin-top:3px"><span style="font-size:11px;color:${uC[l.understanding]}">${uL[l.understanding]}</span><span class="ltime">${l.date}</span></div>${l.note?`<div class="lnote">${l.note}</div>`:''}</div></div>`).join('');
-}
-
-/* ══════════════════════════════════════
-   INIT
-══════════════════════════════════════ */
-async function init(){
-  await openIDB();
-  await refreshDBCount();
-  renderStudy();
-}
-init();
 </script>
 </body>
 </html>
