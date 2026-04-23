@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v6 — NAIST/Kobe 院試対策</title>
+<title>StudyFlow v7 — NAIST/Kobe 院試・TOEIC対策</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<!-- D3.js for Galaxy Chart -->
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-/* 以前のスタイルを継承しつつ、Galaxyと英語用の調整を追加 */
-*{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#F6F5F1;--bg2:#FFFFFF;--bg3:#EFEDE8;--bg4:#E5E3DC;
   --border:#DDD9D0;--border2:#C4C0B5;
@@ -17,336 +14,310 @@
   --accent:#7C5FD4;--accent2:#9B7FF0;--alight:#F0ECFF;--aborder:#C4ADFF;
   --green:#167A50;--gbg:#E6F4EE;--gborder:#8FD9B8;
   --amber:#7A5200;--abg2:#FEF2D8;--aborder2:#F5C060;
-  --red:#9E2A2A;--rbg:#FBEBEB;--rborder:#F0BABA;
   --blue:#145898;--bbg:#E4F0FB;--bborder:#A8CCF0;
   --pink:#B21B7E;--pbg:#FBE8F4;--pborder:#E6A4D0;
   --r:12px;--r2:8px;--r3:20px;
   --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
-  --sh2:0 4px 18px rgba(0,0,0,.09);
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-.font-num{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums}
 #app{max-width:960px;margin:0 auto;padding:24px 16px}
 
 /* HEADER & TABS */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
 .logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px}
 .logo span{color:var(--accent)}
-.header-right{display:flex;align-items:center;gap:10px}
-.db-count{font-size:11px;color:var(--text3);background:var(--bg3);border:1px solid var(--border);border-radius:var(--r3);padding:4px 10px}
-.streak{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:6px 14px;font-size:13px;font-weight:500;box-shadow:var(--sh)}
 
-.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
-.tab{flex:1;min-width:fit-content;padding:8px 10px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
+.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;overflow-x:auto}
+.tab{flex:1;min-width:fit-content;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;white-space:nowrap}
 .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
 .panel{display:none}.panel.active{display:block}
-.stitle{font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
+.stitle{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:12px}
 
-/* COUNTDOWN CARDS */
-.cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:580px){.cdown-grid{grid-template-columns:1fr}}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.cd-toeic::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--pink)}
-.cd-naist::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
-.cd-kobe::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--blue)}
-.cd-badge{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;margin-bottom:10px;display:inline-block}
-.cd-days{font-family:'Inter',sans-serif;font-size:42px;font-weight:800;line-height:1}
-
-/* SUBJECT GRID */
-.subj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:24px}
+/* SUBJECT CARDS */
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
 .subj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.subj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.sc-la::before{background:var(--accent)}.sc-ca::before{background:var(--green)}.sc-ml::before{background:var(--blue)}.sc-pr::before{background:var(--amber)}.sc-en::before{background:var(--pink)}
+.subj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.sc-la::before{background:var(--accent)}.sc-ca::before{background:var(--green)}.sc-ml::before{background:var(--blue)}.sc-en::before{background:var(--pink)}.sc-cs::before{background:var(--amber)}
+
+/* PROGRESS BAR */
+.pbar-bg{height:6px;background:var(--bg4);border-radius:3px;margin-top:10px;overflow:hidden}
+.pbar-fill{height:100%;background:var(--accent);transition:width 0.5s ease}
 
 /* FLASH CARDS */
-.fc-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;min-height:180px;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;margin-bottom:14px;cursor:pointer;box-shadow:var(--sh);transition:all .2s}
-.fc-card.flipped{background:var(--alight);border-color:var(--aborder)}
-.fc-q{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--text)}
-.fc-a{font-size:14px;color:var(--text2);line-height:1.7}
-.fc-acts{display:flex;gap:8px;justify-content:center}
-.fc-btn{padding:10px 20px;border-radius:var(--r2);border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-weight:600}
+.fc-card{background:var(--bg2);border:2px solid var(--border);border-radius:18px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;margin-bottom:20px;cursor:pointer;box-shadow:var(--sh);transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);position:relative}
+.fc-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.fc-card.flipped{background:var(--alight);border-color:var(--accent)}
+.fc-q{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
+.fc-a{font-size:15px;color:var(--text2);line-height:1.8;text-align:left;width:100%}
 
 /* GALAXY STYLE */
-.galaxy-container{background:#0d0b1a;border-radius:var(--r);overflow:hidden;position:relative;height:500px;border:1px solid var(--border)}
+.galaxy-container{background:#070610;border-radius:var(--r);position:relative;height:550px;border:1px solid #1a1a3a;box-shadow:inset 0 0 50px rgba(0,0,0,0.5)}
 #galaxy-svg{width:100%;height:100%}
-.node{cursor:pointer;stroke:#fff;stroke-width:1.5px}
-.link{stroke:#555;stroke-opacity:0.4;stroke-width:1px}
-.node-label{font-size:10px;fill:#ccc;pointer-events:none;font-family:'Inter'}
-.galaxy-overlay{position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.9);padding:10px;border-radius:var(--r2);font-size:12px;max-width:240px;display:none;border:1px solid var(--accent);box-shadow:var(--sh2)}
+.node-label{font-size:9px;fill:#888;pointer-events:none;font-family:'Inter'}
+.galaxy-overlay{position:absolute;top:12px;right:12px;background:rgba(13, 11, 26, 0.9);padding:15px;border-radius:var(--r2);font-size:13px;max-width:280px;display:none;border:1px solid var(--accent);color:#eee;backdrop-filter:blur(4px)}
 
-/* AI LOGIC STYLE */
-.api-key-wrap{background:var(--abg2);border:1px solid var(--aborder2);border-radius:var(--r);padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center}
-.api-key-inp{flex:1;padding:8px;border-radius:var(--r2);border:1px solid var(--aborder2)}
-.ai-gen-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--r2);font-weight:700;cursor:pointer;margin-top:10px}
-.ai-spinner{width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;display:none}
+/* API KEY */
+.api-key-wrap{background:var(--abg2);border:1px solid var(--aborder2);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.api-key-inp{width:100%;padding:10px;border-radius:var(--r2);border:1px solid var(--aborder2);font-family:monospace;margin-top:8px}
+
+.ai-gen-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--r2);font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(124,95,212,0.3)}
+.ai-spinner{display:none;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.ai-res-body{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:14px;line-height:1.8;font-size:14px}
-.ai-res-body h3{font-family:'Syne';margin-bottom:10px;color:var(--accent)}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v6</span></div>
-    <div class="header-right">
-      <div class="db-count" id="db-count">📊 0問記録済み</div>
-      <div class="streak">🔥 <span id="streak-count" class="font-num">0</span>日連続</div>
-    </div>
+    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v7</span></div>
+    <div id="streak-disp" class="tab" style="background:var(--bg2); border:1px solid var(--border); flex:none; padding:5px 12px;">🔥 0 days streak</div>
   </div>
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
     <button class="tab" onclick="switchTab('study')">📚 演習</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 AI類題(Gemini)</button>
+    <button class="tab" onclick="switchTab('ai')">🤖 AI生成(Gemini)</button>
     <button class="tab" onclick="switchTab('galaxy')">🌌 知識銀河</button>
-    <button class="tab" onclick="switchTab('analytics')">📈 分析</button>
-    <button class="tab" onclick="switchTab('log')">📝 ログ</button>
   </div>
 
-  <!-- PLAN -->
+  <!-- PLAN PANEL -->
   <div class="panel active" id="panel-plan">
-    <div class="stitle">試験カウントダウン</div>
-    <div class="cdown-grid">
-      <div class="cdown-card cd-toeic"><div class="cd-badge" style="background:var(--pbg);color:var(--pink)">TOEIC</div><div class="cd-days" id="d-toeic" style="color:var(--pink)">—</div><div style="font-size:11px;color:var(--text3)">2026年5月17日</div></div>
-      <div class="cdown-card cd-naist"><div class="cd-badge" style="background:var(--alight);color:var(--accent)">NAIST</div><div class="cd-days" id="d-naist" style="color:var(--accent)">—</div><div style="font-size:11px;color:var(--text3)">2026年7月6日</div></div>
-      <div class="cdown-card cd-kobe"><div class="cd-badge" style="background:var(--bbg);color:var(--blue)">神戸大</div><div class="cd-days" id="d-kobe" style="color:var(--blue)">—</div><div style="font-size:11px;color:var(--text3)">2026年8月24日</div></div>
+    <div class="stitle">受験カウントダウン</div>
+    <div class="subj-grid">
+      <div class="subj-card" style="border-top:4px solid var(--pink)">
+        <div style="font-size:11px; font-weight:700; color:var(--pink)">TOEIC</div>
+        <div style="font-size:28px; font-weight:800; margin:5px 0;" id="d-toeic">--</div>
+        <div style="font-size:10px; color:var(--text3)">2026/05/17</div>
+      </div>
+      <div class="subj-card" style="border-top:4px solid var(--accent)">
+        <div style="font-size:11px; font-weight:700; color:var(--accent)">NAIST</div>
+        <div style="font-size:28px; font-weight:800; margin:5px 0;" id="d-naist">--</div>
+        <div style="font-size:10px; color:var(--text3)">2026/07/06</div>
+      </div>
     </div>
-    <div class="stitle">教科別 進捗</div>
-    <div class="subj-grid" id="subj-grid"></div>
+
+    <div class="stitle">教科別進捗</div>
+    <div class="subj-grid" id="subj-list">
+      <!-- Generated via JS -->
+    </div>
   </div>
 
-  <!-- STUDY -->
+  <!-- STUDY PANEL -->
   <div class="panel" id="panel-study">
-    <div class="stitle">演習モード</div>
-    <div class="chips" id="mode-chips" style="margin-bottom:15px; display:flex; gap:8px;">
-      <button class="tab active" style="flex:none; padding:8px 15px;" onclick="setMode('flash',this)">🃏 フラッシュカード</button>
-      <button class="tab" style="flex:none; padding:8px 15px;" onclick="setMode('fill',this)">✏️ 穴埋め</button>
-    </div>
     <div class="stitle">教科選択</div>
-    <div class="chips" id="subj-chips" style="margin-bottom:15px; display:flex; gap:8px; overflow-x:auto;">
-      <button class="tab active" style="flex:none; padding:8px 15px;" onclick="setSubject('la',this)">線形代数</button>
-      <button class="tab" style="flex:none; padding:8px 15px;" onclick="setSubject('ca',this)">微積分</button>
-      <button class="tab" style="flex:none; padding:8px 15px;" onclick="setSubject('ml',this)">機械学習</button>
-      <button class="tab" style="flex:none; padding:8px 15px;" onclick="setSubject('en',this)">英語(院試)</button>
+    <div id="subj-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:20px; padding-bottom:5px;">
+      <!-- Generated via JS -->
     </div>
-    <div id="study-content"></div>
+    
+    <div id="study-content">
+      <!-- Flashcard rendering -->
+    </div>
   </div>
 
-  <!-- AI (Gemini) -->
+  <!-- AI PANEL -->
   <div class="panel" id="panel-ai">
-    <div class="stitle">Gemini API 類題生成</div>
     <div class="api-key-wrap">
-      <label style="font-size:11px; font-weight:700; color:var(--amber)">🔑 Gemini API Key</label>
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <label style="font-size:11px; font-weight:700; color:var(--amber)">🔑 GEMINI API KEY</label>
+        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:10px; color:var(--text3)">取得はこちら</a>
+      </div>
       <input type="password" class="api-key-inp" id="api-key-gemini" placeholder="AIzaSy..." value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU">
     </div>
-    <div style="background:var(--bg2); border:1px solid var(--border); padding:16px; border-radius:var(--r);">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-        <select class="api-key-inp" id="ai-subj-sel">
-          <option value="la">線形代数</option><option value="ca">微積分</option><option value="ml">機械学習</option>
+
+    <div style="background:var(--bg2); padding:16px; border-radius:var(--r); border:1px solid var(--border)">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+        <select class="api-key-inp" id="ai-subj-sel" style="margin-top:0">
+          <option value="la">線形代数</option>
+          <option value="ca">微積分</option>
+          <option value="ml">機械学習</option>
+          <option value="en">TOEIC/英語</option>
+          <option value="cs">専門(アルゴリズム等)</option>
         </select>
-        <select class="api-key-inp" id="ai-level-sel">
-          <option value="基礎">基礎</option><option value="院試レベル">院試レベル</option>
+        <select class="api-key-inp" id="ai-level-sel" style="margin-top:0">
+          <option value="基礎">基礎固め</option>
+          <option value="応用">応用・計算</option>
+          <option value="院試">院試本番レベル</option>
         </select>
       </div>
       <button class="ai-gen-btn" onclick="generateGemini()">
-        <span class="ai-spinner" id="ai-spin"></span>
-        <span id="ai-btn-text">✨ Geminiで類題を生成</span>
+        <span class="ai-spinner" id="ai-spin"></span><span id="ai-btn-text">類題を生成する</span>
       </button>
     </div>
-    <div id="ai-output"></div>
+    <div id="ai-output" style="margin-top:15px"></div>
   </div>
 
-  <!-- GALAXY -->
+  <!-- GALAXY PANEL -->
   <div class="panel" id="panel-galaxy">
-    <div class="stitle">🌌 知識銀河 (Interactive Knowledge Graph)</div>
+    <div class="stitle">🌌 知識銀河 - 学習した概念のネットワーク</div>
     <div class="galaxy-container">
       <svg id="galaxy-svg"></svg>
       <div class="galaxy-overlay" id="galaxy-overlay"></div>
     </div>
-  </div>
-
-  <!-- ANALYTICS -->
-  <div class="panel" id="panel-analytics">
-    <div class="stitle">学習統計</div>
-    <div id="ana-summary" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
-  </div>
-
-  <!-- LOG -->
-  <div class="panel" id="panel-log">
-    <div class="stitle">学習ログ</div>
-    <div id="log-list" class="empty-s" style="text-align:center; padding:40px; color:var(--text3);">データ読み込み中...</div>
+    <div style="font-size:10px; color:var(--text3); margin-top:8px; text-align:center;">
+      スクロールでズーム、ドラッグで移動、ノードクリックで詳細表示
+    </div>
   </div>
 </div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, push, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-
-// Firebase Config
-const FB = {apiKey:"AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",authDomain:"study-tracker-5a35c.firebaseapp.com",databaseURL:"https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"study-tracker-5a35c",appId:"1:1091326221496:web:5bcd5ab27bdc6cca03e84d"};
-const fbApp = initializeApp(FB);
-const db = getDatabase(fbApp);
-
+<script>
 /* ══════════════════════════════════════
-   DATA: SUBJECTS & FLASHCARDS
+   DATABASE: EXTENDED CONTENT
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数',cls:'sc-la',dot:'#7C5FD4',chapters:['行列演算','固有値','SVD','次元定理']},
-  ca:{name:'微積分',cls:'sc-ca',dot:'#167A50',chapters:['極限','微分','積分','多変数関数']},
-  ml:{name:'機械学習',cls:'sc-ml',dot:'#145898',chapters:['回帰','最適化','CNN','Transformer']},
-  en:{name:'英語(院試)',cls:'sc-en',dot:'#B21B7E',chapters:['論文表現','TOEIC語彙','CS英単語']}
+  la:{name:'線形代数', color:'#7C5FD4', cls:'sc-la'},
+  ca:{name:'微積分', color:'#167A50', cls:'sc-ca'},
+  ml:{name:'機械学習', color:'#145898', cls:'sc-ml'},
+  en:{name:'TOEIC/英語', color:'#B21B7E', cls:'sc-en'},
+  cs:{name:'計算機科学', color:'#7A5200', cls:'sc-cs'}
 };
 
 const FC = {
-  la:[
-    {q:'det(A)=0 の意味は？',a:'行列Aが特異行列（非正則）である。逆行列が存在しない。',tag:'行列式'},
-    {q:'固有値の和は何に等しい？',a:'行列のトレース（対角成分の和）に等しい。',tag:'固有値'}
+  la: [
+    {q:'Rank-Nullity Theorem (次元定理)', a:'dim(V) = rank(f) + dim(ker f)\n線形写像において、像の次元と核の次元の和は元の空間の次元に等しい。', tag:'次元定理'},
+    {q:'正定値行列 (Positive Definite) の条件', a:'1. 全ての固有値が正\n2. 全ての首座小行列式が正\n3. 任意のx≠0に対して xᵀAx > 0', tag:'行列'},
+    {q:'グラム・シュミットの正規直交化', a:'任意の基底から正規直交基底を順次作り出すアルゴリズム。', tag:'直交化'}
   ],
-  ca:[
-    {q:'ロピタルの定理の条件は？',a:'0/0または∞/∞の不定形であり、極限が存在すること。',tag:'極限'}
+  ca: [
+    {q:'テイラー展開 (Taylor Expansion)', a:'関数f(x)を、特定の点aの周りで多項式近似すること。\nf(x) = Σ (f⁽ⁿ⁾(a)/n!) (x-a)ⁿ', tag:'近似'},
+    {q:'広義積分が収束する条件', a:'不連続点や無限遠において、極限値が存在すること。', tag:'積分'}
   ],
-  ml:[
-    {q:'L2正則化の別名は？',a:'Ridge回帰。重みの二乗和をペナルティに加える。',tag:'正則化'}
+  en: [
+    {q:'TOEIC: 接続詞 vs 前置詞 (Despite)', a:'Despite/In spite of → 前置詞（後ろは名詞/動名詞）\nAlthough/Even though → 接続詞（後ろはS+V）', tag:'TOEIC文法'},
+    {q:'TOEIC: 頻出単語 "Approve"', a:'Approve of 〜（〜を承認する）。\n名詞形：Approval。院試の論文紹介メール等でも頻出。', tag:'英単語'},
+    {q:'TOEIC: "Unless" の書き換え', a:'Unless S+V = If S do NOT V.\n「〜しない限り」', tag:'TOEIC文法'},
+    {q:'論文表現: "A is attributed to B"', a:'「Aの原因はBにあるとされる」\n原因分析のセクションで頻出。', tag:'論文表現'}
   ],
-  en:[
-    {q:'"State-of-the-art" (SOTA)',a:'「最新の」「最高水準の」。論文で手法を比較する際によく使われる。',tag:'論文表現'},
-    {q:'"Leverage"',a:'「〜を活用する」。useよりも「（既存のものを）うまく利用する」ニュアンス。',tag:'論文表現'},
-    {q:'"Mitigate"',a:'「（悪い影響を）軽減する」。例：mitigate the risk.',tag:'論文表現'},
-    {q:'"Empirical"',a:'「経験的な」「実証的な」。理論だけでなく実験に基づいた結果。',tag:'論文表現'},
-    {q:'"Implicit"',a:'「暗黙の」。対義語はExplicit（明示的な）。',tag:'CS英単語'},
-    {q:'"Subsequent"',a:'「その後の」「次に続く」。例：Subsequent experiments showed...',tag:'TOEIC語彙'}
+  cs: [
+    {q:'ダイクストラ法 (Dijkstra)', a:'単一始点最短経路問題を解くグラフアルゴリズム。負の辺がない場合に有効。計算量 O(E log V)。', tag:'アルゴリズム'},
+    {q:'キャッシュのヒット率と実効アクセス時間', a:'実効時間 = (ヒット率 × ヒット時時間) + ((1-ヒット率) × ミス時時間)', tag:'計算機構成'},
+    {q:'ハッシュテーブルの衝突解決', a:'1. チェイン法（リストで繋ぐ）\n2. オープンアドレス法（空きを探す）', tag:'データ構造'}
+  ],
+  ml: [
+    {q:'勾配消失問題 (Vanishing Gradient)', a:'層が深くなるにつれ勾配が小さくなり、学習が進まなくなる現象。ReLUの使用等で対策。', tag:'深層学習'},
+    {q:'過学習 (Overfitting) の抑制方法', a:'1. L1/L2正則化\n2. Dropout\n3. Data Augmentation\n4. Early Stopping', tag:'最適化'}
   ]
 };
 
 /* ══════════════════════════════════════
-   CORE LOGIC: TABS & STATE
+   STATE MANAGEMENT
 ══════════════════════════════════════ */
-let mode='flash', subj='la', progressData={};
+let currentTab = 'plan';
+let currentSubj = 'la';
+let fcState = { cur: 0, flipped: false };
+let galaxyNodes = [];
 
-window.switchTab = (tab) => {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+// LocalStorage Progress
+let progress = JSON.parse(localStorage.getItem('study_flow_prog')) || { la:0, ca:0, ml:0, en:0, cs:0 };
+
+function saveProg(){ localStorage.setItem('study_flow_prog', JSON.stringify(progress)); }
+
+/* ══════════════════════════════════════
+   UI RENDERING
+══════════════════════════════════════ */
+function switchTab(t) {
+  currentTab = t;
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  event.target.classList.add('active');
-  if(tab === 'galaxy') initGalaxy();
-  if(tab === 'analytics') renderAnalytics();
-};
-
-window.setMode = (m, el) => {
-  mode = m;
-  document.querySelectorAll('#mode-chips .tab').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderStudy();
-};
-
-window.setSubject = (s, el) => {
-  subj = s;
-  document.querySelectorAll('#subj-chips .tab').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderStudy();
-};
-
-/* ══════════════════════════════════════
-   STUDY: FLASHCARDS
-══════════════════════════════════════ */
-let fcState = {cur:0, flipped:false};
-
-function renderStudy(){
-  const ct = document.getElementById('study-content');
-  const cards = FC[subj] || [];
-  if(fcState.cur >= cards.length) fcState.cur = 0;
-  
-  const card = cards[fcState.cur];
-  ct.innerHTML = `
-    <div class="fc-card ${fcState.flipped ? 'flipped' : ''}" onclick="flipFC()">
-      <div>
-        <div class="stitle" style="margin-bottom:10px">${card.tag}</div>
-        <div class="${fcState.flipped ? 'fc-a' : 'fc-q'}">${fcState.flipped ? card.a : card.q}</div>
-      </div>
-    </div>
-    <div class="fc-acts">
-      <button class="fc-btn" onclick="nextFC(-1)">←</button>
-      <button class="fc-btn" onclick="nextFC(1)">OK / 次へ →</button>
-    </div>
-    <div style="text-align:center; margin-top:10px; font-size:12px; color:var(--text3)">${fcState.cur+1} / ${cards.length}</div>
-  `;
-}
-window.flipFC = () => { fcState.flipped = !fcState.flipped; renderStudy(); };
-window.nextFC = (dir) => {
-  const cards = FC[subj] || [];
-  fcState.cur = (fcState.cur + dir + cards.length) % cards.length;
-  fcState.flipped = false;
-  renderStudy();
-  // ログに記録（簡易）
-  if(dir > 0) recordActivity(subj, cards[fcState.cur-1]?.tag);
-};
-
-async function recordActivity(s, tag){
-  const countRef = ref(db, `activity/${s}/${tag || 'general'}`);
-  const snap = await get(countRef);
-  set(countRef, (snap.val() || 0) + 1);
+  document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + t).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(t === 'galaxy') initGalaxy();
+  if(t === 'plan') renderPlan();
 }
 
-/* ══════════════════════════════════════
-   AI: GEMINI API IMPLEMENTATION
-══════════════════════════════════════ */
-window.generateGemini = async () => {
-  const key = document.getElementById('api-key-gemini').value;
-  const s = document.getElementById('ai-subj-sel').value;
-  const lv = document.getElementById('ai-level-sel').value;
-  
-  if(!key) return alert("Gemini API Keyを入力してください");
-
-  const btn = document.querySelector('.ai-gen-btn');
-  const spin = document.getElementById('ai-spin');
-  btn.disabled = true; spin.style.display = 'inline-block';
-
-  const prompt = `${SUBJECTS[s].name}の${lv}レベルの大学院入試類題を1問作成し、ステップバイステップの解説を付けてください。解答は最後に出力してください。`;
-
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
-      })
-    });
-    const data = await res.json();
-    const resultText = data.candidates[0].content.parts[0].text;
-    
-    document.getElementById('ai-output').innerHTML = `
-      <div class="ai-res-body">
-        <h3>🤖 Gemini 生成結果</h3>
-        <div style="white-space: pre-wrap;">${resultText}</div>
+function renderPlan() {
+  const list = document.getElementById('subj-list');
+  list.innerHTML = Object.keys(SUBJECTS).map(k => {
+    const s = SUBJECTS[k];
+    const p = progress[k] || 0;
+    const total = FC[k]?.length || 1;
+    const pct = Math.min(100, Math.round((p / total) * 100));
+    return `
+      <div class="subj-card ${s.cls}">
+        <div style="font-size:12px; font-weight:700;">${s.name}</div>
+        <div style="font-size:18px; font-weight:800; margin-top:8px;">${pct}%</div>
+        <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%; background:${s.color}"></div></div>
       </div>
     `;
-  } catch (e) {
-    alert("エラーが発生しました: " + e.message);
-  } finally {
-    btn.disabled = false; spin.style.display = 'none';
+  }).join('');
+}
+
+function setSubject(s) {
+  currentSubj = s;
+  fcState = { cur: 0, flipped: false };
+  renderStudyChips();
+  renderFlashcard();
+}
+
+function renderStudyChips() {
+  const container = document.getElementById('subj-chips');
+  container.innerHTML = Object.keys(SUBJECTS).map(k => `
+    <button class="tab ${currentSubj === k ? 'active' : ''}" 
+            onclick="setSubject('${k}')" 
+            style="background:${currentSubj === k ? SUBJECTS[k].color : ''}; flex:none;">
+      ${SUBJECTS[k].name}
+    </button>
+  `).join('');
+}
+
+function renderFlashcard() {
+  const container = document.getElementById('study-content');
+  const cards = FC[currentSubj] || [];
+  const card = cards[fcState.cur];
+
+  if(!card) {
+    container.innerHTML = `<div class="fc-card">カードがありません</div>`;
+    return;
   }
-};
+
+  container.innerHTML = `
+    <div class="fc-card ${fcState.flipped ? 'flipped' : ''}" onclick="flipFC()">
+      <div class="stitle" style="position:absolute; top:15px;">${card.tag}</div>
+      <div class="${fcState.flipped ? 'fc-a' : 'fc-q'}">
+        ${fcState.flipped ? card.a.replace(/\n/g, '<br>') : card.q}
+      </div>
+      <div style="position:absolute; bottom:15px; font-size:10px; color:var(--text3)">
+        Tap to reveal
+      </div>
+    </div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="tab" onclick="moveFC(-1)" style="flex:none; background:var(--bg2); color:var(--text); border:1px solid var(--border)">← Back</button>
+      <button class="tab" onclick="moveFC(1)" style="flex:none; background:var(--accent); color:#fff">Next / Clear →</button>
+    </div>
+  `;
+}
+
+function flipFC() { fcState.flipped = !fcState.flipped; renderFlashcard(); }
+
+function moveFC(dir) {
+  const cards = FC[currentSubj] || [];
+  if(dir > 0) {
+    progress[currentSubj] = Math.max(progress[currentSubj], fcState.cur + 1);
+    saveProg();
+  }
+  fcState.cur = (fcState.cur + dir + cards.length) % cards.length;
+  fcState.flipped = false;
+  renderFlashcard();
+}
 
 /* ══════════════════════════════════════
-   GALAXY: D3.JS INTERACTIVE GRAPH
+   GALAXY: ENHANCED D3.JS
 ══════════════════════════════════════ */
 function initGalaxy() {
   const width = document.querySelector('.galaxy-container').clientWidth;
-  const height = 500;
+  const height = 550;
   
-  // Data Structure
-  const nodes = [{id: "Root", group: 0, size: 20}];
+  const nodes = [{id: "YOU", group: 'center', size: 15}];
   const links = [];
   
-  Object.keys(SUBJECTS).forEach(k => {
-    nodes.push({id: SUBJECTS[k].name, group: k, size: 15});
-    links.push({source: "Root", target: SUBJECTS[k].name});
+  // Build data from FC
+  Object.keys(SUBJECTS).forEach(sKey => {
+    const s = SUBJECTS[sKey];
+    nodes.push({id: s.name, group: sKey, size: 12});
+    links.push({source: "YOU", target: s.name});
     
-    (FC[k] || []).forEach(f => {
-      if(!nodes.find(n => n.id === f.tag)){
-        nodes.push({id: f.tag, group: k, size: 8, detail: f.a});
-        links.push({source: SUBJECTS[k].name, target: f.tag});
+    FC[sKey].forEach(card => {
+      if(!nodes.find(n => n.id === card.tag)) {
+        nodes.push({id: card.tag, group: sKey, size: 6, detail: card.a});
+        links.push({source: s.name, target: card.tag});
       }
     });
   });
@@ -354,45 +325,50 @@ function initGalaxy() {
   const svg = d3.select("#galaxy-svg");
   svg.selectAll("*").remove();
 
+  // Zoom behavior
+  const g = svg.append("g");
+  svg.call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)));
+
   const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(80))
-    .force("charge", d3.forceManyBody().strength(-200))
+    .force("link", d3.forceLink(links).id(d => d.id).distance(70))
+    .force("charge", d3.forceManyBody().strength(-150))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
-  const link = svg.append("g")
+  const link = g.append("g")
     .selectAll("line")
     .data(links)
     .join("line")
-    .attr("class", "link");
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1);
 
-  const node = svg.append("g")
+  const node = g.append("g")
     .selectAll("circle")
     .data(nodes)
     .join("circle")
     .attr("r", d => d.size)
-    .attr("fill", d => SUBJECTS[d.group]?.dot || "#fff")
-    .attr("class", "node")
+    .attr("fill", d => SUBJECTS[d.group]?.color || "#fff")
+    .attr("stroke", d => d.group === 'center' ? '#fff' : 'none')
+    .attr("stroke-width", 2)
+    .style("cursor", "pointer")
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
       .on("end", dragended))
     .on("click", (e, d) => {
-      const over = document.getElementById('galaxy-overlay');
-      if(d.detail){
-        over.style.display = 'block';
-        over.innerHTML = `<strong>${d.id}</strong><br>${d.detail}`;
-      } else {
-        over.style.display = 'none';
+      if(d.detail) {
+        const ov = document.getElementById('galaxy-overlay');
+        ov.style.display = 'block';
+        ov.innerHTML = `<strong>${d.id}</strong><hr style="border:none; border-top:1px solid #333; margin:8px 0;">${d.detail.replace(/\n/g,'<br>')}`;
       }
     });
 
-  const label = svg.append("g")
+  const label = g.append("g")
     .selectAll("text")
     .data(nodes)
     .join("text")
     .text(d => d.id)
     .attr("class", "node-label")
-    .attr("dx", 12)
+    .attr("dx", d => d.size + 2)
     .attr("dy", 4);
 
   simulation.on("tick", () => {
@@ -419,32 +395,63 @@ function initGalaxy() {
 }
 
 /* ══════════════════════════════════════
-   DATA SYNC & OTHERS
+   GEMINI AI INTEGRATION
 ══════════════════════════════════════ */
-onValue(ref(db, 'logs'), snap => {
-  const data = snap.val();
-  const list = document.getElementById('log-list');
-  if(!data) return list.innerHTML = "記録がありません";
-  list.innerHTML = Object.values(data).reverse().map(l => `
-    <div style="background:#fff; padding:10px; border-bottom:1px solid #eee; font-size:13px;">
-      <strong>${l.date}</strong>: ${l.chapter} (${l.duration}分)
-    </div>
-  `).join('');
-});
+async function generateGemini() {
+  const key = document.getElementById('api-key-gemini').value;
+  const subj = document.getElementById('ai-subj-sel').value;
+  const level = document.getElementById('ai-level-sel').value;
+  const btn = document.querySelector('.ai-gen-btn');
+  const spin = document.getElementById('ai-spin');
+  const btnText = document.getElementById('ai-btn-text');
 
-function daysUntil(dateStr) {
-  const diff = new Date(dateStr) - new Date();
+  if(!key) return alert("API Keyを入力してください");
+
+  btn.disabled = true; spin.style.display = 'inline-block'; btnText.innerText = "生成中...";
+
+  const prompt = `あなたは大学院入試(NAIST/神戸大)の専門講師です。
+  ${SUBJECTS[subj].name}について、${level}レベルの類題を1問作成してください。
+  1. まず問題文。
+  2. 次に、思考のプロセス（ヒント）。
+  3. 最後に詳細な解答。
+  数学ならLaTeX形式を使い、英語ならTOEIC Part 5形式にしてください。`;
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    const txt = data.candidates[0].content.parts[0].text;
+
+    document.getElementById('ai-output').innerHTML = `
+      <div style="background:var(--bg2); padding:20px; border-radius:var(--r); border:1px solid var(--accent); line-height:1.7; font-size:14px; white-space:pre-wrap;">${txt}</div>
+    `;
+  } catch (e) {
+    alert("エラー: " + e.message);
+  } finally {
+    btn.disabled = false; spin.style.display = 'none'; btnText.innerText = "類題を生成する";
+  }
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+function daysUntil(str) {
+  const diff = new Date(str) - new Date();
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function initApp(){
-  document.getElementById('d-toeic').textContent = daysUntil('2026-05-17');
-  document.getElementById('d-naist').textContent = daysUntil('2026-07-06');
-  document.getElementById('d-kobe').textContent = daysUntil('2026-08-24');
-  renderStudy();
+function init() {
+  document.getElementById('d-toeic').innerText = daysUntil('2026-05-17') + " days";
+  document.getElementById('d-naist').innerText = daysUntil('2026-07-06') + " days";
+  renderPlan();
+  renderStudyChips();
+  renderFlashcard();
 }
 
-initApp();
+init();
 </script>
 </body>
 </html>
