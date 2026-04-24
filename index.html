@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v9 — 統合院試対策システム</title>
+<title>StudyFlow v10 — 院試・TOEIC 究極版</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
@@ -17,17 +17,17 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);margin:0;overflow-x:hidden}
 #app{max-width:1000px;margin:0 auto;padding:20px}
 
-/* HEADER */
+/* HEADER & COUNTDOWN */
 .header{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
 .logo{font-family:'Syne';font-size:24px;font-weight:800;cursor:default}
 .logo span{color:var(--accent)}
 
-/* COUNTDOWN CARDS */
 .cd-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:20px}
 .cd-card{background:var(--bg2);border:1px solid var(--border);padding:15px;border-radius:var(--r);text-align:center}
 .cd-val{font-family:'Inter';font-size:32px;font-weight:800;color:var(--accent)}
 .cd-label{font-size:11px;color:var(--text2);margin-top:5px;font-weight:bold;text-transform:uppercase}
 
+/* TABS */
 .tabs{display:flex;gap:5px;background:var(--bg2);padding:5px;border-radius:var(--r);margin-bottom:20px;border:1px solid var(--border)}
 .tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:8px;font-weight:600;font-size:13px;transition:0.2s}
 .tab.active{background:var(--accent);color:#fff}
@@ -42,23 +42,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);mar
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:15px}
 .stitle{font-family:'Syne';font-size:12px;color:var(--accent);letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
 
-/* FORM */
+/* INPUTS */
 .input-group{display:flex;gap:8px;margin-bottom:15px}
-input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:#fff;padding:12px;border-radius:8px;flex:1;outline:none}
+input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:#fff;padding:12px;border-radius:8px;flex:1;outline:none;font-size:14px}
 input:focus{border-color:var(--accent)}
 button.primary{background:var(--accent);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;transition:0.2s}
 button.primary:hover{opacity:0.9;transform:translateY(-1px)}
 
-/* STUDY MODE */
+/* CHIPS */
 .chips{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:5px}
-.chip{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px;white-space:nowrap;transition:0.2s}
+.chip{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px;white-space:nowrap}
 .chip.active{border-color:var(--accent);color:var(--accent);background:rgba(124,95,212,0.1)}
 
-.fc-card{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:bold;cursor:pointer;background:var(--bg3);border-radius:var(--r);border:2px solid var(--border);padding:20px;transition:0.3s}
-.fc-card.flipped{border-color:var(--accent);background:var(--bg2);color:var(--accent2)}
-
-/* QUIZ */
-.quiz-opt{display:block;width:100%;padding:14px;text-align:left;background:var(--bg3);border:1px solid var(--border);color:#fff;margin-top:10px;border-radius:8px;cursor:pointer;font-size:14px;transition:0.2s}
+/* STUDY CONTENT */
+.fc-card{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:bold;cursor:pointer;background:var(--bg3);border-radius:var(--r);border:2px solid var(--border);padding:20px}
+.quiz-opt{display:block;width:100%;padding:14px;text-align:left;background:var(--bg3);border:1px solid var(--border);color:#fff;margin-top:10px;border-radius:8px;cursor:pointer;font-size:14px}
 .quiz-opt:hover{border-color:var(--accent);background:var(--bg2)}
 .quiz-fb{margin-top:15px;padding:12px;border-radius:8px;display:none;font-size:13px}
 </style>
@@ -68,8 +66,8 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
 <div id="app">
   <!-- HEADER & COUNTDOWN -->
   <div class="header">
-    <div class="logo">Study<span>Flow</span> v9</div>
-    <div id="star-status" style="font-size:12px; color:var(--text2)">✨ <span id="star-count">0</span> Knowledge Stars</div>
+    <div class="logo">Study<span>Flow</span> v10</div>
+    <div style="font-size:12px; color:var(--text2)">✨ <span id="star-count">0</span> Knowledge Stars</div>
   </div>
 
   <div class="cd-grid">
@@ -78,6 +76,7 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
     <div class="cd-card"><div class="cd-val" id="cd-kobe">--</div><div class="cd-label">KOBE (8/24)</div></div>
   </div>
 
+  <!-- NAVIGATION TABS -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('galaxy')">🌌 知識銀河</button>
     <button class="tab" onclick="switchTab('study')">📚 演習</button>
@@ -91,10 +90,6 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
       <svg id="galaxy-svg"></svg>
       <div class="galaxy-info" id="galaxy-info"></div>
     </div>
-    <div class="card" style="font-size:13px; color:var(--text2); line-height:1.6">
-      <div class="stitle">銀河の歩き方</div>
-      各ノード（星）はあなたの学習データです。ドラッグして関係性を整理し、クリックして復習しましょう。知識を追加するほど銀河は拡大します。
-    </div>
   </div>
 
   <!-- STUDY PANEL -->
@@ -103,7 +98,6 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
     <div class="chips">
       <button class="chip active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
       <button class="chip" onclick="setMode('quiz',this)">📝 多肢選択クイズ</button>
-      <button class="chip" onclick="setMode('fill',this)">✏️ 穴埋め演習</button>
     </div>
     <div class="stitle">教科別</div>
     <div id="subj-chips" class="chips"></div>
@@ -113,24 +107,24 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
   <!-- ADD KNOWLEDGE PANEL -->
   <div class="panel" id="panel-add">
     <div class="card">
-      <div class="stitle">知識の結晶化</div>
+      <div class="stitle">知識を手動で追加</div>
       <div class="input-group">
-        <input type="text" id="new-q" placeholder="概念・単語名 (例: 特異値分解)">
+        <input type="text" id="new-q" placeholder="概念・単語 (例: SVM)">
         <select id="new-cat" style="flex:0.3">
           <option value="en">英語</option><option value="la">線形代数</option><option value="ca">微積分</option>
           <option value="ml">機械学習</option><option value="cs">CS専門</option>
         </select>
       </div>
-      <textarea id="new-a" placeholder="詳細な説明や答えを入力..." rows="4" style="width:100%; box-sizing:border-box; margin-bottom:15px;"></textarea>
-      <button class="primary" onclick="addNewKnowledge()">銀河に解き放つ</button>
+      <textarea id="new-a" placeholder="意味や詳細な説明を入力..." rows="4" style="width:100%; box-sizing:border-box; margin-bottom:15px;"></textarea>
+      <button class="primary" onclick="addNewKnowledge()">銀河に追加</button>
     </div>
   </div>
 
   <!-- AI PANEL -->
   <div class="panel" id="panel-ai">
     <div class="card">
-      <div class="stitle">Gemini-1.5-Flash エンジン</div>
-      <input type="password" id="api-key" placeholder="Gemini API Key (AIzaSy...)" value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU" style="width:100%; margin-bottom:15px;">
+      <div class="stitle">Gemini 1.5 Flash (v1beta)</div>
+      <input type="password" id="api-key" placeholder="API Key" value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU" style="width:100%; margin-bottom:15px;">
       <div class="input-group">
         <select id="ai-subj"><option value="線形代数">線形代数</option><option value="微積分">微積分</option><option value="機械学習">機械学習</option><option value="CSアルゴリズム">CSアルゴリズム</option><option value="TOEIC英語">TOEIC英語</option></select>
         <button class="primary" id="ai-btn" onclick="askGemini()">類題を生成</button>
@@ -142,7 +136,7 @@ button.primary:hover{opacity:0.9;transform:translateY(-1px)}
 
 <script>
 /* ══════════════════════════════════════
-   DATA: QUIZ & KNOWLEDGE
+   DATABASE: QUIZ & KNOWLEDGE
 ══════════════════════════════════════ */
 const SUBJECTS = {
   la: {name:'線形代数', color:'#7C5FD4'},
@@ -152,54 +146,34 @@ const SUBJECTS = {
   cs: {name:'CS専門', color:'#7A5200'}
 };
 
-let KNOWLEDGE = JSON.parse(localStorage.getItem('study_v9_data')) || [
-  {cat:'la', q:'固有値(Eigenvalue)', a:'Av = λv を満たす λ。行列の性質を決定する。', tag:'行列'},
-  {cat:'ca', q:'テイラー展開', a:'関数を多項式の無限和で表す。f(x)=Σf(n)(a)/n! * (x-a)^n', tag:'解析'},
-  {cat:'ml', q:'勾配降下法', a:'損失関数の勾配と逆方向にパラメータを更新し最小値を探す手法。', tag:'最適化'},
-  {cat:'cs', q:'二分探索木', a:'左の子 < 親 < 右の子 の関係を持つ木構造。検索効率が良い。', tag:'データ構造'},
-  {cat:'en', q:'Implicitly', a:'暗黙のうちに、それとなく。対義語：Explicitly。', tag:'TOEIC'}
+let KNOWLEDGE = JSON.parse(localStorage.getItem('study_v10_data')) || [
+  {cat:'la', q:'固有値(Eigenvalue)', a:'Av = λv を満たす λ'},
+  {cat:'ca', q:'テイラー展開', a:'関数を多項式で近似する手法'},
+  {cat:'ml', q:'勾配降下法', a:'損失を最小化するパラメータ更新法'},
+  {cat:'cs', q:'二分探索', a:'ソート済み配列を半分ずつ探す(O(log n))'},
+  {cat:'en', q:'Implicitly', a:'暗黙のうちに'}
 ];
 
 const QUIZ_DATA = {
-  la: [
-    {q:'det(A)=0である行列Aについて正しいのは？', o:['逆行列が存在する','ランクがフルである','固有値に0が含まれる','一意な解を持つ'], a:2},
-    {q:'対称行列の固有値の性質は？', o:['常に虚数','常に実数','常に0','常に正'], a:1}
-  ],
-  ca: [
-    {q:'sin(x)/x の x→0 の極限値は？', o:['0','1','∞','不定'], a:1},
-    {q:'ロピタルの定理が使えるのは？', o:['常に','0/0 または ∞/∞ のとき','連続関数のとき','導関数が0のとき'], a:1}
-  ],
-  ml: [
-    {q:'L1正則化(Lasso)の特徴は？', o:['重みを一律に小さくする','一部の重みを完全に0にする','計算が非常に高速','過学習を促進する'], a:1},
-    {q:'過学習(Overfitting)が起きている状態は？', o:['訓練誤差もテスト誤差も高い','訓練誤差は低いがテスト誤差が高い','どちらの誤差も低い','モデルが単純すぎる'], a:1}
-  ],
-  cs: [
-    {q:'クイックソートの平均計算量は？', o:['O(n)','O(n^2)','O(n log n)','O(1)'], a:2},
-    {q:'デッドロックの4条件に含まれないのは？', o:['相互排除','保持と待機','非割り込み','メモリ不足'], a:3}
-  ],
-  en: [
-    {q:'"Subsequent" の意味として適切なのは？', o:['以前の','後の、次に続く','同時の','巨大な'], a:1},
-    {q:'"Despite" の後に続く形式は？', o:['名詞句','S + V','動詞原形','形容詞のみ'], a:0}
-  ]
+  la: [{q:'det(A)=0の行列について正しいのは？', o:['正則である','固有値に0を含む','ランクが最大','逆行列を持つ'], a:1}],
+  ca: [{q:'sin(x)/x (x→0) の極限は？', o:['0','1','∞','不定'], a:1}],
+  ml: [{q:'過学習を防ぐ手法は？', o:['正則化','データの削減','モデルの複雑化','学習率の増加'], a:0}],
+  cs: [{q:'クイックソートの平均計算量は？', o:['O(n)','O(n^2)','O(n log n)','O(1)'], a:2}],
+  en: [{q:'"Despite" の後にくるのは？', o:['名詞句','S+V','動詞原形','形容詞'], a:0}]
 };
 
 /* ══════════════════════════════════════
-   LOGIC: COUNTDOWN & TABS
+   COUNTDOWN & NAVIGATION
 ══════════════════════════════════════ */
 function updateCountdown() {
-  const diff = (target) => {
-    const d = Math.ceil((new Date(target) - new Date()) / (1000*60*60*24));
-    return d > 0 ? d : 0;
-  };
+  const diff = (t) => Math.max(0, Math.ceil((new Date(t) - new Date()) / (1000*60*60*24)));
   document.getElementById('cd-toeic').innerText = diff('2026-05-17');
   document.getElementById('cd-naist').innerText = diff('2026-07-06');
   document.getElementById('cd-kobe').innerText = diff('2026-08-24');
 }
 
-let currentTab = 'galaxy';
 function switchTab(t) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
   document.getElementById('panel-' + t).classList.add('active');
   event.currentTarget.classList.add('active');
   if(t === 'galaxy') initGalaxy();
@@ -211,7 +185,7 @@ function switchTab(t) {
 ══════════════════════════════════════ */
 function initGalaxy() {
   const width = document.getElementById('galaxy-wrap').clientWidth;
-  const nodes = [{id:'YOU', group:'center', r:20, label:'CORE'}];
+  const nodes = [{id:'YOU', group:'center', r:18}];
   const links = [];
 
   Object.keys(SUBJECTS).forEach(s => {
@@ -232,18 +206,17 @@ function initGalaxy() {
 
   const simulation = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d => d.id).distance(60))
-    .force("charge", d3.forceManyBody().strength(-120))
+    .force("charge", d3.forceManyBody().strength(-100))
     .force("center", d3.forceCenter(width / 2, 225));
 
   const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845");
   const node = g.append("g").selectAll("circle").data(nodes).join("circle")
     .attr("r", d => d.r).attr("fill", d => SUBJECTS[d.group]?.color || "#fff")
-    .style("cursor", "pointer")
     .on("click", (e, d) => {
       if(d.detail) {
         const info = document.getElementById('galaxy-info');
         info.style.display = 'block';
-        info.innerHTML = `<div style="color:var(--accent); font-weight:bold; margin-bottom:5px">${d.label}</div><div style="line-height:1.5">${d.detail}</div>`;
+        info.innerHTML = `<strong>${d.label}</strong><br>${d.detail}`;
       }
     });
 
@@ -257,17 +230,13 @@ function initGalaxy() {
 /* ══════════════════════════════════════
    STUDY ENGINE
 ══════════════════════════════════════ */
-let studyIdx = 0;
-let currentMode = 'fc';
-let currentSubj = 'la';
-let isFlipped = false;
+let studyIdx = 0, currentMode = 'fc', currentSubj = 'la', isFlipped = false;
 
 function setMode(m, el) {
   currentMode = m;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
-  studyIdx = 0;
-  renderStudy();
+  studyIdx = 0; renderStudy();
 }
 
 function renderStudy() {
@@ -277,30 +246,23 @@ function renderStudy() {
 
   if(currentMode === 'fc') {
     const card = subjKnowledge[studyIdx];
-    if(!card) { container.innerHTML = "カードがありません。知識を追加してください。"; return; }
+    if(!card) return container.innerHTML = "カードがありません。";
     container.innerHTML = `
-      <div class="fc-card ${isFlipped?'flipped':''}" onclick="isFlipped=!isFlipped;renderStudy()">
-        ${isFlipped ? card.a : card.q}
-      </div>
+      <div class="fc-card" onclick="this.innerText='${card.a}'">${card.q}</div>
       <div style="display:flex; justify-content:center; gap:10px; margin-top:20px">
-        <button class="chip" onclick="studyIdx=(studyIdx-1+${subjKnowledge.length})%${subjKnowledge.length};isFlipped=false;renderStudy()">← 前へ</button>
-        <button class="chip" onclick="studyIdx=(studyIdx+1)%${subjKnowledge.length};isFlipped=false;renderStudy()">次へ →</button>
+        <button class="chip" onclick="studyIdx=(studyIdx+1)%${subjKnowledge.length};renderStudy()">次へ</button>
       </div>
     `;
   } else if(currentMode === 'quiz') {
     const q = subjQuizzes[studyIdx];
-    if(!q) { container.innerHTML = "クイズがありません。"; return; }
+    if(!q) return container.innerHTML = "クイズがありません。";
     container.innerHTML = `
       <div class="card">
-        <div style="margin-bottom:15px; font-weight:bold">${q.q}</div>
+        <div>${q.q}</div>
         ${q.o.map((opt, i) => `<button class="quiz-opt" onclick="checkQuiz(${i}, ${q.a})">${opt}</button>`).join('')}
         <div id="quiz-fb" class="quiz-fb"></div>
-        <button class="chip" style="margin-top:15px; width:100%" onclick="studyIdx=(studyIdx+1)%${subjQuizzes.length};renderStudy()">次の問題へ</button>
       </div>
     `;
-  } else {
-    const card = subjKnowledge[studyIdx];
-    container.innerHTML = `<div class="card"><strong>${card.q}</strong> の意味・答えを入力してください。<input type="text" id="fill-in" style="margin-top:15px; width:100%"><button class="primary" style="margin-top:10px; width:100%" onclick="alert('正解: '+KNOWLEDGE.filter(k=>k.cat===currentSubj)[studyIdx].a)">回答チェック</button></div>`;
   }
 }
 
@@ -308,11 +270,11 @@ window.checkQuiz = (i, a) => {
   const fb = document.getElementById('quiz-fb');
   fb.style.display = 'block';
   fb.style.background = i === a ? 'var(--green)' : 'var(--pink)';
-  fb.innerText = i === a ? "正解です！" : "残念。正解は: " + QUIZ_DATA[currentSubj][studyIdx].o[a];
+  fb.innerText = i === a ? "正解！" : "不正解...";
 };
 
 /* ══════════════════════════════════════
-   AI & DATA MANAGEMENT
+   AI (FIXED GEMINI CALL)
 ══════════════════════════════════════ */
 async function askGemini() {
   const key = document.getElementById('api-key').value;
@@ -320,40 +282,35 @@ async function askGemini() {
   const out = document.getElementById('ai-output');
   const btn = document.getElementById('ai-btn');
 
-  if(!key) return alert("APIキーを入力してください");
+  if(!key) return alert("API Keyを入力してください");
   out.style.display = 'block'; out.innerText = "生成中...";
   btn.disabled = true;
 
-  // v1 エンドポイントに変更
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+  // 重要：モデルが見つからないエラーを回避するために v1beta を使用し、正しいフルパスを指定
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
   
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ contents: [{ parts: [{ text: `${subj}に関する、大学院入試レベルの専門的な問題を1問作成し、詳しい解説と解答を付けてください。日本語でお願いします。` }] }] })
+      body: JSON.stringify({ contents: [{ parts: [{ text: `${subj}に関する、院試レベルの類題を1問作成し、詳しい解説と解答を付けてください。` }] }] })
     });
     const data = await res.json();
     if(data.error) throw new Error(data.error.message);
     out.innerText = data.candidates[0].content.parts[0].text;
   } catch (e) {
-    out.innerText = "エラー: " + e.message + "\n\n※APIキーが有効か、モデル名が正しいか確認してください。";
+    out.innerText = "エラー: " + e.message;
   } finally {
     btn.disabled = false;
   }
 }
 
 window.addNewKnowledge = () => {
-  const q = document.getElementById('new-q').value;
-  const a = document.getElementById('new-a').value;
-  const cat = document.getElementById('new-cat').value;
+  const q = document.getElementById('new-q').value, a = document.getElementById('new-a').value, cat = document.getElementById('new-cat').value;
   if(!q || !a) return alert("空欄があります");
   KNOWLEDGE.push({cat, q, a});
-  localStorage.setItem('study_v9_data', JSON.stringify(KNOWLEDGE));
-  document.getElementById('new-q').value = '';
-  document.getElementById('new-a').value = '';
-  alert("銀河に新しい知識が保存されました。");
-  initGalaxy();
+  localStorage.setItem('study_v10_data', JSON.stringify(KNOWLEDGE));
+  alert("保存されました"); initGalaxy();
 };
 
 function init() {
@@ -361,9 +318,7 @@ function init() {
   chips.innerHTML = Object.keys(SUBJECTS).map(k => `
     <button class="chip" onclick="currentSubj='${k}';studyIdx=0;renderStudy()">${SUBJECTS[k].name}</button>
   `).join('');
-  updateCountdown();
-  initGalaxy();
-  renderStudy();
+  updateCountdown(); initGalaxy(); renderStudy();
 }
 
 init();
