@@ -3,418 +3,296 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v7 — NAIST/Kobe 院試・TOEIC対策</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<title>StudyFlow v8 — 究極の院試・TOEIC学習システム</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 :root{
-  --bg:#F6F5F1;--bg2:#FFFFFF;--bg3:#EFEDE8;--bg4:#E5E3DC;
-  --border:#DDD9D0;--border2:#C4C0B5;
-  --text:#1A1916;--text2:#5A5850;--text3:#98958E;
-  --accent:#7C5FD4;--accent2:#9B7FF0;--alight:#F0ECFF;--aborder:#C4ADFF;
-  --green:#167A50;--gbg:#E6F4EE;--gborder:#8FD9B8;
-  --amber:#7A5200;--abg2:#FEF2D8;--aborder2:#F5C060;
-  --blue:#145898;--bbg:#E4F0FB;--bborder:#A8CCF0;
-  --pink:#B21B7E;--pbg:#FBE8F4;--pborder:#E6A4D0;
-  --r:12px;--r2:8px;--r3:20px;
-  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --bg:#070610;--bg2:#0D0B1A;--bg3:#1A1830;
+  --border:#2A2845;--text:#F6F5F1;--text2:#98958E;
+  --accent:#7C5FD4;--accent2:#9B7FF0;
+  --pink:#B21B7E;--green:#167A50;--amber:#7A5200;--blue:#145898;
+  --r:12px;--sh:0 4px 20px rgba(0,0,0,0.5);
 }
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-#app{max-width:960px;margin:0 auto;padding:24px 16px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);margin:0;overflow-x:hidden}
+#app{max-width:1000px;margin:0 auto;padding:20px}
 
 /* HEADER & TABS */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
-.logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-.5px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
+.logo{font-family:'Syne';font-size:24px;font-weight:800}
 .logo span{color:var(--accent)}
 
-.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;overflow-x:auto}
-.tab{flex:1;min-width:fit-content;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;white-space:nowrap}
-.tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
-.panel{display:none}.panel.active{display:block}
-.stitle{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:12px}
+.tabs{display:flex;gap:5px;background:var(--bg2);padding:5px;border-radius:var(--r);margin-bottom:20px;border:1px solid var(--border)}
+.tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:8px;font-weight:600;font-size:13px;transition:0.2s}
+.tab.active{background:var(--accent);color:#fff}
 
-/* SUBJECT CARDS */
-.subj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px}
-.subj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.subj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
-.sc-la::before{background:var(--accent)}.sc-ca::before{background:var(--green)}.sc-ml::before{background:var(--blue)}.sc-en::before{background:var(--pink)}.sc-cs::before{background:var(--amber)}
-
-/* PROGRESS BAR */
-.pbar-bg{height:6px;background:var(--bg4);border-radius:3px;margin-top:10px;overflow:hidden}
-.pbar-fill{height:100%;background:var(--accent);transition:width 0.5s ease}
-
-/* FLASH CARDS */
-.fc-card{background:var(--bg2);border:2px solid var(--border);border-radius:18px;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;margin-bottom:20px;cursor:pointer;box-shadow:var(--sh);transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);position:relative}
-.fc-card:hover{transform:translateY(-2px);border-color:var(--accent)}
-.fc-card.flipped{background:var(--alight);border-color:var(--accent)}
-.fc-q{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text)}
-.fc-a{font-size:15px;color:var(--text2);line-height:1.8;text-align:left;width:100%}
-
-/* GALAXY STYLE */
-.galaxy-container{background:#070610;border-radius:var(--r);position:relative;height:550px;border:1px solid #1a1a3a;box-shadow:inset 0 0 50px rgba(0,0,0,0.5)}
+/* GALAXY BOX */
+.galaxy-wrap{height:500px;background:radial-gradient(circle at center, #131129 0%, #070610 100%);border-radius:var(--r);position:relative;border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
 #galaxy-svg{width:100%;height:100%}
-.node-label{font-size:9px;fill:#888;pointer-events:none;font-family:'Inter'}
-.galaxy-overlay{position:absolute;top:12px;right:12px;background:rgba(13, 11, 26, 0.9);padding:15px;border-radius:var(--r2);font-size:13px;max-width:280px;display:none;border:1px solid var(--accent);color:#eee;backdrop-filter:blur(4px)}
+.galaxy-info{position:absolute;bottom:15px;left:15px;background:rgba(0,0,0,0.7);padding:12px;border-radius:8px;border:1px solid var(--accent);max-width:280px;display:none;backdrop-filter:blur(5px)}
 
-/* API KEY */
-.api-key-wrap{background:var(--abg2);border:1px solid var(--aborder2);border-radius:var(--r);padding:14px;margin-bottom:16px}
-.api-key-inp{width:100%;padding:10px;border-radius:var(--r2);border:1px solid var(--aborder2);font-family:monospace;margin-top:8px}
+/* CARD STYLES */
+.panel{display:none}.panel.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:15px}
+.stitle{font-family:'Syne';font-size:12px;color:var(--accent);letter-spacing:1px;margin-bottom:10px}
 
-.ai-gen-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--r2);font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(124,95,212,0.3)}
-.ai-spinner{display:none;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ADD WORD FORM */
+.input-group{display:flex;gap:8px;margin-bottom:15px}
+input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:#fff;padding:12px;border-radius:8px;flex:1}
+button.primary{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:bold}
+
+/* STUDY MODE */
+.study-modes{display:flex;gap:8px;margin-bottom:15px}
+.mode-btn{padding:8px 15px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px}
+.mode-btn.active{border-color:var(--accent);color:var(--accent)}
+
+.fc-card{min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:bold;cursor:pointer;background:var(--bg3);border-radius:var(--r);border:2px solid var(--border)}
+.fc-card.flipped{border-color:var(--accent);background:var(--bg2)}
+
+/* QUIZ */
+.quiz-opt{display:block;width:100%;padding:12px;text-align:left;background:var(--bg3);border:1px solid var(--border);color:#fff;margin-top:8px;border-radius:8px;cursor:pointer}
+.quiz-opt:hover{background:var(--accent)}
+
+/* AI RES */
+#ai-output{line-height:1.6;white-space:pre-wrap;font-size:14px;border-left:4px solid var(--accent);padding-left:15px}
 </style>
 </head>
 <body>
+
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v7</span></div>
-    <div id="streak-disp" class="tab" style="background:var(--bg2); border:1px solid var(--border); flex:none; padding:5px 12px;">🔥 0 days streak</div>
+    <div class="logo">Study<span>Flow</span> v8</div>
+    <div id="status-bar" style="font-size:12px; color:var(--text2)">✨ 知識レベル: <span id="star-count">0</span> Stars</div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
+    <button class="tab active" onclick="switchTab('galaxy')">🌌 知識銀河</button>
     <button class="tab" onclick="switchTab('study')">📚 演習</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 AI生成(Gemini)</button>
-    <button class="tab" onclick="switchTab('galaxy')">🌌 知識銀河</button>
+    <button class="tab" onclick="switchTab('add')">➕ 知識追加</button>
+    <button class="tab" onclick="switchTab('ai')">🤖 AI生成</button>
   </div>
 
-  <!-- PLAN PANEL -->
-  <div class="panel active" id="panel-plan">
-    <div class="stitle">受験カウントダウン</div>
-    <div class="subj-grid">
-      <div class="subj-card" style="border-top:4px solid var(--pink)">
-        <div style="font-size:11px; font-weight:700; color:var(--pink)">TOEIC</div>
-        <div style="font-size:28px; font-weight:800; margin:5px 0;" id="d-toeic">--</div>
-        <div style="font-size:10px; color:var(--text3)">2026/05/17</div>
-      </div>
-      <div class="subj-card" style="border-top:4px solid var(--accent)">
-        <div style="font-size:11px; font-weight:700; color:var(--accent)">NAIST</div>
-        <div style="font-size:28px; font-weight:800; margin:5px 0;" id="d-naist">--</div>
-        <div style="font-size:10px; color:var(--text3)">2026/07/06</div>
-      </div>
+  <!-- GALAXY PANEL -->
+  <div class="panel active" id="panel-galaxy">
+    <div class="galaxy-wrap">
+      <svg id="galaxy-svg"></svg>
+      <div class="galaxy-info" id="galaxy-info"></div>
     </div>
-
-    <div class="stitle">教科別進捗</div>
-    <div class="subj-grid" id="subj-list">
-      <!-- Generated via JS -->
-    </div>
+    <div style="font-size:12px; color:var(--text2); text-align:center">ノードをドラッグして移動、クリックで詳細を確認できます。</div>
   </div>
 
   <!-- STUDY PANEL -->
   <div class="panel" id="panel-study">
-    <div class="stitle">教科選択</div>
-    <div id="subj-chips" style="display:flex; gap:8px; overflow-x:auto; margin-bottom:20px; padding-bottom:5px;">
-      <!-- Generated via JS -->
+    <div class="study-modes">
+      <button class="mode-btn active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
+      <button class="mode-btn" onclick="setMode('quiz',this)">📝 多肢選択</button>
+      <button class="mode-btn" onclick="setMode('fill',this)">✏️ 穴埋め</button>
     </div>
-    
-    <div id="study-content">
-      <!-- Flashcard rendering -->
+    <div id="subj-chips" style="display:flex; gap:8px; margin-bottom:15px; overflow-x:auto"></div>
+    <div id="study-content"></div>
+  </div>
+
+  <!-- ADD KNOWLEDGE PANEL -->
+  <div class="panel" id="panel-add">
+    <div class="card">
+      <div class="stitle">英単語・知識を手動で追加</div>
+      <div class="input-group">
+        <input type="text" id="new-q" placeholder="単語または問題 (例: Persistence)">
+        <select id="new-cat" style="flex:0.3">
+          <option value="en">英語</option><option value="la">数学</option><option value="cs">CS専門</option>
+        </select>
+      </div>
+      <textarea id="new-a" placeholder="意味または答え (例: 粘り強さ、永続性)" rows="3" style="width:100%; box-sizing:border-box; margin-bottom:10px;"></textarea>
+      <button class="primary" onclick="addNewKnowledge()">銀河に追加</button>
     </div>
+    <div id="user-list" style="font-size:13px; color:var(--text2)"></div>
   </div>
 
   <!-- AI PANEL -->
   <div class="panel" id="panel-ai">
-    <div class="api-key-wrap">
-      <div style="display:flex; justify-content:space-between; align-items:center">
-        <label style="font-size:11px; font-weight:700; color:var(--amber)">🔑 GEMINI API KEY</label>
-        <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:10px; color:var(--text3)">取得はこちら</a>
+    <div class="card">
+      <input type="password" id="api-key" placeholder="Gemini API Key" value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU" style="width:100%; margin-bottom:10px;">
+      <div class="input-group">
+        <select id="ai-subj"><option value="数学">数学</option><option value="CS専門">CS専門</option><option value="TOEIC">TOEIC英語</option></select>
+        <button class="primary" onclick="askGemini()">AI類題を生成</button>
       </div>
-      <input type="password" class="api-key-inp" id="api-key-gemini" placeholder="AIzaSy..." value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU">
-    </div>
-
-    <div style="background:var(--bg2); padding:16px; border-radius:var(--r); border:1px solid var(--border)">
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-        <select class="api-key-inp" id="ai-subj-sel" style="margin-top:0">
-          <option value="la">線形代数</option>
-          <option value="ca">微積分</option>
-          <option value="ml">機械学習</option>
-          <option value="en">TOEIC/英語</option>
-          <option value="cs">専門(アルゴリズム等)</option>
-        </select>
-        <select class="api-key-inp" id="ai-level-sel" style="margin-top:0">
-          <option value="基礎">基礎固め</option>
-          <option value="応用">応用・計算</option>
-          <option value="院試">院試本番レベル</option>
-        </select>
-      </div>
-      <button class="ai-gen-btn" onclick="generateGemini()">
-        <span class="ai-spinner" id="ai-spin"></span><span id="ai-btn-text">類題を生成する</span>
-      </button>
-    </div>
-    <div id="ai-output" style="margin-top:15px"></div>
-  </div>
-
-  <!-- GALAXY PANEL -->
-  <div class="panel" id="panel-galaxy">
-    <div class="stitle">🌌 知識銀河 - 学習した概念のネットワーク</div>
-    <div class="galaxy-container">
-      <svg id="galaxy-svg"></svg>
-      <div class="galaxy-overlay" id="galaxy-overlay"></div>
-    </div>
-    <div style="font-size:10px; color:var(--text3); margin-top:8px; text-align:center;">
-      スクロールでズーム、ドラッグで移動、ノードクリックで詳細表示
+      <div id="ai-output" class="card" style="display:none"></div>
     </div>
   </div>
 </div>
 
 <script>
 /* ══════════════════════════════════════
-   DATABASE: EXTENDED CONTENT
+   DATABASE & INITIAL DATA
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数', color:'#7C5FD4', cls:'sc-la'},
-  ca:{name:'微積分', color:'#167A50', cls:'sc-ca'},
-  ml:{name:'機械学習', color:'#145898', cls:'sc-ml'},
-  en:{name:'TOEIC/英語', color:'#B21B7E', cls:'sc-en'},
-  cs:{name:'計算機科学', color:'#7A5200', cls:'sc-cs'}
+  la: {name:'線形代数', color:'#7C5FD4'},
+  ca: {name:'微積分', color:'#167A50'},
+  ml: {name:'機械学習', color:'#145898'},
+  en: {name:'英語', color:'#B21B7E'},
+  cs: {name:'CS専門', color:'#7A5200'}
 };
 
-const FC = {
-  la: [
-    {q:'Rank-Nullity Theorem (次元定理)', a:'dim(V) = rank(f) + dim(ker f)\n線形写像において、像の次元と核の次元の和は元の空間の次元に等しい。', tag:'次元定理'},
-    {q:'正定値行列 (Positive Definite) の条件', a:'1. 全ての固有値が正\n2. 全ての首座小行列式が正\n3. 任意のx≠0に対して xᵀAx > 0', tag:'行列'},
-    {q:'グラム・シュミットの正規直交化', a:'任意の基底から正規直交基底を順次作り出すアルゴリズム。', tag:'直交化'}
-  ],
-  ca: [
-    {q:'テイラー展開 (Taylor Expansion)', a:'関数f(x)を、特定の点aの周りで多項式近似すること。\nf(x) = Σ (f⁽ⁿ⁾(a)/n!) (x-a)ⁿ', tag:'近似'},
-    {q:'広義積分が収束する条件', a:'不連続点や無限遠において、極限値が存在すること。', tag:'積分'}
-  ],
-  en: [
-    {q:'TOEIC: 接続詞 vs 前置詞 (Despite)', a:'Despite/In spite of → 前置詞（後ろは名詞/動名詞）\nAlthough/Even though → 接続詞（後ろはS+V）', tag:'TOEIC文法'},
-    {q:'TOEIC: 頻出単語 "Approve"', a:'Approve of 〜（〜を承認する）。\n名詞形：Approval。院試の論文紹介メール等でも頻出。', tag:'英単語'},
-    {q:'TOEIC: "Unless" の書き換え', a:'Unless S+V = If S do NOT V.\n「〜しない限り」', tag:'TOEIC文法'},
-    {q:'論文表現: "A is attributed to B"', a:'「Aの原因はBにあるとされる」\n原因分析のセクションで頻出。', tag:'論文表現'}
-  ],
-  cs: [
-    {q:'ダイクストラ法 (Dijkstra)', a:'単一始点最短経路問題を解くグラフアルゴリズム。負の辺がない場合に有効。計算量 O(E log V)。', tag:'アルゴリズム'},
-    {q:'キャッシュのヒット率と実効アクセス時間', a:'実効時間 = (ヒット率 × ヒット時時間) + ((1-ヒット率) × ミス時時間)', tag:'計算機構成'},
-    {q:'ハッシュテーブルの衝突解決', a:'1. チェイン法（リストで繋ぐ）\n2. オープンアドレス法（空きを探す）', tag:'データ構造'}
-  ],
-  ml: [
-    {q:'勾配消失問題 (Vanishing Gradient)', a:'層が深くなるにつれ勾配が小さくなり、学習が進まなくなる現象。ReLUの使用等で対策。', tag:'深層学習'},
-    {q:'過学習 (Overfitting) の抑制方法', a:'1. L1/L2正則化\n2. Dropout\n3. Data Augmentation\n4. Early Stopping', tag:'最適化'}
-  ]
-};
+// 知識ベース (デフォルト)
+let KNOWLEDGE = JSON.parse(localStorage.getItem('study_v8_data')) || [
+  {cat:'la', q:'固有値(Eigenvalue)の定義', a:'Av = λv を満たすスカラー λ', tag:'行列'},
+  {cat:'la', q:'Rank(A)=n のとき A は?', a:'正則行列（逆行列が存在する）', tag:'行列'},
+  {cat:'cs', q:'プロセスとスレッドの違い', a:'プロセスは独立したメモリ空間、スレッドはメモリを共有', tag:'OS'},
+  {cat:'cs', q:'TCPとUDPの違い', a:'TCPは信頼性重視(確認応答あり)、UDPは速度重視(垂れ流し)', tag:'NW'},
+  {cat:'en', q:'Incur', a:'(負債などを)負う、(怒りなどを)招く', tag:'TOEIC'},
+  {cat:'en', q:'Prerequisite', a:'必須条件、あらかじめ必要な', tag:'Academic'}
+];
+
+// 演習問題 (デフォルト)
+const QUIZ_DATA = [
+  {cat:'la', q:'det(A)=0 のとき正しいのは？', o:['逆行列がある','ランクが最大','特異行列である','固有値に0を含まない'], a:2},
+  {cat:'cs', q:'二分探索の最悪計算量は？', o:['O(n)','O(log n)','O(n log n)','O(1)'], a:1}
+];
 
 /* ══════════════════════════════════════
-   STATE MANAGEMENT
+   APP STATE
 ══════════════════════════════════════ */
-let currentTab = 'plan';
-let currentSubj = 'la';
-let fcState = { cur: 0, flipped: false };
-let galaxyNodes = [];
-
-// LocalStorage Progress
-let progress = JSON.parse(localStorage.getItem('study_flow_prog')) || { la:0, ca:0, ml:0, en:0, cs:0 };
-
-function saveProg(){ localStorage.setItem('study_flow_prog', JSON.stringify(progress)); }
+let currentMode = 'fc';
+let currentSubj = 'en';
+let studyIdx = 0;
+let isFlipped = false;
 
 /* ══════════════════════════════════════
-   UI RENDERING
-══════════════════════════════════════ */
-function switchTab(t) {
-  currentTab = t;
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + t).classList.add('active');
-  event.currentTarget.classList.add('active');
-  if(t === 'galaxy') initGalaxy();
-  if(t === 'plan') renderPlan();
-}
-
-function renderPlan() {
-  const list = document.getElementById('subj-list');
-  list.innerHTML = Object.keys(SUBJECTS).map(k => {
-    const s = SUBJECTS[k];
-    const p = progress[k] || 0;
-    const total = FC[k]?.length || 1;
-    const pct = Math.min(100, Math.round((p / total) * 100));
-    return `
-      <div class="subj-card ${s.cls}">
-        <div style="font-size:12px; font-weight:700;">${s.name}</div>
-        <div style="font-size:18px; font-weight:800; margin-top:8px;">${pct}%</div>
-        <div class="pbar-bg"><div class="pbar-fill" style="width:${pct}%; background:${s.color}"></div></div>
-      </div>
-    `;
-  }).join('');
-}
-
-function setSubject(s) {
-  currentSubj = s;
-  fcState = { cur: 0, flipped: false };
-  renderStudyChips();
-  renderFlashcard();
-}
-
-function renderStudyChips() {
-  const container = document.getElementById('subj-chips');
-  container.innerHTML = Object.keys(SUBJECTS).map(k => `
-    <button class="tab ${currentSubj === k ? 'active' : ''}" 
-            onclick="setSubject('${k}')" 
-            style="background:${currentSubj === k ? SUBJECTS[k].color : ''}; flex:none;">
-      ${SUBJECTS[k].name}
-    </button>
-  `).join('');
-}
-
-function renderFlashcard() {
-  const container = document.getElementById('study-content');
-  const cards = FC[currentSubj] || [];
-  const card = cards[fcState.cur];
-
-  if(!card) {
-    container.innerHTML = `<div class="fc-card">カードがありません</div>`;
-    return;
-  }
-
-  container.innerHTML = `
-    <div class="fc-card ${fcState.flipped ? 'flipped' : ''}" onclick="flipFC()">
-      <div class="stitle" style="position:absolute; top:15px;">${card.tag}</div>
-      <div class="${fcState.flipped ? 'fc-a' : 'fc-q'}">
-        ${fcState.flipped ? card.a.replace(/\n/g, '<br>') : card.q}
-      </div>
-      <div style="position:absolute; bottom:15px; font-size:10px; color:var(--text3)">
-        Tap to reveal
-      </div>
-    </div>
-    <div style="display:flex; gap:10px; justify-content:center;">
-      <button class="tab" onclick="moveFC(-1)" style="flex:none; background:var(--bg2); color:var(--text); border:1px solid var(--border)">← Back</button>
-      <button class="tab" onclick="moveFC(1)" style="flex:none; background:var(--accent); color:#fff">Next / Clear →</button>
-    </div>
-  `;
-}
-
-function flipFC() { fcState.flipped = !fcState.flipped; renderFlashcard(); }
-
-function moveFC(dir) {
-  const cards = FC[currentSubj] || [];
-  if(dir > 0) {
-    progress[currentSubj] = Math.max(progress[currentSubj], fcState.cur + 1);
-    saveProg();
-  }
-  fcState.cur = (fcState.cur + dir + cards.length) % cards.length;
-  fcState.flipped = false;
-  renderFlashcard();
-}
-
-/* ══════════════════════════════════════
-   GALAXY: ENHANCED D3.JS
+   GALAXY (D3.JS SYSTEM)
 ══════════════════════════════════════ */
 function initGalaxy() {
-  const width = document.querySelector('.galaxy-container').clientWidth;
-  const height = 550;
-  
-  const nodes = [{id: "YOU", group: 'center', size: 15}];
+  const width = document.getElementById('galaxy-wrap')?.clientWidth || 800;
+  const nodes = [{id:'YOU', group:'center', r:18}];
   const links = [];
-  
-  // Build data from FC
-  Object.keys(SUBJECTS).forEach(sKey => {
-    const s = SUBJECTS[sKey];
-    nodes.push({id: s.name, group: sKey, size: 12});
-    links.push({source: "YOU", target: s.name});
-    
-    FC[sKey].forEach(card => {
-      if(!nodes.find(n => n.id === card.tag)) {
-        nodes.push({id: card.tag, group: sKey, size: 6, detail: card.a});
-        links.push({source: s.name, target: card.tag});
-      }
-    });
+
+  // 知識データをノードに変換
+  Object.keys(SUBJECTS).forEach(s => {
+    nodes.push({id: SUBJECTS[s].name, group: s, r:12});
+    links.push({source:'YOU', target: SUBJECTS[s].name});
+  });
+
+  KNOWLEDGE.forEach((k, i) => {
+    const nodeID = `k${i}`;
+    nodes.push({id: nodeID, group: k.cat, r:5, label: k.q, detail: k.a});
+    links.push({source: SUBJECTS[k.cat].name, target: nodeID});
   });
 
   const svg = d3.select("#galaxy-svg");
   svg.selectAll("*").remove();
-
-  // Zoom behavior
   const g = svg.append("g");
-  svg.call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)));
 
   const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(70))
-    .force("charge", d3.forceManyBody().strength(-150))
-    .force("center", d3.forceCenter(width / 2, height / 2));
+    .force("link", d3.forceLink(links).id(d => d.id).distance(50))
+    .force("charge", d3.forceManyBody().strength(-100))
+    .force("center", d3.forceCenter(width / 2, 250));
 
-  const link = g.append("g")
-    .selectAll("line")
-    .data(links)
-    .join("line")
-    .attr("stroke", "#333")
-    .attr("stroke-width", 1);
-
-  const node = g.append("g")
-    .selectAll("circle")
-    .data(nodes)
-    .join("circle")
-    .attr("r", d => d.size)
+  const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845");
+  const node = g.append("g").selectAll("circle").data(nodes).join("circle")
+    .attr("r", d => d.r)
     .attr("fill", d => SUBJECTS[d.group]?.color || "#fff")
-    .attr("stroke", d => d.group === 'center' ? '#fff' : 'none')
-    .attr("stroke-width", 2)
-    .style("cursor", "pointer")
-    .call(d3.drag()
-      .on("start", dragstarted)
-      .on("drag", dragged)
-      .on("end", dragended))
+    .attr("stroke", "#fff").attr("stroke-width", d => d.id==='YOU'?2:0)
+    .call(d3.drag().on("start", (e,d)=>{ if(!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+    .on("drag", (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+    .on("end", (e,d)=>{ if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }))
     .on("click", (e, d) => {
       if(d.detail) {
-        const ov = document.getElementById('galaxy-overlay');
-        ov.style.display = 'block';
-        ov.innerHTML = `<strong>${d.id}</strong><hr style="border:none; border-top:1px solid #333; margin:8px 0;">${d.detail.replace(/\n/g,'<br>')}`;
+        const info = document.getElementById('galaxy-info');
+        info.style.display = 'block';
+        info.innerHTML = `<div style="color:var(--accent); font-weight:bold">${d.label}</div><hr style="border:0; border-top:1px solid #333; margin:8px 0">${d.detail}`;
       }
     });
 
-  const label = g.append("g")
-    .selectAll("text")
-    .data(nodes)
-    .join("text")
-    .text(d => d.id)
-    .attr("class", "node-label")
-    .attr("dx", d => d.size + 2)
-    .attr("dy", 4);
+  const labels = g.append("g").selectAll("text").data(nodes.filter(n => n.r > 8)).join("text")
+    .text(d => d.id === 'YOU' ? 'MY GALAXY' : d.id)
+    .attr("fill", "#fff").attr("font-size", "10px").attr("dx", 15).attr("dy", 5);
 
   simulation.on("tick", () => {
-    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
     node.attr("cx", d => d.x).attr("cy", d => d.y);
-    label.attr("x", d => d.x).attr("y", d => d.y);
+    labels.attr("x", d => d.x).attr("y", d => d.y);
   });
-
-  function dragstarted(event) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
-    event.subject.fx = event.subject.x;
-    event.subject.fy = event.subject.y;
-  }
-  function dragged(event) {
-    event.subject.fx = event.x;
-    event.subject.fy = event.y;
-  }
-  function dragended(event) {
-    if (!event.active) simulation.alphaTarget(0);
-    event.subject.fx = null;
-    event.subject.fy = null;
-  }
+  
+  document.getElementById('star-count').innerText = KNOWLEDGE.length;
 }
 
 /* ══════════════════════════════════════
-   GEMINI AI INTEGRATION
+   STUDY LOGIC
 ══════════════════════════════════════ */
-async function generateGemini() {
-  const key = document.getElementById('api-key-gemini').value;
-  const subj = document.getElementById('ai-subj-sel').value;
-  const level = document.getElementById('ai-level-sel').value;
-  const btn = document.querySelector('.ai-gen-btn');
-  const spin = document.getElementById('ai-spin');
-  const btnText = document.getElementById('ai-btn-text');
+function renderStudy() {
+  const content = document.getElementById('study-content');
+  const subjData = KNOWLEDGE.filter(k => k.cat === currentSubj);
+  const quizData = QUIZ_DATA.filter(k => k.cat === currentSubj);
 
-  if(!key) return alert("API Keyを入力してください");
+  if(currentMode === 'fc') {
+    const item = subjData[studyIdx];
+    if(!item) { content.innerHTML = "この教科のカードはありません。"; return; }
+    content.innerHTML = `
+      <div class="fc-card ${isFlipped?'flipped':''}" onclick="flip()">
+        ${isFlipped ? item.a : item.q}
+      </div>
+      <div style="display:flex; justify-content:center; gap:10px; margin-top:15px">
+        <button class="mode-btn" onclick="moveStudy(-1)">← 前へ</button>
+        <button class="mode-btn" onclick="moveStudy(1)">次へ →</button>
+      </div>
+    `;
+  } else if(currentMode === 'quiz') {
+    const q = quizData[0]; // 簡易実装のため1問目のみ
+    if(!q) { content.innerHTML = "クイズデータがありません。"; return; }
+    content.innerHTML = `
+      <div class="card">
+        <div class="stitle">多肢選択問題</div>
+        <div>${q.q}</div>
+        ${q.o.map((opt, i) => `<button class="quiz-opt" onclick="checkAns(${i}, ${q.a})">${opt}</button>`).join('')}
+      </div>
+    `;
+  } else {
+    content.innerHTML = `<div class="card">穴埋めモード：${subjData[0]?.q} の答えを入力してください。<br><input type="text" id="fill-ans" style="margin-top:10px"><button class="primary" onclick="checkFill('${subjData[0]?.a}')">回答</button></div>`;
+  }
+}
 
-  btn.disabled = true; spin.style.display = 'inline-block'; btnText.innerText = "生成中...";
+window.flip = () => { isFlipped = !isFlipped; renderStudy(); };
+window.moveStudy = (d) => {
+  const subjData = KNOWLEDGE.filter(k => k.cat === currentSubj);
+  studyIdx = (studyIdx + d + subjData.length) % subjData.length;
+  isFlipped = false;
+  renderStudy();
+};
+window.checkAns = (i, a) => { alert(i === a ? "正解！" : "不正解..."); };
+window.checkFill = (a) => {
+  const val = document.getElementById('fill-ans').value;
+  alert(val === a ? "正解！" : `不正解... 正解は: ${a}`);
+};
 
-  const prompt = `あなたは大学院入試(NAIST/神戸大)の専門講師です。
-  ${SUBJECTS[subj].name}について、${level}レベルの類題を1問作成してください。
-  1. まず問題文。
-  2. 次に、思考のプロセス（ヒント）。
-  3. 最後に詳細な解答。
-  数学ならLaTeX形式を使い、英語ならTOEIC Part 5形式にしてください。`;
+/* ══════════════════════════════════════
+   USER ADD KNOWLEDGE
+══════════════════════════════════════ */
+window.addNewKnowledge = () => {
+  const q = document.getElementById('new-q').value;
+  const a = document.getElementById('new-a').value;
+  const cat = document.getElementById('new-cat').value;
+  if(!q || !a) return alert("入力してください");
+  
+  KNOWLEDGE.push({cat, q, a, tag:'UserAdded'});
+  localStorage.setItem('study_v8_data', JSON.stringify(KNOWLEDGE));
+  
+  document.getElementById('new-q').value = '';
+  document.getElementById('new-a').value = '';
+  alert("銀河に新しい知識が追加されました！");
+  initGalaxy();
+};
+
+/* ══════════════════════════════════════
+   AI GENERATION (FIXED)
+══════════════════════════════════════ */
+async function askGemini() {
+  const key = document.getElementById('api-key').value;
+  const subj = document.getElementById('ai-subj').value;
+  const output = document.getElementById('ai-output');
+  
+  output.style.display = 'block';
+  output.innerText = "思考中...";
+
+  const prompt = `あなたは大学院入試(数学・CS)とTOEICの専門講師です。${subj}に関する院試レベルの類題を1問作成し、その次に「解答：」として答えを書いてください。`;
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
@@ -423,32 +301,49 @@ async function generateGemini() {
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     const data = await res.json();
-    const txt = data.candidates[0].content.parts[0].text;
+    
+    // エラーハンドリングの強化
+    if(data.error) {
+      throw new Error(data.error.message);
+    }
+    
+    if(!data.candidates || data.candidates.length === 0) {
+      throw new Error("AIが回答を生成できませんでした（安全フィルター等）。プロンプトを変えてみてください。");
+    }
 
-    document.getElementById('ai-output').innerHTML = `
-      <div style="background:var(--bg2); padding:20px; border-radius:var(--r); border:1px solid var(--accent); line-height:1.7; font-size:14px; white-space:pre-wrap;">${txt}</div>
-    `;
+    const txt = data.candidates[0].content.parts[0].text;
+    output.innerText = txt;
   } catch (e) {
-    alert("エラー: " + e.message);
-  } finally {
-    btn.disabled = false; spin.style.display = 'none'; btnText.innerText = "類題を生成する";
+    output.innerText = "エラーが発生しました:\n" + e.message;
   }
 }
 
 /* ══════════════════════════════════════
-   INIT
+   SYSTEM
 ══════════════════════════════════════ */
-function daysUntil(str) {
-  const diff = new Date(str) - new Date();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+function switchTab(t) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + t).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(t === 'galaxy') initGalaxy();
+  if(t === 'study') renderStudy();
+}
+
+function setMode(m, el) {
+  currentMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderStudy();
 }
 
 function init() {
-  document.getElementById('d-toeic').innerText = daysUntil('2026-05-17') + " days";
-  document.getElementById('d-naist').innerText = daysUntil('2026-07-06') + " days";
-  renderPlan();
-  renderStudyChips();
-  renderFlashcard();
+  const chips = document.getElementById('subj-chips');
+  chips.innerHTML = Object.keys(SUBJECTS).map(k => `
+    <button class="mode-btn" onclick="currentSubj='${k}'; studyIdx=0; renderStudy()">${SUBJECTS[k].name}</button>
+  `).join('');
+  initGalaxy();
+  renderStudy();
 }
 
 init();
