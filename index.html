@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v8 — 究極の院試・TOEIC学習システム</title>
+<title>StudyFlow v9 — 統合院試対策システム</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@400;500;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
@@ -17,52 +17,65 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);margin:0;overflow-x:hidden}
 #app{max-width:1000px;margin:0 auto;padding:20px}
 
-/* HEADER & TABS */
+/* HEADER */
 .header{display:flex;justify-content:space-between;align-items:center;padding:10px 0}
-.logo{font-family:'Syne';font-size:24px;font-weight:800}
+.logo{font-family:'Syne';font-size:24px;font-weight:800;cursor:default}
 .logo span{color:var(--accent)}
+
+/* COUNTDOWN CARDS */
+.cd-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:15px;margin-bottom:20px}
+.cd-card{background:var(--bg2);border:1px solid var(--border);padding:15px;border-radius:var(--r);text-align:center}
+.cd-val{font-family:'Inter';font-size:32px;font-weight:800;color:var(--accent)}
+.cd-label{font-size:11px;color:var(--text2);margin-top:5px;font-weight:bold;text-transform:uppercase}
 
 .tabs{display:flex;gap:5px;background:var(--bg2);padding:5px;border-radius:var(--r);margin-bottom:20px;border:1px solid var(--border)}
 .tab{flex:1;padding:10px;border:none;background:transparent;color:var(--text2);cursor:pointer;border-radius:8px;font-weight:600;font-size:13px;transition:0.2s}
 .tab.active{background:var(--accent);color:#fff}
 
-/* GALAXY BOX */
-.galaxy-wrap{height:500px;background:radial-gradient(circle at center, #131129 0%, #070610 100%);border-radius:var(--r);position:relative;border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
+/* GALAXY */
+.galaxy-wrap{height:450px;background:radial-gradient(circle at center, #131129 0%, #070610 100%);border-radius:var(--r);position:relative;border:1px solid var(--border);margin-bottom:20px;overflow:hidden}
 #galaxy-svg{width:100%;height:100%}
-.galaxy-info{position:absolute;bottom:15px;left:15px;background:rgba(0,0,0,0.7);padding:12px;border-radius:8px;border:1px solid var(--accent);max-width:280px;display:none;backdrop-filter:blur(5px)}
+.galaxy-info{position:absolute;bottom:15px;left:15px;background:rgba(0,0,0,0.85);padding:15px;border-radius:8px;border:1px solid var(--accent);max-width:300px;display:none;backdrop-filter:blur(5px);font-size:13px;z-index:100}
 
-/* CARD STYLES */
+/* PANEL & CARDS */
 .panel{display:none}.panel.active{display:block}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:15px}
-.stitle{font-family:'Syne';font-size:12px;color:var(--accent);letter-spacing:1px;margin-bottom:10px}
+.stitle{font-family:'Syne';font-size:12px;color:var(--accent);letter-spacing:1px;margin-bottom:12px;text-transform:uppercase}
 
-/* ADD WORD FORM */
+/* FORM */
 .input-group{display:flex;gap:8px;margin-bottom:15px}
-input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:#fff;padding:12px;border-radius:8px;flex:1}
-button.primary{background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:bold}
+input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:#fff;padding:12px;border-radius:8px;flex:1;outline:none}
+input:focus{border-color:var(--accent)}
+button.primary{background:var(--accent);color:#fff;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:bold;transition:0.2s}
+button.primary:hover{opacity:0.9;transform:translateY(-1px)}
 
 /* STUDY MODE */
-.study-modes{display:flex;gap:8px;margin-bottom:15px}
-.mode-btn{padding:8px 15px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px}
-.mode-btn.active{border-color:var(--accent);color:var(--accent)}
+.chips{display:flex;gap:8px;margin-bottom:20px;overflow-x:auto;padding-bottom:5px}
+.chip{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px;white-space:nowrap;transition:0.2s}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(124,95,212,0.1)}
 
-.fc-card{min-height:200px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:bold;cursor:pointer;background:var(--bg3);border-radius:var(--r);border:2px solid var(--border)}
-.fc-card.flipped{border-color:var(--accent);background:var(--bg2)}
+.fc-card{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:bold;cursor:pointer;background:var(--bg3);border-radius:var(--r);border:2px solid var(--border);padding:20px;transition:0.3s}
+.fc-card.flipped{border-color:var(--accent);background:var(--bg2);color:var(--accent2)}
 
 /* QUIZ */
-.quiz-opt{display:block;width:100%;padding:12px;text-align:left;background:var(--bg3);border:1px solid var(--border);color:#fff;margin-top:8px;border-radius:8px;cursor:pointer}
-.quiz-opt:hover{background:var(--accent)}
-
-/* AI RES */
-#ai-output{line-height:1.6;white-space:pre-wrap;font-size:14px;border-left:4px solid var(--accent);padding-left:15px}
+.quiz-opt{display:block;width:100%;padding:14px;text-align:left;background:var(--bg3);border:1px solid var(--border);color:#fff;margin-top:10px;border-radius:8px;cursor:pointer;font-size:14px;transition:0.2s}
+.quiz-opt:hover{border-color:var(--accent);background:var(--bg2)}
+.quiz-fb{margin-top:15px;padding:12px;border-radius:8px;display:none;font-size:13px}
 </style>
 </head>
 <body>
 
 <div id="app">
+  <!-- HEADER & COUNTDOWN -->
   <div class="header">
-    <div class="logo">Study<span>Flow</span> v8</div>
-    <div id="status-bar" style="font-size:12px; color:var(--text2)">✨ 知識レベル: <span id="star-count">0</span> Stars</div>
+    <div class="logo">Study<span>Flow</span> v9</div>
+    <div id="star-status" style="font-size:12px; color:var(--text2)">✨ <span id="star-count">0</span> Knowledge Stars</div>
+  </div>
+
+  <div class="cd-grid">
+    <div class="cd-card"><div class="cd-val" id="cd-toeic">--</div><div class="cd-label">TOEIC (5/17)</div></div>
+    <div class="cd-card"><div class="cd-val" id="cd-naist">--</div><div class="cd-label">NAIST (7/6)</div></div>
+    <div class="cd-card"><div class="cd-val" id="cd-kobe">--</div><div class="cd-label">KOBE (8/24)</div></div>
   </div>
 
   <div class="tabs">
@@ -78,52 +91,58 @@ button.primary{background:var(--accent);color:#fff;border:none;padding:10px 20px
       <svg id="galaxy-svg"></svg>
       <div class="galaxy-info" id="galaxy-info"></div>
     </div>
-    <div style="font-size:12px; color:var(--text2); text-align:center">ノードをドラッグして移動、クリックで詳細を確認できます。</div>
+    <div class="card" style="font-size:13px; color:var(--text2); line-height:1.6">
+      <div class="stitle">銀河の歩き方</div>
+      各ノード（星）はあなたの学習データです。ドラッグして関係性を整理し、クリックして復習しましょう。知識を追加するほど銀河は拡大します。
+    </div>
   </div>
 
   <!-- STUDY PANEL -->
   <div class="panel" id="panel-study">
-    <div class="study-modes">
-      <button class="mode-btn active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
-      <button class="mode-btn" onclick="setMode('quiz',this)">📝 多肢選択</button>
-      <button class="mode-btn" onclick="setMode('fill',this)">✏️ 穴埋め</button>
+    <div class="stitle">学習モード</div>
+    <div class="chips">
+      <button class="chip active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
+      <button class="chip" onclick="setMode('quiz',this)">📝 多肢選択クイズ</button>
+      <button class="chip" onclick="setMode('fill',this)">✏️ 穴埋め演習</button>
     </div>
-    <div id="subj-chips" style="display:flex; gap:8px; margin-bottom:15px; overflow-x:auto"></div>
+    <div class="stitle">教科別</div>
+    <div id="subj-chips" class="chips"></div>
     <div id="study-content"></div>
   </div>
 
   <!-- ADD KNOWLEDGE PANEL -->
   <div class="panel" id="panel-add">
     <div class="card">
-      <div class="stitle">英単語・知識を手動で追加</div>
+      <div class="stitle">知識の結晶化</div>
       <div class="input-group">
-        <input type="text" id="new-q" placeholder="単語または問題 (例: Persistence)">
+        <input type="text" id="new-q" placeholder="概念・単語名 (例: 特異値分解)">
         <select id="new-cat" style="flex:0.3">
-          <option value="en">英語</option><option value="la">数学</option><option value="cs">CS専門</option>
+          <option value="en">英語</option><option value="la">線形代数</option><option value="ca">微積分</option>
+          <option value="ml">機械学習</option><option value="cs">CS専門</option>
         </select>
       </div>
-      <textarea id="new-a" placeholder="意味または答え (例: 粘り強さ、永続性)" rows="3" style="width:100%; box-sizing:border-box; margin-bottom:10px;"></textarea>
-      <button class="primary" onclick="addNewKnowledge()">銀河に追加</button>
+      <textarea id="new-a" placeholder="詳細な説明や答えを入力..." rows="4" style="width:100%; box-sizing:border-box; margin-bottom:15px;"></textarea>
+      <button class="primary" onclick="addNewKnowledge()">銀河に解き放つ</button>
     </div>
-    <div id="user-list" style="font-size:13px; color:var(--text2)"></div>
   </div>
 
   <!-- AI PANEL -->
   <div class="panel" id="panel-ai">
     <div class="card">
-      <input type="password" id="api-key" placeholder="Gemini API Key" value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU" style="width:100%; margin-bottom:10px;">
+      <div class="stitle">Gemini-1.5-Flash エンジン</div>
+      <input type="password" id="api-key" placeholder="Gemini API Key (AIzaSy...)" value="AIzaSyBBHbcxQpK_BAsNbRYcmr0ijwgEyQP6_eU" style="width:100%; margin-bottom:15px;">
       <div class="input-group">
-        <select id="ai-subj"><option value="数学">数学</option><option value="CS専門">CS専門</option><option value="TOEIC">TOEIC英語</option></select>
-        <button class="primary" onclick="askGemini()">AI類題を生成</button>
+        <select id="ai-subj"><option value="線形代数">線形代数</option><option value="微積分">微積分</option><option value="機械学習">機械学習</option><option value="CSアルゴリズム">CSアルゴリズム</option><option value="TOEIC英語">TOEIC英語</option></select>
+        <button class="primary" id="ai-btn" onclick="askGemini()">類題を生成</button>
       </div>
-      <div id="ai-output" class="card" style="display:none"></div>
+      <div id="ai-output" class="card" style="display:none; line-height:1.8; font-size:14px; background:var(--bg3)"></div>
     </div>
   </div>
 </div>
 
 <script>
 /* ══════════════════════════════════════
-   DATABASE & INITIAL DATA
+   DATA: QUIZ & KNOWLEDGE
 ══════════════════════════════════════ */
 const SUBJECTS = {
   la: {name:'線形代数', color:'#7C5FD4'},
@@ -133,194 +152,51 @@ const SUBJECTS = {
   cs: {name:'CS専門', color:'#7A5200'}
 };
 
-// 知識ベース (デフォルト)
-let KNOWLEDGE = JSON.parse(localStorage.getItem('study_v8_data')) || [
-  {cat:'la', q:'固有値(Eigenvalue)の定義', a:'Av = λv を満たすスカラー λ', tag:'行列'},
-  {cat:'la', q:'Rank(A)=n のとき A は?', a:'正則行列（逆行列が存在する）', tag:'行列'},
-  {cat:'cs', q:'プロセスとスレッドの違い', a:'プロセスは独立したメモリ空間、スレッドはメモリを共有', tag:'OS'},
-  {cat:'cs', q:'TCPとUDPの違い', a:'TCPは信頼性重視(確認応答あり)、UDPは速度重視(垂れ流し)', tag:'NW'},
-  {cat:'en', q:'Incur', a:'(負債などを)負う、(怒りなどを)招く', tag:'TOEIC'},
-  {cat:'en', q:'Prerequisite', a:'必須条件、あらかじめ必要な', tag:'Academic'}
+let KNOWLEDGE = JSON.parse(localStorage.getItem('study_v9_data')) || [
+  {cat:'la', q:'固有値(Eigenvalue)', a:'Av = λv を満たす λ。行列の性質を決定する。', tag:'行列'},
+  {cat:'ca', q:'テイラー展開', a:'関数を多項式の無限和で表す。f(x)=Σf(n)(a)/n! * (x-a)^n', tag:'解析'},
+  {cat:'ml', q:'勾配降下法', a:'損失関数の勾配と逆方向にパラメータを更新し最小値を探す手法。', tag:'最適化'},
+  {cat:'cs', q:'二分探索木', a:'左の子 < 親 < 右の子 の関係を持つ木構造。検索効率が良い。', tag:'データ構造'},
+  {cat:'en', q:'Implicitly', a:'暗黙のうちに、それとなく。対義語：Explicitly。', tag:'TOEIC'}
 ];
 
-// 演習問題 (デフォルト)
-const QUIZ_DATA = [
-  {cat:'la', q:'det(A)=0 のとき正しいのは？', o:['逆行列がある','ランクが最大','特異行列である','固有値に0を含まない'], a:2},
-  {cat:'cs', q:'二分探索の最悪計算量は？', o:['O(n)','O(log n)','O(n log n)','O(1)'], a:1}
-];
-
-/* ══════════════════════════════════════
-   APP STATE
-══════════════════════════════════════ */
-let currentMode = 'fc';
-let currentSubj = 'en';
-let studyIdx = 0;
-let isFlipped = false;
-
-/* ══════════════════════════════════════
-   GALAXY (D3.JS SYSTEM)
-══════════════════════════════════════ */
-function initGalaxy() {
-  const width = document.getElementById('galaxy-wrap')?.clientWidth || 800;
-  const nodes = [{id:'YOU', group:'center', r:18}];
-  const links = [];
-
-  // 知識データをノードに変換
-  Object.keys(SUBJECTS).forEach(s => {
-    nodes.push({id: SUBJECTS[s].name, group: s, r:12});
-    links.push({source:'YOU', target: SUBJECTS[s].name});
-  });
-
-  KNOWLEDGE.forEach((k, i) => {
-    const nodeID = `k${i}`;
-    nodes.push({id: nodeID, group: k.cat, r:5, label: k.q, detail: k.a});
-    links.push({source: SUBJECTS[k.cat].name, target: nodeID});
-  });
-
-  const svg = d3.select("#galaxy-svg");
-  svg.selectAll("*").remove();
-  const g = svg.append("g");
-
-  const simulation = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(50))
-    .force("charge", d3.forceManyBody().strength(-100))
-    .force("center", d3.forceCenter(width / 2, 250));
-
-  const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845");
-  const node = g.append("g").selectAll("circle").data(nodes).join("circle")
-    .attr("r", d => d.r)
-    .attr("fill", d => SUBJECTS[d.group]?.color || "#fff")
-    .attr("stroke", "#fff").attr("stroke-width", d => d.id==='YOU'?2:0)
-    .call(d3.drag().on("start", (e,d)=>{ if(!e.active) simulation.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
-    .on("drag", (e,d)=>{ d.fx=e.x; d.fy=e.y; })
-    .on("end", (e,d)=>{ if(!e.active) simulation.alphaTarget(0); d.fx=null; d.fy=null; }))
-    .on("click", (e, d) => {
-      if(d.detail) {
-        const info = document.getElementById('galaxy-info');
-        info.style.display = 'block';
-        info.innerHTML = `<div style="color:var(--accent); font-weight:bold">${d.label}</div><hr style="border:0; border-top:1px solid #333; margin:8px 0">${d.detail}`;
-      }
-    });
-
-  const labels = g.append("g").selectAll("text").data(nodes.filter(n => n.r > 8)).join("text")
-    .text(d => d.id === 'YOU' ? 'MY GALAXY' : d.id)
-    .attr("fill", "#fff").attr("font-size", "10px").attr("dx", 15).attr("dy", 5);
-
-  simulation.on("tick", () => {
-    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-    node.attr("cx", d => d.x).attr("cy", d => d.y);
-    labels.attr("x", d => d.x).attr("y", d => d.y);
-  });
-  
-  document.getElementById('star-count').innerText = KNOWLEDGE.length;
-}
-
-/* ══════════════════════════════════════
-   STUDY LOGIC
-══════════════════════════════════════ */
-function renderStudy() {
-  const content = document.getElementById('study-content');
-  const subjData = KNOWLEDGE.filter(k => k.cat === currentSubj);
-  const quizData = QUIZ_DATA.filter(k => k.cat === currentSubj);
-
-  if(currentMode === 'fc') {
-    const item = subjData[studyIdx];
-    if(!item) { content.innerHTML = "この教科のカードはありません。"; return; }
-    content.innerHTML = `
-      <div class="fc-card ${isFlipped?'flipped':''}" onclick="flip()">
-        ${isFlipped ? item.a : item.q}
-      </div>
-      <div style="display:flex; justify-content:center; gap:10px; margin-top:15px">
-        <button class="mode-btn" onclick="moveStudy(-1)">← 前へ</button>
-        <button class="mode-btn" onclick="moveStudy(1)">次へ →</button>
-      </div>
-    `;
-  } else if(currentMode === 'quiz') {
-    const q = quizData[0]; // 簡易実装のため1問目のみ
-    if(!q) { content.innerHTML = "クイズデータがありません。"; return; }
-    content.innerHTML = `
-      <div class="card">
-        <div class="stitle">多肢選択問題</div>
-        <div>${q.q}</div>
-        ${q.o.map((opt, i) => `<button class="quiz-opt" onclick="checkAns(${i}, ${q.a})">${opt}</button>`).join('')}
-      </div>
-    `;
-  } else {
-    content.innerHTML = `<div class="card">穴埋めモード：${subjData[0]?.q} の答えを入力してください。<br><input type="text" id="fill-ans" style="margin-top:10px"><button class="primary" onclick="checkFill('${subjData[0]?.a}')">回答</button></div>`;
-  }
-}
-
-window.flip = () => { isFlipped = !isFlipped; renderStudy(); };
-window.moveStudy = (d) => {
-  const subjData = KNOWLEDGE.filter(k => k.cat === currentSubj);
-  studyIdx = (studyIdx + d + subjData.length) % subjData.length;
-  isFlipped = false;
-  renderStudy();
-};
-window.checkAns = (i, a) => { alert(i === a ? "正解！" : "不正解..."); };
-window.checkFill = (a) => {
-  const val = document.getElementById('fill-ans').value;
-  alert(val === a ? "正解！" : `不正解... 正解は: ${a}`);
+const QUIZ_DATA = {
+  la: [
+    {q:'det(A)=0である行列Aについて正しいのは？', o:['逆行列が存在する','ランクがフルである','固有値に0が含まれる','一意な解を持つ'], a:2},
+    {q:'対称行列の固有値の性質は？', o:['常に虚数','常に実数','常に0','常に正'], a:1}
+  ],
+  ca: [
+    {q:'sin(x)/x の x→0 の極限値は？', o:['0','1','∞','不定'], a:1},
+    {q:'ロピタルの定理が使えるのは？', o:['常に','0/0 または ∞/∞ のとき','連続関数のとき','導関数が0のとき'], a:1}
+  ],
+  ml: [
+    {q:'L1正則化(Lasso)の特徴は？', o:['重みを一律に小さくする','一部の重みを完全に0にする','計算が非常に高速','過学習を促進する'], a:1},
+    {q:'過学習(Overfitting)が起きている状態は？', o:['訓練誤差もテスト誤差も高い','訓練誤差は低いがテスト誤差が高い','どちらの誤差も低い','モデルが単純すぎる'], a:1}
+  ],
+  cs: [
+    {q:'クイックソートの平均計算量は？', o:['O(n)','O(n^2)','O(n log n)','O(1)'], a:2},
+    {q:'デッドロックの4条件に含まれないのは？', o:['相互排除','保持と待機','非割り込み','メモリ不足'], a:3}
+  ],
+  en: [
+    {q:'"Subsequent" の意味として適切なのは？', o:['以前の','後の、次に続く','同時の','巨大な'], a:1},
+    {q:'"Despite" の後に続く形式は？', o:['名詞句','S + V','動詞原形','形容詞のみ'], a:0}
+  ]
 };
 
 /* ══════════════════════════════════════
-   USER ADD KNOWLEDGE
+   LOGIC: COUNTDOWN & TABS
 ══════════════════════════════════════ */
-window.addNewKnowledge = () => {
-  const q = document.getElementById('new-q').value;
-  const a = document.getElementById('new-a').value;
-  const cat = document.getElementById('new-cat').value;
-  if(!q || !a) return alert("入力してください");
-  
-  KNOWLEDGE.push({cat, q, a, tag:'UserAdded'});
-  localStorage.setItem('study_v8_data', JSON.stringify(KNOWLEDGE));
-  
-  document.getElementById('new-q').value = '';
-  document.getElementById('new-a').value = '';
-  alert("銀河に新しい知識が追加されました！");
-  initGalaxy();
-};
-
-/* ══════════════════════════════════════
-   AI GENERATION (FIXED)
-══════════════════════════════════════ */
-async function askGemini() {
-  const key = document.getElementById('api-key').value;
-  const subj = document.getElementById('ai-subj').value;
-  const output = document.getElementById('ai-output');
-  
-  output.style.display = 'block';
-  output.innerText = "思考中...";
-
-  const prompt = `あなたは大学院入試(数学・CS)とTOEICの専門講師です。${subj}に関する院試レベルの類題を1問作成し、その次に「解答：」として答えを書いてください。`;
-
-  try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-    });
-    const data = await res.json();
-    
-    // エラーハンドリングの強化
-    if(data.error) {
-      throw new Error(data.error.message);
-    }
-    
-    if(!data.candidates || data.candidates.length === 0) {
-      throw new Error("AIが回答を生成できませんでした（安全フィルター等）。プロンプトを変えてみてください。");
-    }
-
-    const txt = data.candidates[0].content.parts[0].text;
-    output.innerText = txt;
-  } catch (e) {
-    output.innerText = "エラーが発生しました:\n" + e.message;
-  }
+function updateCountdown() {
+  const diff = (target) => {
+    const d = Math.ceil((new Date(target) - new Date()) / (1000*60*60*24));
+    return d > 0 ? d : 0;
+  };
+  document.getElementById('cd-toeic').innerText = diff('2026-05-17');
+  document.getElementById('cd-naist').innerText = diff('2026-07-06');
+  document.getElementById('cd-kobe').innerText = diff('2026-08-24');
 }
 
-/* ══════════════════════════════════════
-   SYSTEM
-══════════════════════════════════════ */
+let currentTab = 'galaxy';
 function switchTab(t) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(p => p.classList.remove('active'));
@@ -330,18 +206,162 @@ function switchTab(t) {
   if(t === 'study') renderStudy();
 }
 
+/* ══════════════════════════════════════
+   GALAXY (D3.JS)
+══════════════════════════════════════ */
+function initGalaxy() {
+  const width = document.getElementById('galaxy-wrap').clientWidth;
+  const nodes = [{id:'YOU', group:'center', r:20, label:'CORE'}];
+  const links = [];
+
+  Object.keys(SUBJECTS).forEach(s => {
+    nodes.push({id: SUBJECTS[s].name, group: s, r:12});
+    links.push({source:'YOU', target: SUBJECTS[s].name});
+  });
+
+  KNOWLEDGE.forEach((k, i) => {
+    const id = `k${i}`;
+    nodes.push({id, group: k.cat, r:5, label: k.q, detail: k.a});
+    links.push({source: SUBJECTS[k.cat].name, target: id});
+  });
+
+  const svg = d3.select("#galaxy-svg");
+  svg.selectAll("*").remove();
+  const g = svg.append("g");
+  svg.call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)));
+
+  const simulation = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d => d.id).distance(60))
+    .force("charge", d3.forceManyBody().strength(-120))
+    .force("center", d3.forceCenter(width / 2, 225));
+
+  const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845");
+  const node = g.append("g").selectAll("circle").data(nodes).join("circle")
+    .attr("r", d => d.r).attr("fill", d => SUBJECTS[d.group]?.color || "#fff")
+    .style("cursor", "pointer")
+    .on("click", (e, d) => {
+      if(d.detail) {
+        const info = document.getElementById('galaxy-info');
+        info.style.display = 'block';
+        info.innerHTML = `<div style="color:var(--accent); font-weight:bold; margin-bottom:5px">${d.label}</div><div style="line-height:1.5">${d.detail}</div>`;
+      }
+    });
+
+  simulation.on("tick", () => {
+    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+    node.attr("cx", d => d.x).attr("cy", d => d.y);
+  });
+  document.getElementById('star-count').innerText = KNOWLEDGE.length;
+}
+
+/* ══════════════════════════════════════
+   STUDY ENGINE
+══════════════════════════════════════ */
+let studyIdx = 0;
+let currentMode = 'fc';
+let currentSubj = 'la';
+let isFlipped = false;
+
 function setMode(m, el) {
   currentMode = m;
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
+  studyIdx = 0;
   renderStudy();
 }
+
+function renderStudy() {
+  const container = document.getElementById('study-content');
+  const subjKnowledge = KNOWLEDGE.filter(k => k.cat === currentSubj);
+  const subjQuizzes = QUIZ_DATA[currentSubj] || [];
+
+  if(currentMode === 'fc') {
+    const card = subjKnowledge[studyIdx];
+    if(!card) { container.innerHTML = "カードがありません。知識を追加してください。"; return; }
+    container.innerHTML = `
+      <div class="fc-card ${isFlipped?'flipped':''}" onclick="isFlipped=!isFlipped;renderStudy()">
+        ${isFlipped ? card.a : card.q}
+      </div>
+      <div style="display:flex; justify-content:center; gap:10px; margin-top:20px">
+        <button class="chip" onclick="studyIdx=(studyIdx-1+${subjKnowledge.length})%${subjKnowledge.length};isFlipped=false;renderStudy()">← 前へ</button>
+        <button class="chip" onclick="studyIdx=(studyIdx+1)%${subjKnowledge.length};isFlipped=false;renderStudy()">次へ →</button>
+      </div>
+    `;
+  } else if(currentMode === 'quiz') {
+    const q = subjQuizzes[studyIdx];
+    if(!q) { container.innerHTML = "クイズがありません。"; return; }
+    container.innerHTML = `
+      <div class="card">
+        <div style="margin-bottom:15px; font-weight:bold">${q.q}</div>
+        ${q.o.map((opt, i) => `<button class="quiz-opt" onclick="checkQuiz(${i}, ${q.a})">${opt}</button>`).join('')}
+        <div id="quiz-fb" class="quiz-fb"></div>
+        <button class="chip" style="margin-top:15px; width:100%" onclick="studyIdx=(studyIdx+1)%${subjQuizzes.length};renderStudy()">次の問題へ</button>
+      </div>
+    `;
+  } else {
+    const card = subjKnowledge[studyIdx];
+    container.innerHTML = `<div class="card"><strong>${card.q}</strong> の意味・答えを入力してください。<input type="text" id="fill-in" style="margin-top:15px; width:100%"><button class="primary" style="margin-top:10px; width:100%" onclick="alert('正解: '+KNOWLEDGE.filter(k=>k.cat===currentSubj)[studyIdx].a)">回答チェック</button></div>`;
+  }
+}
+
+window.checkQuiz = (i, a) => {
+  const fb = document.getElementById('quiz-fb');
+  fb.style.display = 'block';
+  fb.style.background = i === a ? 'var(--green)' : 'var(--pink)';
+  fb.innerText = i === a ? "正解です！" : "残念。正解は: " + QUIZ_DATA[currentSubj][studyIdx].o[a];
+};
+
+/* ══════════════════════════════════════
+   AI & DATA MANAGEMENT
+══════════════════════════════════════ */
+async function askGemini() {
+  const key = document.getElementById('api-key').value;
+  const subj = document.getElementById('ai-subj').value;
+  const out = document.getElementById('ai-output');
+  const btn = document.getElementById('ai-btn');
+
+  if(!key) return alert("APIキーを入力してください");
+  out.style.display = 'block'; out.innerText = "生成中...";
+  btn.disabled = true;
+
+  // v1 エンドポイントに変更
+  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+  
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ contents: [{ parts: [{ text: `${subj}に関する、大学院入試レベルの専門的な問題を1問作成し、詳しい解説と解答を付けてください。日本語でお願いします。` }] }] })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    out.innerText = data.candidates[0].content.parts[0].text;
+  } catch (e) {
+    out.innerText = "エラー: " + e.message + "\n\n※APIキーが有効か、モデル名が正しいか確認してください。";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+window.addNewKnowledge = () => {
+  const q = document.getElementById('new-q').value;
+  const a = document.getElementById('new-a').value;
+  const cat = document.getElementById('new-cat').value;
+  if(!q || !a) return alert("空欄があります");
+  KNOWLEDGE.push({cat, q, a});
+  localStorage.setItem('study_v9_data', JSON.stringify(KNOWLEDGE));
+  document.getElementById('new-q').value = '';
+  document.getElementById('new-a').value = '';
+  alert("銀河に新しい知識が保存されました。");
+  initGalaxy();
+};
 
 function init() {
   const chips = document.getElementById('subj-chips');
   chips.innerHTML = Object.keys(SUBJECTS).map(k => `
-    <button class="mode-btn" onclick="currentSubj='${k}'; studyIdx=0; renderStudy()">${SUBJECTS[k].name}</button>
+    <button class="chip" onclick="currentSubj='${k}';studyIdx=0;renderStudy()">${SUBJECTS[k].name}</button>
   `).join('');
+  updateCountdown();
   initGalaxy();
   renderStudy();
 }
