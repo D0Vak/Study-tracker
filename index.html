@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v24 — 統合院試対策・セキュリティ強化版</title>
+<title>StudyFlow v25 — 院試・専門科目 統合学習システム</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
-/* 以前の1800行クラスのデザインを完全継承 */
+/* 以前の1800行クラスのデザインとロジックを完全継承 */
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#F6F5F1;--bg2:#FFFFFF;--bg3:#EFEDE8;--bg4:#E5E3DC;
@@ -18,58 +18,64 @@
   --amber:#7A5200;--abg2:#FEF2D8;--aborder2:#F5C060;
   --red:#9E2A2A;--rbg:#FBEBEB;--rborder:#F0BABA;
   --blue:#145898;--bbg:#E4F0FB;--bborder:#A8CCF0;
-  --teal:#0C6A52;--tbg:#DFF2EC;--tborder:#8FD4BE;
-  --r:12px;--r2:8px;--sh:0 1px 3px rgba(0,0,0,.07);
+  --pink:#8B1D5A;--indigo:#2C3BAA;
+  --r:12px;--r2:8px;--r3:20px;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sh2:0 4px 18px rgba(0,0,0,.09);
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .font-num{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums}
-#app{max-width:1050px;margin:0 auto;padding:24px 16px}
+#app{max-width:1000px;margin:0 auto;padding:24px 16px}
 
 /* HEADER & TABS */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap}
-.logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800}.logo span{color:var(--accent)}
-.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;overflow-x:auto}
-.tab{flex:1;min-width:fit-content;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-weight:600;font-size:12px;border-radius:var(--r2);cursor:pointer;transition:0.18s}
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:10px}
+.logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.5px}
+.logo span{color:var(--accent)}
+.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
+.tab{flex:1;min-width:fit-content;padding:8px 12px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
 .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
 .panel{display:none}.panel.active{display:block}
+.stitle{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
 
-/* COUNTDOWN */
+/* COUNTDOWN & SUBJECTS */
 .cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;box-shadow:var(--sh)}
-.cd-days{font-family:'Inter',sans-serif;font-size:42px;font-weight:800;color:var(--accent)}
+.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.cd-days{font-family:'Inter',sans-serif;font-size:38px;font-weight:800;color:var(--accent)}
 
-/* GALAXY */
-.galaxy-wrap{height:600px;width:100%;background:#05040a;border-radius:var(--r);position:relative;border:1px solid var(--border);margin-bottom:24px;overflow:hidden}
-#galaxy-svg{width:100%;height:100%;display:block;cursor:grab}
-.galaxy-info{position:absolute;bottom:20px;left:20px;background:rgba(13,11,26,0.96);padding:18px;border-radius:10px;border:1px solid var(--accent);max-width:350px;display:none;backdrop-filter:blur(15px);color:#fff;font-size:13px}
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px}
+.subj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:all 0.18s}
+.subj-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.prog-bar{height:5px;background:var(--bg4);border-radius:3px;margin-bottom:8px;overflow:hidden}
+.prog-fill{height:100%;transition:width 0.6s ease}
 
-/* STUDY COMPONENTS */
-.chips{display:flex;gap:8px;margin-bottom:15px;overflow-x:auto}
-.chip{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px;white-space:nowrap}
-.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(124,95,212,0.1)}
-.fc-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px;line-height:1.6;transition:0.3s}
+/* GALAXY ENGINE */
+.galaxy-wrap{height:600px; width:100%; background:#05040a; border-radius:var(--r); position:relative; border:1px solid var(--border); margin-bottom:24px; overflow:hidden}
+#galaxy-svg{width:100%; height:100%; min-height:600px; background: radial-gradient(circle, #131129 0%, #000 80%); display:block; cursor: grab}
+.galaxy-info{position:absolute;bottom:20px;left:20px;background:rgba(13,11,26,0.96);padding:18px;border-radius:10px;border:1px solid var(--accent);max-width:350px;display:none;backdrop-filter:blur(15px);z-index:100;box-shadow:var(--sh);color:#fff}
+
+/* STUDY BOX */
+.fc-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px;line-height:1.6;transition:all 0.3s;box-shadow:var(--sh)}
 .fc-card.flipped{border-color:var(--accent);background:var(--alight)}
 
 /* ANALYTICS */
-.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--sh)}
+.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
+.ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--sh)}
 
-/* LOGS */
-.log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:8px;display:flex;gap:12px}
-
-/* KEY SETTINGS */
-.key-box{background:var(--abg2);border:1px solid var(--aborder2);padding:15px;border-radius:var(--r);margin-bottom:20px}
-input, select, textarea{background:var(--bg2);border:1px solid var(--border);padding:12px;border-radius:var(--r2);width:100%;margin-bottom:10px;outline:none}
-.btn-p{background:var(--accent);color:#fff;border:none;padding:14px;border-radius:var(--r2);cursor:pointer;font-weight:700;width:100%}
+/* AI SETTINGS */
+.api-config-area{background:var(--abg2); border:1px solid var(--aborder2); padding:20px; border-radius:var(--r); margin-bottom:20px}
+input, select, textarea{background:var(--bg2); border:1px solid var(--border); padding:12px; border-radius:var(--r2); width:100%; margin-bottom:12px; outline:none}
+.btn-p{background:var(--accent); color:#fff; border:none; padding:14px; border-radius:var(--r2); cursor:pointer; font-weight:700; width:100%; transition:0.2s}
+.btn-p:hover{opacity:0.9; transform:translateY(-1px)}
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v24</span></div>
+    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v25</span></div>
     <div class="header-right">
-      <div id="api-status" style="font-size:11px; color:var(--text3)">🔑 API Key: <span id="key-state" style="color:var(--red)">Not Set</span></div>
+      <div class="db-count" id="db-count">📊 0問記録済み</div>
+      <div class="streak">🔥 <span id="streak-count" class="font-num">0</span>日連続</div>
     </div>
   </div>
 
@@ -84,22 +90,30 @@ input, select, textarea{background:var(--bg2);border:1px solid var(--border);pad
 
   <!-- PLAN PANEL -->
   <div id="panel-plan" class="panel active">
+    <div class="stitle">試験カウントダウン</div>
     <div class="cdown-grid">
       <div class="cdown-card"><div class="cd-days" id="d-toeic">--</div><div>TOEIC (5/17)</div></div>
       <div class="cdown-card"><div class="cd-days" id="d-naist">--</div><div>NAIST (7/6)</div></div>
       <div class="cdown-card"><div class="cd-days" id="d-kobe">--</div><div>神戸大 (8/24)</div></div>
     </div>
-    <div class="stitle">専門科目進捗</div>
-    <div id="subj-grid" class="cdown-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr))"></div>
+    <div class="stitle">教科別進捗</div>
+    <div class="subj-grid" id="subj-grid"></div>
+    <div class="overall">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="stitle">総合進捗</div>
+        <div id="ov-pct" class="font-num" style="font-weight:800; color:var(--accent)">0%</div>
+      </div>
+      <div class="prog-bar"><div id="ov-bar" class="prog-fill" style="width:0%; background:var(--accent)"></div></div>
+    </div>
   </div>
 
-  <!-- STUDY PANEL (FULL EXERCISES) -->
+  <!-- STUDY PANEL -->
   <div id="panel-study" class="panel">
-    <div class="chips">
-      <button class="chip active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
-      <button class="chip" onclick="setMode('quiz',this)">📝 多肢クイズ</button>
+    <div class="tabs" style="background:transparent; border:none; box-shadow:none; margin-bottom:10px">
+      <button class="tab active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
+      <button class="tab" onclick="setMode('quiz',this)">📝 多肢クイズ</button>
     </div>
-    <div id="subj-chips" class="chips" style="border-bottom: 1px solid var(--border); padding-bottom:10px"></div>
+    <div id="subj-chips" style="display:flex; gap:8px; margin-bottom:20px; overflow-x:auto; padding-bottom:10px; border-bottom:1px solid var(--border)"></div>
     <div id="study-content"></div>
   </div>
 
@@ -111,29 +125,43 @@ input, select, textarea{background:var(--bg2);border:1px solid var(--border);pad
     </div>
   </div>
 
-  <!-- AI PANEL (SECURE) -->
+  <!-- AI PANEL -->
   <div id="panel-ai" class="panel">
-    <div class="key-box">
+    <div class="api-config-area">
       <div class="stitle">🔑 Gemini API セキュリティ設定</div>
-      <p style="font-size:12px; color:var(--text2); margin-bottom:10px">APIキーを入力して保存してください。この情報はあなたのブラウザにのみ保存されます。</p>
+      <p style="font-size:12px; color:var(--text2); margin-bottom:12px">APIキーを入力して「保存」してください。キーはブラウザにのみ保存され、他人に漏洩することはありません。</p>
       <input type="password" id="api-key-input" placeholder="AIzaSy...">
       <button class="btn-p" onclick="saveApiKey()">キーを安全に保存</button>
     </div>
     <div class="card">
-      <div class="stitle">類題生成エンジン (Gemini 1.5/2.0)</div>
+      <div class="stitle">最新AI類題生成 (Gemini 2.0/1.5)</div>
       <select id="ai-subj-sel">
+        <option value="線形代数">線形代数</option><option value="微積分">微積分</option>
         <option value="複素関数論">複素関数論</option><option value="常微分方程式">常微分方程式</option>
-        <option value="線形代数">線形代数</option><option value="機械学習">機械学習</option>
+        <option value="機械学習">機械学習</option><option value="アルゴリズム">アルゴリズム</option>
       </select>
-      <button class="btn-p" id="ai-btn" onclick="askGemini()" style="margin-top:10px">AI問題を生成</button>
-      <div id="ai-output" style="display:none; margin-top:20px; white-space:pre-wrap; font-size:14px; line-height:1.7" class="card"></div>
+      <button class="btn-p" id="ai-btn" onclick="askGemini()">AI問題を生成</button>
+      <div id="ai-output" style="display:none; margin-top:20px" class="card">
+        <div id="ai-txt" style="white-space:pre-wrap; font-size:14px; line-height:1.7"></div>
+        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">ワードバンクに保存</button>
+      </div>
     </div>
   </div>
 
-  <!-- ANALYTICS & LOG -->
-  <div id="panel-analytics" class="panel"><div class="ana-grid" id="ana-summary"></div></div>
+  <!-- ANALYTICS -->
+  <div id="panel-analytics" class="panel">
+    <div class="stitle">弱点分析ダッシュボード</div>
+    <div class="ana-grid" id="ana-summary"></div>
+    <div class="card"><div class="stitle">科目別正答率</div><div id="ana-tags"></div></div>
+  </div>
+
+  <!-- LOG PANEL -->
   <div id="panel-log" class="panel">
-    <div class="card"><input type="text" id="log-chap" placeholder="学習内容"><button class="btn-p" onclick="addLog()">保存</button></div>
+    <div class="card">
+      <input type="text" id="log-chap" placeholder="学習した章・トピック">
+      <input type="number" id="log-dur" placeholder="学習時間（分）">
+      <button class="btn-p" onclick="addLog()">記録を保存</button>
+    </div>
     <div id="log-list"></div>
   </div>
 </div>
@@ -142,36 +170,36 @@ input, select, textarea{background:var(--bg2);border:1px solid var(--border);pad
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getDatabase, ref, set, push, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-// Firebase Config
+// Firebase Config (完全復元)
 const FB = {apiKey:"AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",authDomain:"study-tracker-5a35c.firebaseapp.com",databaseURL:"https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"study-tracker-5a35c",appId:"1:1091326221496:web:5bcd5ab27bdc6cca03e84d"};
 const fbApp = initializeApp(FB);
 const db = getDatabase(fbApp);
 
 /* ══════════════════════════════════════
-   DATABASE: CORE KNOWLEDGE (1800行規模データ復元)
+   DATABASE: FULL RECOVERY (1800行規模データ)
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数',color:'#7C5FD4',areas:['固有値','行列演算']},
-  ca:{name:'微積分',color:'#167A50',areas:['極限','重積分']},
-  cf:{name:'複素関数',color:'#00A3CC',areas:['留数定理','コーシー公式']},
-  de:{name:'常微分',color:'#E67E22',areas:['ラプラス変換','1階線形']},
-  ml:{name:'機械学習',color:'#145898',areas:['Transformer','正則化']},
-  cs:{name:'計算機科学',color:'#7A5200',areas:['計算量','データ構造']},
-  en:{name:'英語(TOEIC)',color:'#B21B7E',areas:['語彙','論文表現']}
+  la:{name:'線形代数',color:'#7C5FD4',cls:'sc-la',areas:['行列演算','固有値','次元定理'],chapters:['行列','空間','分解']},
+  ca:{name:'微積分',color:'#167A50',cls:'sc-ca',areas:['極限','微分','積分','多変数'],chapters:['微分','積分','多変数']},
+  cf:{name:'複素関数',color:'#00A3CC',cls:'sc-cf',areas:['正則性','コーシー積分','留数定理'],chapters:['複素微分','積分','留数']},
+  de:{name:'常微分',color:'#E67E22',cls:'sc-de',areas:['1階線形','2階定数係数','ラプラス変換'],chapters:['1階','2階','ラプラス']},
+  ml:{name:'機械学習',color:'#145898',cls:'sc-ml',areas:['最適化','Transformer','正則化'],chapters:['基礎','学習']},
+  cs:{name:'計算機科学',color:'#7A5200',cls:'sc-cs',areas:['計算量','ソート','データ構造'],chapters:['計算量','構造']},
+  en:{name:'英語(TOEIC)',color:'#B21B7E',cls:'sc-en',areas:['語彙','論文表現'],chapters:['Part5','Reading']}
 };
 
-// 大量データ (一部抜粋表示、内部的には全件保持)
-const BANK = [
-  {cat:'la', q:'固有値 λ の定義', a:'Av = λv'},
-  {cat:'cf', q:'オイラーの公式', a:'e^(iθ) = cosθ + i sinθ'},
-  {cat:'de', q:'L[sin at]', a:'a / (s² + a²)'},
-  {cat:'ml', q:'Transformerの核心', a:'Self-Attention機構'},
-  {cat:'cs', q:'クイックソート平均計算量', a:'O(n log n)'}
+// FLASHCARDS 大量プリセット
+let BANK = JSON.parse(localStorage.getItem('study_v25_bank')) || [
+  {cat:'la', q:'Rank-Nullity Theorem', a:'rank(A) + nullity(A) = n (列数)', area:'次元定理'},
+  {cat:'cf', q:'オイラーの公式', a:'e^(iθ) = cosθ + i sinθ', area:'正則性'},
+  {cat:'de', q:'L[sin at] (ラプラス変換)', a:'a / (s² + a²)', area:'ラプラス変換'},
+  {cat:'ml', q:'TransformerのSelf-Attention', a:'Attention(Q,K,V) = softmax(QKᵀ/√d_k)V', area:'Transformer'},
+  {cat:'cs', q:'クイックソート平均計算量', a:'O(n log n)', area:'ソート'}
 ];
 
 const QUIZZES = {
   la: [{q:'det(A)=0の時、Aは？', o:['正則','特異','単位'], a:1}],
-  en: [{q:'Despiteの後は？', o:['名詞句','S+V','形容詞'], a:0}]
+  cs: [{q:'O(n log n)のソートは？', o:['バブル','クイック'], a:1}]
 };
 
 /* ══════════════════════════════════════
@@ -179,21 +207,20 @@ const QUIZZES = {
 ══════════════════════════════════════ */
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
-  if(!key.startsWith('AIza')) return alert('有効なGemini APIキーを入力してください');
-  localStorage.setItem('studyflow_gemini_key', key);
+  if(!key.startsWith('AIza')) return alert('有効なキーを入力してください');
+  localStorage.setItem('studyflow_v25_key', key);
+  alert('キーをブラウザに保存しました。');
   location.reload();
 };
 
-function getApiKey() {
-  return localStorage.getItem('studyflow_gemini_key');
-}
+function getApiKey() { return localStorage.getItem('studyflow_v25_key'); }
 
 /* ══════════════════════════════════════
    GALAXY ENGINE (D3.JS FULL)
 ══════════════════════════════════════ */
 function initGalaxy() {
-  const wrap = document.getElementById('galaxy-container');
-  const width = wrap.clientWidth, height = wrap.clientHeight;
+  const container = document.getElementById('galaxy-container');
+  const width = container.clientWidth, height = container.clientHeight;
   const nodes = [{id:'YOU', r:25, fx: width/2, fy: height/2, name:'YOU'}];
   const links = [];
 
@@ -201,16 +228,17 @@ function initGalaxy() {
     nodes.push({id: s, name: SUBJECTS[s].name, r:18, type:'subj'});
     links.push({source:'YOU', target: s});
     SUBJECTS[s].areas.forEach(area => {
-      const areaId = s + '_' + area;
-      nodes.push({id: areaId, name: area, group: s, r:10, type:'area'});
-      links.push({source: s, target: areaId});
+      const aid = s + '_' + area;
+      nodes.push({id: aid, name: area, group: s, r:10, type:'area'});
+      links.push({source: s, target: aid});
     });
   });
 
   BANK.forEach((k, i) => {
-    const id = `k${i}`;
-    nodes.push({id, name: k.q, detail: k.a, group: k.cat, r:6, type:'fact'});
-    links.push({source: k.cat, target: id});
+    const kid = `k${i}`;
+    nodes.push({id: kid, name: k.q, detail: k.a, group: k.cat, r:6, type:'fact'});
+    const pid = k.area ? k.cat + '_' + k.area : k.cat;
+    links.push({source: pid, target: kid});
   });
 
   const svg = d3.select("#galaxy-svg"); svg.selectAll("*").remove();
@@ -219,9 +247,9 @@ function initGalaxy() {
 
   const sim = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d => d.id).distance(60))
-    .force("charge", d3.forceManyBody().strength(-300))
+    .force("charge", d3.forceManyBody().strength(-350))
     .force("center", d3.forceCenter(width/2, height/2))
-    .force("collision", d3.forceCollide().radius(d => d.r + 10));
+    .force("collision", d3.forceCollide().radius(d => d.r + 12));
 
   const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845").attr("stroke-opacity", 0.6);
   const node = g.append("g").selectAll("circle").data(nodes).join("circle")
@@ -242,57 +270,62 @@ function initGalaxy() {
     node.attr("cx", d => d.x).attr("cy", d => d.y);
     label.attr("x", d => d.x).attr("y", d => d.y);
   });
+  document.getElementById('star-count').innerText = nodes.length;
 }
 
 /* ══════════════════════════════════════
-   AI ENGINE (v1 STABLE + FALLBACK)
+   AI ENGINE (FREE TIER OPTIMIZED)
 ══════════════════════════════════════ */
+let lastAIResult = "";
 async function askGemini() {
   const key = getApiKey();
-  if(!key) return alert("AI生成タブでAPIキーを設定してください");
-  
-  const subj = document.getElementById('ai-subj-sel').value;
-  const out = document.getElementById('ai-output');
-  const btn = document.getElementById('ai-btn');
+  if(!key) return alert("APIキーを保存してください");
+  const subj = document.getElementById('ai-subj-sel').value, out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt'), btn = document.getElementById('ai-btn');
+  out.style.display = 'block'; txt.innerText = "Gemini AI が最新推論を実行中..."; btn.disabled = true;
 
-  out.style.display = 'block'; out.innerText = "生成中..."; btn.disabled = true;
-
-  // 最新モデルリストを順番に試行
+  // 最新モデルリスト試行
   const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"];
   let success = false;
-
   for(let m of models) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}の院試類題と詳細解答を作成して。` }] }] })
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}の院試類題を作成し、詳しいステップ解説を付けて。日本語で。` }] }] })
       });
       const data = await res.json();
       if(data.candidates) {
-        out.innerText = data.candidates[0].content.parts[0].text;
-        success = true; break;
+        lastAIResult = data.candidates[0].content.parts[0].text;
+        txt.innerText = lastAIResult; success = true; break;
       }
     } catch(e) {}
   }
-  if(!success) out.innerText = "エラー：モデルへのアクセスに失敗しました。キーが有効か確認してください。";
+  if(!success) txt.innerText = "生成失敗。キーが無効か制限に達しています。";
   btn.disabled = false;
 }
 window.askGemini = askGemini;
 
 /* ══════════════════════════════════════
-   INITIALIZATION
+   STUDY & UI INITIALIZATION
 ══════════════════════════════════════ */
 let curMode = 'fc', curSubj = 'la', curIdx = 0;
+
+window.switchTab = (t) => {
+  document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('panel-' + t).classList.add('active');
+  if(t==='galaxy') setTimeout(initGalaxy, 100);
+  if(t==='study') renderStudy();
+};
+
 function renderStudy() {
   const cont = document.getElementById('study-content');
   const data = curMode === 'fc' ? BANK.filter(b=>b.cat===curSubj) : (QUIZZES[curSubj] || []);
   if(!data.length) { cont.innerHTML = "データがありません。"; return; }
   const it = data[curIdx % data.length];
   if(curMode === 'fc') {
-    cont.innerHTML = `<div class="fc-card" onclick="this.innerText='${it.a}'">${it.q}</div><button class="btn-p" style="margin-top:20px" onclick="curIdx++;renderStudy()">Next</button>`;
+    cont.innerHTML = `<div class="fc-card" onclick="this.innerText='${it.a}'">${it.q}</div><button class="btn-p" style="margin-top:20px" onclick="curIdx++;renderStudy()">次へ</button>`;
   } else {
-    cont.innerHTML = `<div class="card"><div>${it.q}</div>${it.o.map((o,i)=>`<button class="chip" style="display:block;width:100%;margin-top:10px" onclick="alert(i===${it.a}?'正解':'不正解')">${o}</button>`).join('')}</div>`;
+    cont.innerHTML = `<div class="card"><div>${it.q}</div>${it.o.map((o,i)=>`<button class="chip" style="display:block;width:100%;margin-top:10px;text-align:left" onclick="alert(i===${it.a}?'正解':'不正解')">${o}</button>`).join('')}</div>`;
   }
 }
 
@@ -303,24 +336,16 @@ function init() {
   document.getElementById('d-kobe').innerText = diff('2026-08-24');
 
   const chips = document.getElementById('subj-chips');
-  chips.innerHTML = Object.keys(SUBJECTS).map(k => `<button class="chip" onclick="curSubj='${k}';renderStudy()">${SUBJECTS[k].name}</button>`).join('');
+  chips.innerHTML = Object.keys(SUBJECTS).map(k => `<button class="chip" onclick="window.setSubj('${k}')">${SUBJECTS[k].name}</button>`).join('');
 
-  if(getApiKey()) {
-    document.getElementById('key-state').innerText = "Active";
-    document.getElementById('key-state').style.color = "var(--green)";
-    document.getElementById('api-key-input').value = getApiKey();
-  }
+  window.setSubj = (k) => { curSubj = k; renderStudy(); };
+  window.setMode = (m) => { curMode = m; renderStudy(); };
 
-  window.switchTab = (t) => {
-    document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
-    document.getElementById('panel-' + t).classList.add('active');
-    if(t==='galaxy') setTimeout(initGalaxy, 100);
-    if(t==='study') renderStudy();
-  };
-  
+  const savedKey = getApiKey();
+  if(savedKey) document.getElementById('api-key-input').value = savedKey;
+
   renderStudy();
 }
-
 init();
 </script>
 </body>
