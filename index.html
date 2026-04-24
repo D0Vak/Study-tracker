@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v22 — 統合院試対策・究極完全版</title>
+<title>StudyFlow v23 — 院試/専門科目 統合学習システム</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
@@ -39,10 +39,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
 .tab{flex:1;min-width:fit-content;padding:8px 12px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
 .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
+.tab:hover:not(.active){background:var(--bg3);color:var(--text)}
 .panel{display:none}.panel.active{display:block}
 .stitle{font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
 
-/* COUNTDOWN */
+/* COUNTDOWN CARDS */
 .cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:580px){.cdown-grid{grid-template-columns:1fr}}
 .cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden}
@@ -50,14 +51,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cd-toeic::before{background:linear-gradient(90deg,#0C6A52,#2EC4B6)}
 .cd-naist::before{background:linear-gradient(90deg,#7C5FD4,#9B7FF0)}
 .cd-kobe::before{background:linear-gradient(90deg,#145898,#4A9EF0)}
-.cd-badge{font-size:10px;font-weight:700;text-transform:uppercase;display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:10px}
-.cd-toeic .cd-badge{background:var(--tbg);color:var(--teal)}
-.cd-naist .cd-badge{background:var(--alight);color:#5C3FB8}
-.cd-kobe .cd-badge{background:var(--bbg);color:var(--blue)}
+.cd-badge{font-size:10px;font-weight:700;display:inline-block;padding:3px 8px;border-radius:6px;margin-bottom:10px}
 .cd-days{font-family:'Inter',sans-serif;font-size:42px;font-weight:800;line-height:1;margin-bottom:3px}
 .cd-toeic .cd-days{color:var(--teal)}.cd-naist .cd-days{color:var(--accent)}.cd-kobe .cd-days{color:var(--blue)}
+.cd-unit{font-size:11px;color:var(--text3);margin-bottom:7px}
 .cd-name{font-size:12px;font-weight:500;color:var(--text2)}
-.cd-date{font-size:11px;color:var(--text3);margin-top:2px}
 
 /* SUBJECT CARDS */
 .subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:24px}
@@ -73,13 +71,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sc-stats{display:flex;gap:12px;font-size:11px;color:var(--text3)}
 .quiz-btn{width:100%;margin-top:12px;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);font-size:12px;cursor:pointer;font-weight:600}
 
-/* GALAXY BOX */
+/* GALAXY ENGINE (Stable Visualization) */
 .galaxy-wrap{height:600px; width:100%; background:#05040a; border-radius:var(--r); position:relative; border:1px solid var(--border); margin-bottom:24px; overflow:hidden; box-shadow:var(--sh2)}
-#galaxy-svg{width:100%; height:100%; background: radial-gradient(circle, #131129 0%, #000 80%); display:block;}
+#galaxy-svg{width:100%; height:100%; min-height:600px; background: radial-gradient(circle, #131129 0%, #000 80%); display:block; cursor: grab;}
 .galaxy-info{position:absolute;bottom:20px;left:20px;background:rgba(13,11,26,0.96);padding:18px;border-radius:10px;border:1px solid var(--accent);max-width:350px;display:none;backdrop-filter:blur(15px);z-index:100;box-shadow:var(--sh);color:#fff}
 
-/* STUDY BOX */
-.fc-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px;line-height:1.6;transition:all 0.3s;box-shadow:var(--sh)}
+/* STUDY COMPONENTS */
+.chips{display:flex;gap:8px;margin-bottom:15px;overflow-x:auto; padding-bottom:5px}
+.chip{padding:10px 18px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:11px;white-space:nowrap; transition:0.2s}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(124,95,212,0.1)}
+.fc-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px; line-height:1.6; transition:all 0.3s;box-shadow:var(--sh)}
 .fc-card.flipped{border-color:var(--accent);background:var(--alight)}
 
 /* ANALYTICS */
@@ -87,20 +88,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--sh)}
 .ana-val{font-family:'Inter',sans-serif;font-size:32px;font-weight:800;margin-bottom:4px;color:var(--accent)}
 
-/* FIREBASE/LOG LIST */
-.log-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:8px;display:flex;gap:12px;box-shadow:var(--sh)}
+/* GRAPH */
+.graph-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:22px;box-shadow:var(--sh)}
+.graph-bars{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:12px}
+.gbar-wrap{display:flex;flex-direction:column;align-items:center;flex:1}
+.gbar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--accent2),var(--accent));min-height:2px}
 
-/* AI PANEL */
-.ai-config{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px;box-shadow:var(--sh)}
+/* FORM ELEMENTS */
 input, select, textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:var(--r2);width:100%;margin-bottom:12px;outline:none;font-family:inherit}
-.btn-p{background:var(--accent);color:#fff;border:none;padding:14px;border-radius:var(--r2);cursor:pointer;font-weight:700;width:100%}
+.btn-p{background:var(--accent);color:#fff;border:none;padding:14px;border-radius:var(--r2);cursor:pointer;font-weight:700;width:100%; transition: 0.2s}
+.btn-p:hover{opacity: 0.9; transform: translateY(-1px)}
+
+#ai-debug-log{color:var(--pink); font-size:11px; margin-top:10px; background:#1a0000; padding:10px; border-radius:8px; white-space:pre-wrap; display:none}
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v22</span></div>
+    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v23</span></div>
     <div class="header-right">
       <div class="db-count" id="db-count">📊 0問記録済み</div>
       <div class="streak">🔥 <span id="streak-count" class="font-num">0</span>日連続</div>
@@ -109,11 +115,11 @@ input, select, textarea{background:var(--bg3);border:1px solid var(--border);col
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
-    <button class="tab" onclick="switchTab('study')">📚 専門演習</button>
-    <button class="tab" onclick="switchTab('galaxy')">🌌 体系銀河</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 AI生成</button>
-    <button class="tab" onclick="switchTab('analytics')">📈 分析</button>
-    <button class="tab" onclick="switchTab('log')">📝 ログ</button>
+    <button class="tab" onclick="switchTab('study')">📚 演習モード</button>
+    <button class="tab" onclick="switchTab('galaxy')">🌌 体系銀河系</button>
+    <button class="tab" onclick="switchTab('ai')">🤖 AI生成(2.5)</button>
+    <button class="tab" onclick="switchTab('analytics')">📈 弱点分析</button>
+    <button class="tab" onclick="switchTab('log')">📝 学習ログ</button>
   </div>
 
   <!-- PLAN PANEL -->
@@ -126,9 +132,15 @@ input, select, textarea{background:var(--bg3);border:1px solid var(--border);col
     </div>
     <div class="stitle">教科別進捗</div>
     <div class="subj-grid" id="subj-grid"></div>
+    
+    <div class="graph-wrap">
+      <div class="stitle">学習時間グラフ (直近7日)</div>
+      <div class="graph-bars" id="graph-bars"></div>
+    </div>
+
     <div class="overall">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div class="stitle">総合進捗</div>
+        <div class="stitle">総合学習進捗</div>
         <div id="ov-pct" class="sc-pct">0%</div>
       </div>
       <div class="ov-bar"><div id="ov-bar" class="ov-fill" style="width:0%"></div></div>
@@ -142,9 +154,9 @@ input, select, textarea{background:var(--bg3);border:1px solid var(--border);col
     <div class="chips">
       <button class="chip active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
       <button class="chip" onclick="setMode('fill',this)">✏️ 穴埋め問題</button>
-      <button class="chip" onclick="setMode('quiz',this)">📝 多肢クイズ</button>
+      <button class="chip" onclick="setMode('quiz',this)">📝 多肢選択クイズ</button>
     </div>
-    <div class="stitle">科目</div>
+    <div class="stitle">科目選択</div>
     <div id="subj-chips" class="chips"></div>
     <div id="study-content"></div>
   </div>
@@ -159,20 +171,24 @@ input, select, textarea{background:var(--bg3);border:1px solid var(--border);col
 
   <!-- AI PANEL -->
   <div id="panel-ai" class="panel">
-    <div class="ai-config">
-      <div class="stitle">Gemini AI (v2.0 Flash)</div>
-      <div style="font-size:12px; color:var(--text2); margin-bottom:15px">院試レベルの類題を生成し、ワードバンクに自動統合します。</div>
+    <div class="card">
+      <div class="stitle">Gemini 2.5 Flash 次世代エンジン</div>
+      <div style="font-size:12px; color:var(--text2); margin-bottom:15px">無料枠モデル(2.5 Flash/Lite)を使用して、院試レベルの類題を生成します。</div>
       <select id="ai-subj-sel">
-        <option value="線形代数">線形代数</option><option value="微積分">微積分</option>
-        <option value="複素関数">複素関数</option><option value="常微分方程式">常微分方程式</option>
-        <option value="機械学習">機械学習</option><option value="アルゴリズム">アルゴリズム</option>
+        <option value="複素関数論">複素関数論</option>
+        <option value="常微分方程式">常微分方程式</option>
+        <option value="線形代数">線形代数</option>
+        <option value="微積分">微積分</option>
+        <option value="機械学習">機械学習</option>
+        <option value="アルゴリズム">アルゴリズム</option>
       </select>
-      <button class="btn-p" id="ai-btn" onclick="askGemini()">AI問題を生成</button>
+      <button class="btn-p" id="ai-btn" onclick="askGemini()">最新AI問題を生成</button>
+      
       <div id="ai-output" class="card" style="display:none; margin-top:15px; background:var(--bg2); padding:15px; border:1px solid var(--border)">
         <div id="ai-txt" style="white-space:pre-wrap; font-size:14px; line-height:1.7"></div>
-        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">この内容を演習に追加</button>
+        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">この内容をワードバンクに保存</button>
       </div>
-      <div id="ai-error" style="color:var(--red); font-size:11px; margin-top:10px"></div>
+      <div id="ai-debug-log"></div>
     </div>
   </div>
 
@@ -180,17 +196,24 @@ input, select, textarea{background:var(--bg3);border:1px solid var(--border);col
   <div id="panel-analytics" class="panel">
     <div class="stitle">弱点分析ダッシュボード</div>
     <div class="ana-grid" id="ana-summary"></div>
-    <div class="card"><div class="stitle">カテゴリ別正答率</div><div id="ana-tags"></div></div>
+    <div class="card">
+      <div class="stitle">分野別正答率ランク</div>
+      <div id="ana-tags"></div>
+    </div>
   </div>
 
   <!-- LOG PANEL -->
   <div id="panel-log" class="panel">
     <div class="card">
-      <div class="stitle">学習記録を追加</div>
-      <input type="text" id="log-chap" placeholder="学習した章・トピック">
+      <div class="stitle">今日の学習を記録</div>
+      <select id="log-subj-sel">
+        <option value="la">線形代数</option><option value="ca">微積分</option><option value="ml">機械学習</option>
+      </select>
+      <input type="text" id="log-chap" placeholder="学習したトピック（例：固有値分解）">
       <input type="number" id="log-dur" placeholder="学習時間（分）">
       <button class="btn-p" onclick="addLog()">保存</button>
     </div>
+    <div class="stitle">最近の履歴</div>
     <div class="log-list" id="log-list"></div>
   </div>
 </div>
@@ -208,79 +231,54 @@ const db = getDatabase(fbApp);
    DATABASE: FULL KNOWLEDGE DATA
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数',cls:'sc-la',dot:'#7C5FD4',areas:['行列演算','固有値','次元定理','SVD']},
-  ca:{name:'微積分',cls:'sc-ca',dot:'#167A50',areas:['微分','積分','多変数','テイラー展開']},
-  cf:{name:'複素関数',cls:'sc-cf',dot:'#8B1D5A',areas:['正則性','コーシー積分','留数定理']},
-  de:{name:'常微分方程式',cls:'sc-de',dot:'#E67E22',areas:['1階線形','2階定数係数','ラプラス変換']},
-  ml:{name:'機械学習',cls:'sc-ml',dot:'#145898',areas:['正則化','DeepLearning','最適化']},
-  cs:{name:'CS/アルゴリズム',cls:'sc-cs',dot:'#7A5200',areas:['計算量','ソート','データ構造']},
-  en:{name:'英語(TOEIC)',cls:'sc-en',dot:'#8A4A00',areas:['TOEIC語彙','論文表現']}
+  la:{name:'線形代数',cls:'sc-la',dot:'#7C5FD4',areas:['行列演算','固有値','次元定理','SVD'],chapters:['行列','空間','固有値','分解']},
+  ca:{name:'微積分',cls:'sc-ca',dot:'#167A50',areas:['微分','積分','多変数','級数'],chapters:['微分','積分','多変数']},
+  cf:{name:'複素関数',cls:'sc-cf',dot:'#8B1D5A',areas:['正則性','コーシー積分','留数定理'],chapters:['正則','積分','留数']},
+  de:{name:'常微分方程式',cls:'sc-de',dot:'#E67E22',areas:['1階線形','2階定数係数','ラプラス変換'],chapters:['1階','2階','ラプラス']},
+  ml:{name:'機械学習',cls:'sc-ml',dot:'#145898',areas:['正則化','DeepLearning','最適化'],chapters:['基本','ニューラルネット']},
+  cs:{name:'CS/アルゴリズム',cls:'sc-cs',dot:'#7A5200',areas:['計算量','ソート','データ構造'],chapters:['計算量','ソート','構造']},
+  en:{name:'英語(TOEIC)',cls:'sc-en',dot:'#8A4A00',areas:['TOEIC語彙','論文表現'],chapters:['単語','文法']}
 };
 
-// FLASHCARDS (大量復元)
-const FC_DATA = {
-  la:[
-    {q:'固有値 λ と固有ベクトル v の関係式', a:'Av = λv', tag:'固有値'},
-    {q:'det(A)=0 の行列 A は何と呼ばれるか？', a:'特異行列（非正則行列）。逆行列が存在しない。', tag:'行列演算'},
-    {q:'Rank-Nullity Theorem (次元定理) の式', a:'rank(A) + nullity(A) = n (列の数)', tag:'次元定理'},
-    {q:'直交行列 Q の定義と性質', a:'QᵀQ = I。行列式は ±1。ノルムと角度を保存する。', tag:'行列演算'}
-  ],
-  ca:[
-    {q:'テイラー展開の一般式 (x=aの周り)', a:'f(x) = Σ f⁽ⁿ⁾(a)/n! * (x-a)ⁿ', tag:'テイラー展開'},
-    {q:'ロピタルの定理の適用条件', a:'0/0 または ∞/∞ の不定形であること。', tag:'極限'},
-    {q:'ヤコビアン (Jacobian) の役割', a:'多重積分の変数変換における面積比/体積比。', tag:'多変数'}
-  ],
-  cf:[
-    {q:'コーシーの積分定理', a:'正則関数の閉曲線上の積分は 0 となる。∮ f(z)dz = 0', tag:'コーシー積分'},
-    {q:'留数定理の式', a:'∮ f(z)dz = 2πi * Σ Res(f, zₖ)', tag:'留数定理'}
-  ],
-  cs:[
-    {q:'クイックソートの平均計算量と最悪計算量', a:'平均: O(n log n), 最悪: O(n²)', tag:'ソート'},
-    {q:'P vs NP における P の定義', a:'決定性チューリングマシンで多項式時間で解けるクラス。', tag:'計算量'}
-  ],
-  en:[
-    {q:'"Subsequent" の意味', a:'後の、次に起こる。例：subsequent years', tag:'TOEIC語彙'},
-    {q:'"State-of-the-art" の意味', a:'最新の、最高水準の。論文で手法を比較する際によく使う。', tag:'論文表現'}
-  ]
-};
+const BANK = JSON.parse(localStorage.getItem('study_v23_bank')) || [
+  {cat:'la', q:'固有値 λ と固有ベクトル v の関係式', a:'Av = λv', area:'固有値'},
+  {cat:'cf', q:'オイラーの公式', a:'e^(iθ) = cosθ + i sinθ', area:'正則性'},
+  {cat:'de', q:'変数分離形の解法', a:'dy/dx = f(x)g(y) ➔ ∫(1/g(y))dy = ∫f(x)dx', area:'1階線形'},
+  {cat:'cs', q:'クイックソートの平均計算量', a:'O(n log n)', area:'ソート'},
+  {cat:'en', q:'Incur', a:'(負債などを)負う、招く', area:'TOEIC語彙'}
+];
 
-// QUIZZES
-const QUIZ_DATA = {
-  la: [{q:'det(A)=0の時、行列Aは？', o:['正則','特異','単位'], a:1}],
-  cs: [{q:'O(n log n) のソートアルゴリズムは？', o:['バブル','クイック','挿入'], a:1}]
+const QUIZZES = {
+  la: [{q:'det(A)=0 の時、行列Aは？', o:['正則行列','特異行列','単位行列'], a:1}],
+  ca: [{q:'sin(x)/x (x→0) の極限は？', o:['0','1','∞'], a:1}]
 };
 
 /* ══════════════════════════════════════
-   SYSTEM LOGIC
+   SYSTEM LOGIC & UI
 ══════════════════════════════════════ */
 let curTab = 'plan', curMode = 'fc', curSubj = 'la', curIdx = 0;
-let progressData = {}, logs = [];
-
-// API KEY (ご提示のキー)
 const MY_KEY = "AIzaSyCdwmg_WejVCUU1GDpV_R8TdPqFmDm_h6E";
 
 function updateCountdown() {
   const diff = (t) => Math.max(0, Math.ceil((new Date(t) - new Date()) / (1000*60*60*24)));
-  document.getElementById('cd-toeic').innerText = diff('2026-05-17');
-  document.getElementById('cd-naist').innerText = diff('2026-07-06');
-  document.getElementById('cd-kobe').innerText = diff('2026-08-24');
+  document.getElementById('d-toeic').innerText = diff('2026-05-17');
+  document.getElementById('d-naist').innerText = diff('2026-07-06');
+  document.getElementById('d-kobe').innerText = diff('2026-08-24');
 }
 
 window.switchTab = (t) => {
-  curTab = t;
   document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
   document.getElementById('panel-' + t).classList.add('active');
-  const activeTab = Array.from(document.querySelectorAll('.tab')).find(btn => btn.innerText.includes(t==='plan'?'プラン':t==='study'?'演習':t==='galaxy'?'銀河':t==='ai'?'AI':t==='analytics'?'分析':'ログ'));
-  if(activeTab) activeTab.classList.add('active');
+  const activeTabBtn = Array.from(document.querySelectorAll('.tab')).find(b => b.onclick.toString().includes(t));
+  if(activeTabBtn) activeTabBtn.classList.add('active');
   if(t === 'galaxy') setTimeout(initGalaxy, 100);
   if(t === 'study') renderStudy();
-  if(t === 'analytics') renderAnalytics();
 };
 
 window.setMode = (m, el) => { curMode = m; curIdx = 0; document.querySelectorAll('.chip').forEach(c => c.classList.remove('active')); el.classList.add('active'); renderStudy(); };
 
 /* ══════════════════════════════════════
-   GALAXY (D3.JS FULL Implementation)
+   GALAXY ENGINE (D3.JS FULL)
 ══════════════════════════════════════ */
 function initGalaxy() {
   const wrap = document.getElementById('galaxy-container');
@@ -298,14 +296,11 @@ function initGalaxy() {
     });
   });
 
-  // 演習データを星として追加
-  Object.keys(FC_DATA).forEach(s => {
-    FC_DATA[s].forEach((f, i) => {
-      const fid = `${s}_f${i}`;
-      nodes.push({id: fid, name: f.q, detail: f.a, group: s, r:6, type:'fact'});
-      const pid = f.tag ? s + '_' + f.tag : s;
-      links.push({source: pid, target: fid});
-    });
+  BANK.forEach((k, i) => {
+    const fid = `k${i}`;
+    nodes.push({id: fid, name: k.q, detail: k.a, group: k.cat, r:6, type:'fact'});
+    const pid = k.area ? k.cat + '_' + k.area : k.cat;
+    links.push({source: pid, target: fid});
   });
 
   const svg = d3.select("#galaxy-svg"); svg.selectAll("*").remove();
@@ -341,28 +336,37 @@ function initGalaxy() {
 }
 
 /* ══════════════════════════════════════
-   AI ENGINE (Gemini 2.0 Flash)
+   AI ENGINE (Gemini 2.5 Flash Free Tier)
 ══════════════════════════════════════ */
 let lastAIResult = "";
 async function askGemini() {
-  const subj = document.getElementById('ai-subj-sel').value, out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt'), btn = document.getElementById('ai-btn'), err = document.getElementById('ai-error');
-  out.style.display = 'block'; txt.innerText = "Gemini AI (2.0 Flash) が問題を生成中..."; btn.disabled = true; err.innerText = "";
+  const subj = document.getElementById('ai-subj-sel').value, out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt'), btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
+  out.style.display = 'block'; txt.innerText = "Gemini 2.5 Flash が最先端推論を用いて問題を生成中..."; btn.disabled = true; debug.style.display = "none"; debug.innerText = "";
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${MY_KEY}`;
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}に関する大学院入試レベルの計算・証明問題を1問作成し、解説と解答を詳細に付けてください。` }] }] })
-    });
-    const data = await res.json();
-    if(data.candidates) {
-      lastAIResult = data.candidates[0].content.parts[0].text;
-      txt.innerText = lastAIResult;
-    } else {
-      err.innerText = "APIエラー: " + (data.error?.message || "生成に失敗しました");
-    }
-  } catch(e) { err.innerText = "接続エラー。ネットワークを確認してください。"; }
+  // 無料枠で利用可能な2.5系列を優先
+  const models = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
+  let success = false;
+
+  for(let m of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${MY_KEY}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}に関する大学院入試レベルの専門的な計算・証明問題を1問作成し、詳しいステップ付きの解答とポイントを日本語で付けてください。` }] }] })
+      });
+      const data = await res.json();
+      if(data.candidates && data.candidates[0].content) {
+        lastAIResult = data.candidates[0].content.parts[0].text;
+        txt.innerText = lastAIResult;
+        success = true; break;
+      } else {
+        debug.style.display = "block";
+        debug.innerText += `[${m}] ${data.error?.message || "使用不可"}\n`;
+      }
+    } catch(e) { console.log(m + " failed"); }
+  }
+  if(!success) txt.innerText = "全ての2.5/2.0モデルで生成に失敗しました。APIキーまたはネットワークを確認してください。";
   btn.disabled = false;
 }
 window.askGemini = askGemini;
@@ -370,39 +374,54 @@ window.askGemini = askGemini;
 window.saveAI = () => {
   if(!lastAIResult) return;
   const subj = document.getElementById('ai-subj-sel').value;
-  const catMap = {"線形代数":"la","微積分":"ca","複素関数":"cf","常微分方程式":"de","機械学習":"ml","アルゴリズム":"cs"};
-  const cat = catMap[subj] || 'cs';
-  if(!FC_DATA[cat]) FC_DATA[cat] = [];
-  FC_DATA[cat].push({q:"AI生成問題", a: lastAIResult, tag: "AI"});
-  alert("ワードバンクに保存しました。演習モードと銀河に反映されます。");
-  initGalaxy();
+  const catMap = {"線形代数":"la","微積分":"ca","複素関数論":"cf","常微分方程式":"de","機械学習":"ml","アルゴリズム":"cs"};
+  BANK.push({cat: catMap[subj] || 'cs', q: "AI生成問題 (" + subj + ")", a: lastAIResult});
+  localStorage.setItem('study_v23_bank', JSON.stringify(BANK));
+  alert("ワードバンクに保存しました。"); renderBank();
 };
 
 /* ══════════════════════════════════════
-   STUDY ENGINE
+   STUDY & LOGS & ANALYTICS
 ══════════════════════════════════════ */
 function renderStudy() {
-  const cont = document.getElementById('study-content');
-  const data = curMode === 'fc' ? (FC_DATA[curSubj] || []) : (QUIZ_DATA[curSubj] || []);
-  if(data.length === 0) { cont.innerHTML = `<div class="card">まだこの科目のデータがありません。</div>`; return; }
+  const cont = document.getElementById('study-content'), data = curMode==='fc' ? BANK.filter(b=>b.cat===curSubj) : (QUIZZES[curSubj] || []);
+  if(!data.length) { cont.innerHTML = `<div class="card">まだデータがありません。</div>`; return; }
   const it = data[curIdx % data.length];
   if(curMode === 'fc') {
-    cont.innerHTML = `<div class="fc-card" onclick="this.innerText='${it.a}'">${it.q}</div><button class="btn-p" style="margin-top:20px" onclick="curIdx++;renderStudy()">次の知識へ</button>`;
+    cont.innerHTML = `<div class="fc-card" onclick="this.innerText='${it.a}'">${it.q}</div><button class="btn-p" style="margin-top:20px" onclick="curIdx++;renderStudy()">次のカードへ</button>`;
   } else {
     cont.innerHTML = `<div class="card"><div>${it.q}</div>${it.o.map((o,i)=>`<button class="chip" style="display:block;width:100%;margin-top:10px;text-align:left" onclick="alert(i===${it.a}?'正解':'不正解')">${o}</button>`).join('')}</div>`;
   }
 }
 
-function initChips() {
-  const chips = document.getElementById('subj-chips');
-  chips.innerHTML = Object.keys(SUBJECTS).map(k => `<button class="chip ${k==='la'?'active':''}" onclick="curSubj='${k}';renderStudy()">${SUBJECTS[k].name}</button>`).join('');
+function renderBank() {
+  const container = document.getElementById('bank-list-html');
+  container.innerHTML = BANK.slice().reverse().map((it, i) => `
+    <div class="bank-item">
+      <span style="color:${SUBJECTS[it.cat].color}; font-weight:bold">${SUBJECTS[it.cat].name}</span>
+      <span><strong>${it.q}</strong></span>
+      <button style="background:var(--pink); border:none; color:#fff; padding:4px; border-radius:4px; cursor:pointer" onclick="BANK.splice(${BANK.length-1-i},1);localStorage.setItem('study_v23_bank',JSON.stringify(BANK));renderBank();">✕</button>
+    </div>
+  `).join('');
 }
 
-// 起動
+function addLog() {
+  const subj = document.getElementById('log-subj-sel').value, chap = document.getElementById('log-chap').value, dur = parseInt(document.getElementById('log-dur').value);
+  if(!chap || !dur) return alert("入力してください");
+  push(ref(db, 'logs'), {subj, chap, dur, timestamp: Date.now(), date: new Date().toLocaleDateString('ja-JP')});
+  alert("ログを保存しました。");
+}
+
+function renderAnalytics() {
+  const sum = document.getElementById('ana-summary');
+  sum.innerHTML = `<div class="ana-card"><div class="ana-val">${BANK.length}</div>知識総数</div><div class="ana-card"><div class="ana-val" style="color:var(--green)">Ready</div>状態</div>`;
+}
+
 function init() {
   updateCountdown();
-  initChips();
-  renderStudy();
+  const chips = document.getElementById('subj-chips');
+  chips.innerHTML = Object.keys(SUBJECTS).map(k => `<button class="chip" onclick="curSubj='${k}';curIdx=0;renderStudy()">${SUBJECTS[k].name}</button>`).join('');
+  renderBank(); renderStudy();
   setTimeout(initGalaxy, 500);
 }
 init();
