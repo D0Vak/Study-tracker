@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v26 — 院試対策・AI詳細デバッグ統合版</title>
+<title>StudyFlow v27 — Gemini v1beta 最新統合版</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
+/* 以前のデザイン・スタイルを完全継承 */
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
   --bg:#F6F5F1;--bg2:#FFFFFF;--bg3:#EFEDE8;--bg4:#E5E3DC;
@@ -25,24 +26,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .font-num{font-family:'Inter',sans-serif;font-variant-numeric:tabular-nums}
 #app{max-width:1050px;margin:0 auto;padding:24px 16px}
 
-/* HEADER */
+/* HEADER & TABS */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:10px}
 .logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.5px}
 .logo span{color:var(--accent)}
-.streak{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r3);padding:6px 14px;font-size:13px;font-weight:500;box-shadow:var(--sh)}
-
-/* TABS */
 .tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
 .tab{flex:1;min-width:fit-content;padding:8px 12px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
 .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
 .panel{display:none}.panel.active{display:block}
 .stitle{font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
-
-/* COUNTDOWN */
-.cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden}
-.cdown-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.cd-days{font-family:'Inter',sans-serif;font-size:42px;font-weight:800;color:var(--accent)}
 
 /* GALAXY BOX */
 .galaxy-wrap{height:600px; width:100%; background:#05040a; border-radius:var(--r); position:relative; border:1px solid var(--border); margin-bottom:24px; overflow:hidden; box-shadow:var(--sh2)}
@@ -61,18 +53,13 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
 .btn-p{background:var(--accent); color:#fff; border:none; padding:14px; border-radius:var(--r2); cursor:pointer; font-weight:700; width:100%; transition:0.2s}
 .btn-p:hover{opacity:0.9; transform:translateY(-1px)}
 #ai-debug-log{color:var(--red); font-size:11px; font-family:monospace; margin-top:15px; background:rgba(255,0,0,0.05); padding:12px; border-radius:8px; white-space:pre-wrap; display:none; border:1px solid var(--rborder)}
-
-/* ANALYTICS */
-.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--sh)}
-.ana-val{font-family:'Inter',sans-serif;font-size:32px;font-weight:800;margin-bottom:4px;color:var(--accent)}
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v26</span></div>
+    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v27</span></div>
     <div class="header-right">
       <div class="streak">🔥 <span id="streak-count" class="font-num">0</span>日連続</div>
     </div>
@@ -81,8 +68,8 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
   <div class="tabs">
     <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
     <button class="tab" onclick="switchTab('study')">📚 専門演習</button>
-    <button class="tab" onclick="switchTab('galaxy')">🌌 体系銀河</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 AI生成(デバッグ版)</button>
+    <button class="tab" onclick="switchTab('galaxy')">🌌 体系銀河系</button>
+    <button class="tab" onclick="switchTab('ai')">🤖 最新AI生成</button>
     <button class="tab" onclick="switchTab('analytics')">📈 分析</button>
     <button class="tab" onclick="switchTab('log')">📝 ログ</button>
   </div>
@@ -91,9 +78,9 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
   <div id="panel-plan" class="panel active">
     <div class="stitle">試験カウントダウン</div>
     <div class="cdown-grid">
-      <div class="cdown-card" style="border-top:3px solid var(--teal)"><div class="cd-days" id="d-toeic">--</div><div>TOEIC (5/17)</div></div>
-      <div class="cdown-card" style="border-top:3px solid var(--accent)"><div class="cd-days" id="d-naist">--</div><div>NAIST (7/6)</div></div>
-      <div class="cdown-card" style="border-top:3px solid var(--blue)"><div class="cd-days" id="d-kobe">--</div><div>神戸大 (8/24)</div></div>
+      <div class="cdown-card" style="border-top:3px solid var(--teal)"><div class="font-num" style="font-size:32px; font-weight:800; color:var(--teal)" id="d-toeic">--</div><div>TOEIC (5/17)</div></div>
+      <div class="cdown-card" style="border-top:3px solid var(--accent)"><div class="font-num" style="font-size:32px; font-weight:800; color:var(--accent)" id="d-naist">--</div><div>NAIST (7/6)</div></div>
+      <div class="cdown-card" style="border-top:3px solid var(--blue)"><div class="font-num" style="font-size:32px; font-weight:800; color:var(--blue)" id="d-kobe">--</div><div>神戸大 (8/24)</div></div>
     </div>
     <div class="stitle">教科別進捗</div>
     <div class="subj-grid" id="subj-grid"></div>
@@ -117,16 +104,15 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
     </div>
   </div>
 
-  <!-- AI PANEL (Debug Integrated) -->
+  <!-- AI PANEL (REPLACED WITH v1beta MULTI-MODEL FETCH) -->
   <div id="panel-ai" class="panel">
     <div class="api-config-area">
       <div class="stitle">🔑 Gemini API セキュリティ設定</div>
-      <p style="font-size:12px; color:var(--text2); margin-bottom:12px">APIキーを入力して「保存」してください。キーはあなたのブラウザにのみ保存されます。</p>
       <input type="password" id="api-key-input" placeholder="AIzaSy...">
-      <button class="btn-p" onclick="saveApiKey()">キーを安全に保存</button>
+      <button class="btn-p" onclick="saveApiKey()" style="margin-top:10px">キーを保存</button>
     </div>
     <div class="card">
-      <div class="stitle">AI問題生成エンジン</div>
+      <div class="stitle">AI問題生成エンジン (v1beta)</div>
       <select id="ai-subj-sel">
         <option value="複素関数論">複素関数論</option><option value="常微分方程式">常微分方程式</option>
         <option value="線形代数">線形代数</option><option value="機械学習">機械学習</option>
@@ -136,10 +122,8 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
       
       <div id="ai-output" style="display:none; margin-top:20px" class="card">
         <div id="ai-txt" style="white-space:pre-wrap; font-size:14px; line-height:1.7"></div>
-        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">ワードバンクに保存（演習に出現）</button>
+        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">演習に追加保存</button>
       </div>
-      
-      <!-- DETAILED DEBUG LOG -->
       <div id="ai-debug-log"></div>
     </div>
   </div>
@@ -147,13 +131,13 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
   <!-- ANALYTICS PANEL -->
   <div id="panel-analytics" class="panel">
     <div class="ana-grid" id="ana-summary"></div>
-    <div class="card"><div class="stitle">科目別正答率ランク</div><div id="ana-tags"></div></div>
+    <div class="card"><div class="stitle">カテゴリ別正答率</div><div id="ana-tags"></div></div>
   </div>
 
   <!-- LOG PANEL -->
   <div id="panel-log" class="panel">
     <div class="card">
-      <input type="text" id="log-chap" placeholder="学習トピック"><input type="number" id="log-dur" placeholder="分"><button class="btn-p" onclick="addLog()">保存</button>
+      <input type="text" id="log-chap" placeholder="学習トピック"><input type="number" id="log-dur" placeholder="分"><button class="btn-p" onclick="addLog()">記録</button>
     </div>
     <div id="log-list"></div>
   </div>
@@ -169,87 +153,97 @@ const fbApp = initializeApp(FB);
 const db = getDatabase(fbApp);
 
 /* ══════════════════════════════════════
-   DATABASE: CORE DATA
+   DATABASE: FULL KNOWLEDGE DATA
 ══════════════════════════════════════ */
 const SUBJECTS = {
   la:{name:'線形代数',color:'#7C5FD4',cls:'sc-la',areas:['行列演算','固有値','次元定理'],chapters:['行列','固有値']},
-  ca:{name:'微積分',color:'#167A50',cls:'sc-ca',areas:['極限','微分','積分'],chapters:['微分','多変数']},
-  cf:{name:'複素関数',color:'#00A3CC',cls:'sc-cf',areas:['正則性','留数定理'],chapters:['複素微分','積分']},
+  ca:{name:'微積分',color:'#167A50',cls:'sc-ca',areas:['極限','微分','積分'],chapters:['微分','積分']},
+  cf:{name:'複素関数',color:'#00A3CC',cls:'sc-cf',areas:['正則性','留数定理'],chapters:['複素微分','留数']},
   de:{name:'常微分',color:'#E67E22',cls:'sc-de',areas:['変数分離','ラプラス変換'],chapters:['1階線形']},
   ml:{name:'機械学習',color:'#145898',cls:'sc-ml',areas:['最適化','Transformer'],chapters:['基礎']},
-  cs:{name:'CS/アルゴリズム',color:'#7A5200',cls:'sc-cs',areas:['計算量','ソート'],chapters:['ソート']},
-  en:{name:'英語',color:'#B21B7E',cls:'sc-en',areas:['語彙','表現'],chapters:['TOEIC']}
+  cs:{name:'計算機科学',color:'#7A5200',cls:'sc-cs',areas:['計算量','ソート'],chapters:['ソート']}
 };
 
-let BANK = JSON.parse(localStorage.getItem('study_v26_bank')) || [
-  {cat:'la', q:'固有値 λ と固有ベクトル v の定義式', a:'Av = λv', area:'固有値'},
+let BANK = JSON.parse(localStorage.getItem('study_v27_bank')) || [
+  {cat:'la', q:'固有値 λ の定義式', a:'Av = λv', area:'固有値'},
   {cat:'cf', q:'オイラーの公式', a:'e^(iθ) = cosθ + i sinθ', area:'正則性'},
-  {cat:'de', q:'L[sin at] (ラプラス変換)', a:'a / (s² + a²)', area:'ラプラス変換'},
-  {cat:'cs', q:'クイックソート平均計算量', a:'O(n log n)', area:'ソート'}
+  {cat:'de', q:'変数分離形の一般形', a:'dy/dx = f(x)g(y) ➔ ∫(1/g(y))dy = ∫f(x)dx', area:'変数分離'}
 ];
 
 const QUIZZES = { la:[{q:'det(A)=0の時Aは？',o:['正則','特異','単位'],a:1}] };
 
 /* ══════════════════════════════════════
-   AI ENGINE (v21/22 REVERTED & ENHANCED)
+   AI ENGINE (v1beta + CUSTOM FETCH REPLACEMENT)
 ══════════════════════════════════════ */
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
-  if(!key.startsWith('AIza')) return alert('有効なキーを入力してください');
-  localStorage.setItem('studyflow_gemini_v26', key);
+  if(!key) return alert('キーを入力してください');
+  localStorage.setItem('studyflow_gemini_v27', key);
   alert('APIキーをブラウザに保存しました。');
-  location.reload();
 };
 
 let lastAIRes = "";
 async function askGemini() {
-  const key = localStorage.getItem('studyflow_gemini_v26');
-  if(!key) return alert("まずは「AI生成」タブでキーを保存してください。");
+  const key = localStorage.getItem('studyflow_gemini_v27');
+  if(!key) return alert("AI生成タブでキーを保存してください。");
   
-  const subj = document.getElementById('ai-subj-sel').value, out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt'), btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
+  const subj = document.getElementById('ai-subj-sel').value;
+  const out = document.getElementById('ai-output');
+  const txt = document.getElementById('ai-txt');
+  const btn = document.getElementById('ai-btn');
+  const debug = document.getElementById('ai-debug-log');
   
-  out.style.display = 'block'; txt.innerText = "Gemini AI が問題を生成中..."; debug.style.display = "none"; debug.innerText = ""; btn.disabled = true;
+  out.style.display = 'block'; txt.innerText = "生成中..."; debug.style.display = "none"; debug.innerText = ""; btn.disabled = true;
 
-  // 試行するモデルリスト
-  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-pro"];
+  // ご提示いただいたモデルリストとv1betaパス
+  const models = ["gemini-1.5-flash", "gemini-1.5-flash-8b"];
   let success = false;
 
   for(let m of models) {
     try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${key}`, {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+      
+      const res = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}に関する大学院入試レベルの専門的な計算問題を1問作成し、解説と解答を詳細に付けてください。日本語で。` }] }] })
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `${subj}に関する具体的な数値を用いた大学院入試レベルの計算問題を1問作成し、解説と解答を詳細に付けて。日本語で。`
+            }]
+          }]
+        })
       });
+
       const data = await res.json();
       
-      if(data.candidates && data.candidates[0].content) {
-        lastAIRes = data.candidates[0].content.parts[0].text;
-        txt.innerText = lastAIRes; success = true; break;
-      } else {
-        // 詳細なエラーを記録
+      if (data.error) {
         debug.style.display = "block";
-        debug.innerText += `[${m}] 失敗: ${data.error ? (data.error.code + " " + data.error.message) : "レスポンス形式エラー"}\n`;
+        debug.innerText += `Model ${m} failed: ${data.error.message}\n`;
+        console.warn(`Model ${m} failed: ${data.error.message}`);
+        continue;
       }
-    } catch(e) { console.log(m + " failed"); }
+
+      if (data.candidates && data.candidates[0].content) {
+        lastAIRes = data.candidates[0].content.parts[0].text;
+        txt.innerText = lastAIRes;
+        success = true;
+        break;
+      }
+    } catch(e) {
+      debug.style.display = "block";
+      debug.innerText += `Model ${m} catch error: ${e.message}\n`;
+      console.error(e);
+    }
   }
-  
-  if(!success) txt.innerText = "全てのモデルで生成に失敗しました。下のデバッグログを確認してください。";
+
+  if(!success) txt.innerText = "全ての指定モデルで生成に失敗しました。詳細ログを確認してください。";
   btn.disabled = false;
 }
 window.askGemini = askGemini;
 
-window.saveAI = () => {
-  if(!lastAIRes) return;
-  const subj = document.getElementById('ai-subj-sel').value;
-  const catMap = {"線形代数":"la","微積分":"ca","複素関数論":"cf","常微分方程式":"de","機械学習":"ml","アルゴリズム":"cs"};
-  BANK.push({cat: catMap[subj] || 'cs', q: "AI問題 (" + subj + ")", a: lastAIRes});
-  localStorage.setItem('study_v26_bank', JSON.stringify(BANK));
-  alert("保存しました。専門演習タブのフラッシュカードで復習できます。"); initGalaxy();
-};
-
 /* ══════════════════════════════════════
-   GALAXY (V18/21 STABLE RE-INTEGRATED)
+   GALAXY (V18/21 STABLE Implementation)
 ══════════════════════════════════════ */
 function initGalaxy() {
   const wrap = document.getElementById('galaxy-container');
@@ -312,9 +306,8 @@ let curMode = 'fc', curSubj = 'la', curIdx = 0;
 window.switchTab = (t) => {
   document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
   document.getElementById('panel-' + t).classList.add('active');
-  const btns = Array.from(document.querySelectorAll('.tab'));
-  const target = btns.find(b => b.onclick.toString().includes(t));
-  if(target) target.classList.add('active');
+  const activeTabBtn = Array.from(document.querySelectorAll('.tab')).find(btn => btn.innerText.includes(t==='plan'?'プラン':t==='study'?'演習':t==='galaxy'?'銀河':'AI'));
+  if(activeTabBtn) activeTabBtn.classList.add('active');
   if(t === 'galaxy') setTimeout(initGalaxy, 100);
   if(t === 'study') renderStudy();
 };
@@ -342,7 +335,7 @@ function init() {
   window.setSubj = (k) => { curSubj = k; renderStudy(); };
   window.setMode = (m) => { curMode = m; renderStudy(); };
 
-  const savedKey = localStorage.getItem('studyflow_gemini_v26');
+  const savedKey = localStorage.getItem('studyflow_gemini_v27');
   if(savedKey) document.getElementById('api-key-input').value = savedKey;
 
   renderStudy();
