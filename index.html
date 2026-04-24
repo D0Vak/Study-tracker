@@ -353,7 +353,25 @@ async function askGemini() {
       const res = await fetch(url, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: `${subj}に関する大学院入試レベルの専門的な計算・証明問題を1問作成し、詳しいステップ付きの解答とポイントを日本語で付けてください。` }] }] })
+        body: JSON.stringify({ contents: [{ 
+          role: "user", 
+          parts: [{ text: `
+            あなたは大学院入試の試験官です。
+            ${subj}について、以下の条件で問題を作成してください：
+            
+            １．レベル：大学２～３年制の定期試験～院試基礎レベル
+            ２．形式：具体的な数値（行列なら3×3など）を用いた「計算問題」
+            ３．内容：
+                ー　線形代数なら「ベクトルと空間座標の基本」「行列・行列式の基本」「連立１次方程式」「固有値・固有ベクトル」「対角化」「逆行列」「線形空間・線形写像」「ジョルダン標準形」
+                ー　微積分なら「微分法とその応用」「積分法とその応用」「偏微分」「重積分」「２変数関数の微分」「多変数関数の重積分」
+            ４．出力構成：
+                ー【問題】（数値を具体的に示すこと）
+                ー【解答】（途中の計算プロセスを数式で詳しく書くこと）
+                ー【ポイント】（この計算を解くための公式やコツ）
+            LaTeX形式を使用して、見やすく出力してください。
+          ` }]
+          }] 
+        })
       });
       const data = await res.json();
       if(data.candidates && data.candidates[0].content) {
