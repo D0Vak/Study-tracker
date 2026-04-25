@@ -1028,11 +1028,15 @@ function initGalaxy() {
     label.attr('x',d=>d.x).attr('y',d=>d.y);
   });
 }
+<div id="panel-ai" class="panel">
+  </div>
 
+<script>
 /* ══════════════════════════════════════
    AI PANEL
 ══════════════════════════════════════ */
-// 1. プロンプト生成ロジックを分離（見やすさ改善）
+
+// プロンプト生成ロジックを分離
 const buildStudyPrompt = (subj, type) => `
 # 指示: ${subj}の${type}に関する基礎練習問題
 # 制約: 
@@ -1040,13 +1044,86 @@ const buildStudyPrompt = (subj, type) => `
 - 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】の構成。
 - Markdown/LaTeX形式。挨拶不要。
 `.trim();
-  
+
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
   if(!key){toast('キーを入力してください','err');return;}
   localStorage.setItem('studyflow_gemini_v29', key);
   toast('APIキーを保存しました！');
 };
+
+let lastAIRes = '';
+window.askGemini = async () => {
+  const key = localStorage.getItem('studyflow_gemini_v29');
+  if(!key){toast('Gemini APIキーを設定してください','err');return;}
+  
+  const subj = document.getElementById('ai-subj-sel').value;
+  const type = document.getElementById('ai-type-sel').value;
+  const out = document.getElementById('ai-output');
+  const txt = document.getElementById('ai-txt');
+  const btn = document.getElementById('ai-btn');
+  const debug = document.getElementById('ai-debug-log'); // 修正：重複を削除
+
+  out.style.display='block'; 
+  txt.textContent='生成中...'; 
+  debug.style.display='none'; 
+  debug.textContent = ''; 
+  btn.disabled=true;
+
+  const prompt = buildStudyPrompt(subj, type);
+  const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001', 'gemini-1.5-flash-latest'];
+  let success = false;
+
+  for(const m of models){
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
+      const res = await fetch(url,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+      });
+      const data = await res.json();
+      
+      if(data.error){
+        debug.style.display='block';
+        debug.textContent += `[${m}] ${data.error.code}: ${data.error.message}\n`;
+        continue;
+      }
+      
+      if(data.candidates?.[0]?.content){
+        lastAIRes = data.candidates[0].content.parts[0].text;
+        txt.style.lineHeight = "1.8";
+        // marked.js が head で読み込まれていれば動きます
+        txt.innerHTML = marked.parse(lastAIRes);
+        success=true; break;
+      }
+    } catch(e) {
+      console.error(e);
+      debug.style.display='block';
+      debug.textContent += `[${m}] Network Error\n`;
+    }
+  }
+  if(!success) txt.textContent='生成失敗。デバッグログを確認してください。';
+  btn.disabled=false;
+};
+
+window.saveAI = () => {
+  if(!lastAIRes){toast('まず問題を生成してください','err');return;}
+  const subj = document.getElementById('ai-subj-sel').value;
+  const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','TOEIC英語':'en'};
+  const cat = catMap[subj]||'la';
+  // BANKが他で定義されている前提です
+  if(typeof BANK !== 'undefined'){
+      BANK.push({cat,q:'[AI生成] '+lastAIRes.slice(0,60)+'...',a:lastAIRes,area:'AI生成'});
+      localStorage.setItem('study_v29_bank',JSON.stringify(BANK));
+      toast('演習バンクに追加しました！');
+  }
+};
+
+window.copyAI = () => {
+  navigator.clipboard?.writeText(lastAIRes).then(()=>toast('コピーしました！'));
+};
+</script>
 
 let lastAIRes = '';
 window.askGemini = async () => {
