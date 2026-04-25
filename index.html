@@ -1047,7 +1047,13 @@ window.askGemini = async () => {
   const out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt');
   const btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
   out.style.display='block'; txt.textContent='生成中...'; debug.style.display='none'; btn.disabled=true;
-
+  
+  out.style.display='block'; 
+  txt.textContent='生成中...'; 
+  debug.style.display='none'; 
+  debug.textContent = ''; // ログをリセット
+  btn.disabled=true;
+  
   const prompt = `
   #指示
   ${subj}の${type}について、基礎から体系的に理解するための練習問題を1問作成してください。
@@ -1065,6 +1071,7 @@ window.askGemini = async () => {
   #出力形式
   Markdown形式で、数式はLaTeXを使用して分かりやすく表示してください。
   `;
+  
   const models = ['models/gemini-1.5-flash','models/gemini-2.0-flash','models/gemini-1.5-flash-8b'];
   let success = false;
 
@@ -1084,10 +1091,14 @@ window.askGemini = async () => {
       }
       if(data.candidates?.[0]?.content){
         lastAIRes = data.candidates[0].content.parts[0].text;
-        txt.textContent = lastAIRes;
+        txt.innerText = lastAIRes;
         success=true; break;
       }
-    }catch(e){console.error(e);}
+    }catch(e){
+      console.error(e);
+      debug.style.display='block';
+      debug.textContent += `[${m}] Network Error\n`;
+    }
   }
   if(!success) txt.textContent='生成失敗。デバッグログを確認してください。';
   btn.disabled=false;
