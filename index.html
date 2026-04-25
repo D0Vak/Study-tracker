@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyFlow v28 — 院試対策・AIリサーチ統合版</title>
+<title>StudyFlow v29 — 院試対策・AIリサーチ統合版</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
@@ -20,66 +20,167 @@
   --teal:#0C6A52;--tbg:#DFF2EC;--tborder:#8FD4BE;
   --r:12px;--r2:8px;--r3:20px;
   --sh:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --sh2:0 4px 24px rgba(0,0,0,.10);
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 #app{max-width:1100px;margin:0 auto;padding:24px 16px}
 
-/* HEADER & TABS */
 .header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:10px}
 .logo{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;letter-spacing:-.5px}
 .logo span{color:var(--accent)}
+.header-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.db-count{font-size:12px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);padding:6px 12px;border-radius:20px}
+.streak{font-size:12px;color:var(--amber);background:var(--abg2);border:1px solid var(--aborder2);padding:6px 12px;border-radius:20px;font-weight:700}
+
 .tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:24px;box-shadow:var(--sh);overflow-x:auto}
 .tab{flex:1;min-width:fit-content;padding:8px 14px;border:none;background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;border-radius:var(--r2);cursor:pointer;transition:all .18s;text-align:center;white-space:nowrap}
 .tab.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,95,212,.3)}
 .panel{display:none}.panel.active{display:block}
 .stitle{font-family:'Syne',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;color:var(--text3);text-transform:uppercase;margin-bottom:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
 
-/* COUNTDOWN CARDS */
+/* COUNTDOWN */
 .cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:580px){.cdown-grid{grid-template-columns:1fr}}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
 .cd-days{font-family:'Inter',sans-serif;font-size:38px;font-weight:800;color:var(--accent)}
+.cd-label{font-size:12px;color:var(--text2);margin-top:4px}
 
-/* GALAXY BOX */
-.galaxy-wrap{height:600px; width:100%; background:#05040a; border-radius:var(--r); position:relative; border:1px solid var(--border); margin-bottom:24px; overflow:hidden; box-shadow:var(--sh2)}
-#galaxy-svg{width:100%; height:100%; background: radial-gradient(circle, #131129 0%, #000 80%); display:block; cursor: grab;}
+/* SUBJECTS GRID */
+.subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
+.subj-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.subj-name{font-weight:700;font-size:14px;margin-bottom:8px}
+.prog-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.prog-fill{height:100%;border-radius:3px;transition:width .4s}
+.prog-text{font-size:11px;color:var(--text3)}
+
+/* GALAXY */
+.galaxy-wrap{height:600px;width:100%;background:#05040a;border-radius:var(--r);position:relative;border:1px solid var(--border);margin-bottom:24px;overflow:hidden;box-shadow:var(--sh2)}
+#galaxy-svg{width:100%;height:100%;background:radial-gradient(circle,#131129 0%,#000 80%);display:block;cursor:grab}
 .galaxy-info{position:absolute;bottom:20px;left:20px;background:rgba(13,11,26,0.96);padding:18px;border-radius:10px;border:1px solid var(--accent);max-width:350px;display:none;backdrop-filter:blur(15px);z-index:100;box-shadow:var(--sh);color:#fff;font-size:13px}
 
-/* STUDY ENGINE */
-.chips{display:flex;gap:8px;margin-bottom:15px;overflow-x:auto; padding-bottom:5px}
-.chip{padding:10px 18px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:11px;white-space:nowrap; transition:0.2s}
+/* CHIPS */
+.chips{display:flex;gap:8px;margin-bottom:15px;overflow-x:auto;padding-bottom:5px;flex-wrap:wrap}
+.chip{padding:10px 18px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:11px;white-space:nowrap;transition:0.2s}
 .chip.active{border-color:var(--accent);color:var(--accent);background:rgba(124,95,212,0.1)}
-.fc-card{min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:22px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px;line-height:1.6;transition:all 0.3s;box-shadow:var(--sh)}
 
-/* AI PANEL (Security Optimized) */
-.api-config-area{background:var(--abg2); border:1px solid var(--aborder2); padding:20px; border-radius:var(--r); margin-bottom:20px}
-input, select, textarea{background:var(--bg3); border:1px solid var(--border); padding:12px; border-radius:var(--r2); width:100%; margin-bottom:12px; outline:none; font-family:inherit; color:var(--text)}
-.btn-p{background:var(--accent); color:#fff; border:none; padding:14px; border-radius:var(--r2); cursor:pointer; font-weight:700; width:100%; transition:0.2s}
-.btn-p:hover{opacity:0.9; transform:translateY(-1px)}
-#ai-debug-log{color:var(--red); font-size:11px; font-family:monospace; margin-top:15px; background:rgba(255,0,0,0.05); padding:12px; border-radius:8px; white-space:pre-wrap; display:none; border:1px solid var(--rborder)}
+/* FLASHCARD */
+.fc-card{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:20px;font-weight:700;cursor:pointer;background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:40px;line-height:1.6;transition:all 0.3s;box-shadow:var(--sh);user-select:none}
+.fc-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,95,212,.12)}
+.fc-card.flipped{background:var(--alight);border-color:var(--accent)}
+.fc-hint{font-size:12px;color:var(--text3);margin-top:8px}
+.fc-nav{display:flex;gap:10px;margin-top:16px;align-items:center;justify-content:space-between}
+.fc-counter{font-size:12px;color:var(--text3)}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+
+/* FILL-IN-BLANK */
+.fib-wrap{background:var(--bg2);border:2px solid var(--border);border-radius:var(--r);padding:30px;margin-bottom:16px;box-shadow:var(--sh)}
+.fib-q{font-size:18px;font-weight:600;line-height:2;margin-bottom:16px}
+.fib-input{border:2px solid var(--accent);border-radius:8px;padding:8px 14px;font-size:16px;font-weight:700;background:var(--alight);color:var(--accent);text-align:center;width:160px;outline:none;font-family:'Inter',sans-serif}
+.fib-input.correct{border-color:var(--green);background:var(--gbg);color:var(--green)}
+.fib-input.wrong{border-color:var(--red);background:var(--rbg);color:var(--red)}
+.fib-result{font-size:13px;margin-top:12px;padding:10px 14px;border-radius:8px;display:none}
+.fib-result.ok{background:var(--gbg);color:var(--green);border:1px solid var(--gborder)}
+.fib-result.ng{background:var(--rbg);color:var(--red);border:1px solid var(--rborder)}
+
+/* QUIZ */
+.quiz-q{font-size:18px;font-weight:700;margin-bottom:20px;line-height:1.6}
+.quiz-opts{display:grid;gap:10px}
+.quiz-opt{padding:14px 18px;background:var(--bg3);border:2px solid var(--border);border-radius:var(--r2);cursor:pointer;font-size:14px;text-align:left;transition:all .18s;font-family:'DM Sans',sans-serif;color:var(--text)}
+.quiz-opt:hover:not(:disabled){border-color:var(--accent);background:var(--alight);color:var(--accent)}
+.quiz-opt.correct{border-color:var(--green);background:var(--gbg);color:var(--green);font-weight:700}
+.quiz-opt.wrong{border-color:var(--red);background:var(--rbg);color:var(--red)}
+.quiz-explain{font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:12px;margin-top:14px;display:none;line-height:1.7}
+
+/* CHAPTER TEST */
+.test-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.test-progress{font-family:'Inter',sans-serif;font-size:13px;color:var(--text2)}
+.test-score-bar{height:6px;background:var(--bg3);border-radius:3px;margin-bottom:20px;overflow:hidden}
+.test-score-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+.test-result{text-align:center;padding:40px;background:var(--bg2);border-radius:var(--r);border:2px solid var(--accent)}
+.test-result-score{font-family:'Inter',sans-serif;font-size:56px;font-weight:800;color:var(--accent)}
+.test-result-label{font-size:14px;color:var(--text2);margin-top:6px}
+.test-result-msg{font-size:18px;font-weight:700;margin-top:20px}
+.badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:700}
+.badge-gold{background:#FFF3C4;color:#92600A;border:1px solid #F5C060}
+.badge-silver{background:#F0F0F0;color:#555;border:1px solid #CCC}
+.badge-pass{background:var(--gbg);color:var(--green);border:1px solid var(--gborder)}
+.badge-fail{background:var(--rbg);color:var(--red);border:1px solid var(--rborder)}
+
+/* ENGLISH CARDS */
+.en-card{background:linear-gradient(135deg,#1a1040 0%,#2d1b69 100%);border-radius:var(--r);padding:36px;min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#fff;box-shadow:0 8px 32px rgba(124,95,212,.25);cursor:pointer;transition:transform .2s}
+.en-card:hover{transform:translateY(-3px)}
+.en-word{font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.en-phonetic{font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:16px}
+.en-meaning{font-size:16px;color:rgba(255,255,255,0.9);display:none}
+.en-example{font-size:13px;color:rgba(255,255,255,0.6);font-style:italic;margin-top:8px;display:none}
+.en-tag{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);margin-bottom:12px}
 
 /* ANALYTICS */
-.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+.ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
 .ana-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;text-align:center;box-shadow:var(--sh)}
 .ana-val{font-family:'Inter',sans-serif;font-size:32px;font-weight:800;margin-bottom:4px;color:var(--accent)}
+.ana-label{font-size:11px;color:var(--text3)}
+.acc-bar{display:flex;gap:4px;margin-top:6px;align-items:center}
+.acc-dot{width:10px;height:10px;border-radius:50%}
+.heatmap-row{display:flex;gap:3px;margin-bottom:3px;align-items:center}
+.heatmap-cell{width:14px;height:14px;border-radius:3px;background:var(--bg3);transition:all .2s}
+.heatmap-cell:hover{transform:scale(1.4);z-index:10;position:relative}
+
+/* AI PANEL */
+.api-config-area{background:var(--abg2);border:1px solid var(--aborder2);padding:20px;border-radius:var(--r);margin-bottom:20px}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border);padding:12px;border-radius:var(--r2);width:100%;margin-bottom:12px;outline:none;font-family:inherit;color:var(--text);font-size:14px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.btn-p{background:var(--accent);color:#fff;border:none;padding:14px;border-radius:var(--r2);cursor:pointer;font-weight:700;width:100%;transition:0.2s;font-family:'DM Sans',sans-serif;font-size:14px}
+.btn-p:hover{opacity:0.88;transform:translateY(-1px)}
+.btn-p:disabled{opacity:0.5;transform:none;cursor:not-allowed}
+.btn-sm{padding:8px 16px;width:auto;font-size:12px}
+.btn-g{background:var(--green)}
+.btn-b{background:var(--blue)}
+#ai-debug-log{color:var(--red);font-size:11px;font-family:monospace;margin-top:15px;background:rgba(255,0,0,0.05);padding:12px;border-radius:8px;white-space:pre-wrap;display:none;border:1px solid var(--rborder)}
+
+/* LOG */
+.log-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:8px}
+.log-topic{font-weight:600;font-size:14px}
+.log-meta{font-size:11px;color:var(--text3);margin-top:2px}
+.log-dur{font-family:'Inter',sans-serif;font-weight:700;color:var(--accent)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:12px 20px;border-radius:var(--r2);font-size:13px;font-weight:600;z-index:9999;box-shadow:var(--sh2);transform:translateY(80px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--green)}
+.toast.err{background:var(--red)}
+
+/* MODE TABS (inner) */
+.mode-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.mode-tab{padding:8px 16px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;transition:0.2s}
+.mode-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* PROGRESS RING */
+.ring-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+svg.ring{transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--bg3);stroke-width:8}
+.ring-fill{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .6s}
 </style>
 </head>
 <body>
 
 <div id="app">
   <div class="header">
-    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v28</span></div>
+    <div class="logo">Study<span>Flow</span> <span style="font-size:11px;font-weight:400;color:var(--text3)">v29</span></div>
     <div class="header-right">
       <div id="db-count" class="db-count">📊 読み込み中...</div>
       <div id="streak-count" class="streak">🔥 0日連続</div>
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs" id="main-tabs">
     <button class="tab active" onclick="switchTab('plan')">📊 プラン</button>
     <button class="tab" onclick="switchTab('study')">📚 専門演習</button>
-    <button class="tab" onclick="switchTab('galaxy')">🌌 体系銀河系</button>
-    <button class="tab" onclick="switchTab('ai')">🤖 最新AI生成</button>
+    <button class="tab" onclick="switchTab('english')">🇬🇧 英語</button>
+    <button class="tab" onclick="switchTab('chapter')">📋 章末テスト</button>
+    <button class="tab" onclick="switchTab('galaxy')">🌌 銀河系</button>
+    <button class="tab" onclick="switchTab('ai')">🤖 AI生成</button>
     <button class="tab" onclick="switchTab('analytics')">📈 分析</button>
     <button class="tab" onclick="switchTab('log')">📝 ログ</button>
   </div>
@@ -88,51 +189,100 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
   <div id="panel-plan" class="panel active">
     <div class="stitle">試験カウントダウン</div>
     <div class="cdown-grid">
-      <div class="cdown-card" style="border-top:3px solid var(--teal)"><div class="cd-days" id="d-toeic">--</div><div>TOEIC (5/17)</div></div>
-      <div class="cdown-card" style="border-top:3px solid var(--accent)"><div class="cd-days" id="d-naist">--</div><div>NAIST (7/6)</div></div>
-      <div class="cdown-card" style="border-top:3px solid var(--blue)"><div class="cd-days" id="d-kobe">--</div><div>神戸大 (8/24)</div></div>
+      <div class="cdown-card" style="border-top:3px solid var(--teal)">
+        <div class="cd-days" id="d-toeic">--</div>
+        <div class="cd-label">TOEIC <span style="color:var(--text3)">5/17</span></div>
+      </div>
+      <div class="cdown-card" style="border-top:3px solid var(--accent)">
+        <div class="cd-days" id="d-naist">--</div>
+        <div class="cd-label">NAIST <span style="color:var(--text3)">7/6</span></div>
+      </div>
+      <div class="cdown-card" style="border-top:3px solid var(--blue)">
+        <div class="cd-days" id="d-kobe">--</div>
+        <div class="cd-label">神戸大 <span style="color:var(--text3)">8/24</span></div>
+      </div>
     </div>
     <div class="stitle">科目別進捗</div>
     <div id="subj-grid" class="subj-grid"></div>
+
+    <div class="stitle" style="margin-top:8px">今週の学習リング</div>
+    <div class="card" style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;padding:28px">
+      <div id="rings-wrap" style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center"></div>
+    </div>
   </div>
 
   <!-- STUDY PANEL -->
   <div id="panel-study" class="panel">
-    <div class="tabs" style="background:transparent; border:none; box-shadow:none; margin-bottom:10px">
-      <button class="tab active" onclick="setMode('fc',this)">🃏 フラッシュカード</button>
-      <button class="tab" onclick="setMode('quiz',this)">📝 多肢クイズ</button>
+    <div class="stitle">科目選択</div>
+    <div id="subj-chips" class="chips"></div>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setStudyMode('fc',this)">🃏 フラッシュカード</button>
+      <button class="mode-tab" onclick="setStudyMode('fib',this)">✏️ 穴埋め</button>
+      <button class="mode-tab" onclick="setStudyMode('quiz',this)">📝 4択クイズ</button>
     </div>
-    <div id="subj-chips" class="chips" style="border-bottom: 1px solid var(--border); padding-bottom:10px"></div>
+
     <div id="study-content"></div>
+  </div>
+
+  <!-- ENGLISH PANEL -->
+  <div id="panel-english" class="panel">
+    <div class="stitle">英語フラッシュカード (Firebase同期)</div>
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setEnMode('card',this)">🃏 カード</button>
+      <button class="mode-tab" onclick="setEnMode('quiz',this)">📝 4択</button>
+      <button class="mode-tab" onclick="setEnMode('add',this)">➕ 追加</button>
+    </div>
+    <div id="en-content"></div>
+  </div>
+
+  <!-- CHAPTER TEST PANEL -->
+  <div id="panel-chapter" class="panel">
+    <div class="stitle">章末テスト</div>
+    <div id="chapter-content"></div>
   </div>
 
   <!-- GALAXY PANEL -->
   <div id="panel-galaxy" class="panel">
     <div class="galaxy-wrap" id="galaxy-container">
       <svg id="galaxy-svg"></svg>
-      <div class="galaxy-info" id="galaxy-info"></div>
+      <div class="galaxy-info" id="galaxy-info">
+        <button onclick="document.getElementById('galaxy-info').style.display='none'" style="float:right;background:none;border:none;color:#fff;cursor:pointer;font-size:16px">✕</button>
+        <div id="galaxy-info-content"></div>
+      </div>
     </div>
   </div>
 
-  <!-- AI PANEL (v1beta Optimized) -->
+  <!-- AI PANEL -->
   <div id="panel-ai" class="panel">
     <div class="api-config-area">
-      <div class="stitle">🔑 Gemini API セキュリティ設定</div>
+      <div class="stitle">🔑 Gemini API キー</div>
       <input type="password" id="api-key-input" placeholder="AIzaSy...">
-      <button class="btn-p" onclick="saveApiKey()" style="margin-top:10px">キーを安全に保存</button>
+      <button class="btn-p btn-sm" onclick="saveApiKey()" style="width:auto">保存</button>
     </div>
     <div class="card">
-      <div class="stitle">最新AI問題生成 (v1beta / models 固定パス)</div>
+      <div class="stitle">AI問題生成 (Gemini)</div>
       <select id="ai-subj-sel">
-        <option value="複素関数論">複素関数論</option><option value="常微分方程式">常微分方程式</option>
-        <option value="線形代数">線形代数</option><option value="機械学習">機械学習</option>
-        <option value="アルゴリズム">アルゴリズム</option><option value="TOEIC 英語">英語</option>
+        <option value="複素関数論">複素関数論</option>
+        <option value="常微分方程式">常微分方程式</option>
+        <option value="線形代数">線形代数</option>
+        <option value="機械学習">機械学習</option>
+        <option value="アルゴリズム">アルゴリズム</option>
+        <option value="TOEIC英語">英語 (TOEIC)</option>
       </select>
-      <button class="btn-p" id="ai-btn" onclick="askGemini()">問題を生成</button>
-      
-      <div id="ai-output" style="display:none; margin-top:20px" class="card">
-        <div id="ai-txt" style="white-space:pre-wrap; font-size:14px; line-height:1.8"></div>
-        <button class="btn-p" style="background:var(--green); margin-top:15px" onclick="saveAI()">演習に追加保存</button>
+      <select id="ai-type-sel">
+        <option value="計算問題">計算問題</option>
+        <option value="穴埋め問題">穴埋め問題</option>
+        <option value="4択問題">4択問題</option>
+        <option value="概念説明">概念説明問題</option>
+      </select>
+      <button class="btn-p" id="ai-btn" onclick="askGemini()">🤖 問題を生成</button>
+      <div id="ai-output" style="display:none;margin-top:20px" class="card">
+        <div id="ai-txt" style="white-space:pre-wrap;font-size:14px;line-height:1.8"></div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn-p btn-sm btn-g" onclick="saveAI()">演習に追加</button>
+          <button class="btn-p btn-sm btn-b" onclick="copyAI()">コピー</button>
+        </div>
       </div>
       <div id="ai-debug-log"></div>
     </div>
@@ -140,207 +290,932 @@ input, select, textarea{background:var(--bg3); border:1px solid var(--border); p
 
   <!-- ANALYTICS PANEL -->
   <div id="panel-analytics" class="panel">
+    <div class="stitle">サマリー</div>
     <div class="ana-grid" id="ana-summary"></div>
-    <div class="card"><div id="ana-tags"></div></div>
+    <div class="stitle">正答率ランキング</div>
+    <div class="card" id="acc-ranking"></div>
+    <div class="stitle">学習ヒートマップ (過去4週)</div>
+    <div class="card" id="heatmap-wrap"></div>
   </div>
 
   <!-- LOG PANEL -->
   <div id="panel-log" class="panel">
     <div class="card">
-      <input type="text" id="log-chap" placeholder="習得トピック"><input type="number" id="log-dur" placeholder="分"><button class="btn-p" onclick="addLog()">保存</button>
+      <div class="stitle">学習ログ追加</div>
+      <input type="text" id="log-chap" placeholder="習得トピック (例: 固有値分解)">
+      <select id="log-subj-sel">
+        <option value="la">線形代数</option><option value="ca">微積分</option>
+        <option value="cf">複素関数</option><option value="de">常微分</option>
+        <option value="ml">機械学習</option><option value="cs">計算機科学</option>
+        <option value="en">英語</option>
+      </select>
+      <input type="number" id="log-dur" placeholder="分" min="1" max="600">
+      <button class="btn-p" onclick="addLog()">💾 保存</button>
     </div>
     <div id="log-list"></div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getDatabase, ref, set, push, get, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getDatabase, ref, set, push, get, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-// Firebase Config (全ロジック復元)
-const FB = {apiKey:"AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",authDomain:"study-tracker-5a35c.firebaseapp.com",databaseURL:"https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"study-tracker-5a35c",appId:"1:1091326221496:web:5bcd5ab27bdc6cca03e84d"};
+/* ══════════════════════════════════════
+   FIREBASE INIT
+══════════════════════════════════════ */
+const FB = {
+  apiKey:"AIzaSyAFpjxHFKgOs1ke7g3klzhQxAiOvMwfFRQ",
+  authDomain:"study-tracker-5a35c.firebaseapp.com",
+  databaseURL:"https://study-tracker-5a35c-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"study-tracker-5a35c",
+  appId:"1:1091326221496:web:5bcd5ab27bdc6cca03e84d"
+};
 const fbApp = initializeApp(FB);
 const db = getDatabase(fbApp);
 
 /* ══════════════════════════════════════
-   DATABASE: FULL KNOWLEDGE (1800行規模復元)
+   SUBJECTS & CORE DATA
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数',color:'#7C5FD4',cls:'sc-la',areas:['行列演算','固有値','次元定理'],chapters:['行列','固有値','空間']},
-  ca:{name:'微積分',color:'#167A50',cls:'sc-ca',areas:['極限','微分','積分','多変数'],chapters:['微分','積分','重積分']},
-  cf:{name:'複素関数',color:'#00A3CC',cls:'sc-cf',areas:['正則性','留数定理','写像'],chapters:['複素微分','積分','留数']},
-  de:{name:'常微分',color:'#E67E22',cls:'sc-de',areas:['変数分離','ラプラス変換'],chapters:['1階線形','2階定数']},
-  ml:{name:'機械学習',color:'#145898',cls:'sc-ml',areas:['最適化','Transformer','正則化'],chapters:['基礎','ニューラルネット']},
-  cs:{name:'計算機科学',color:'#7A5200',cls:'sc-cs',areas:['計算量','ソート','データ構造'],chapters:['計算量','ソート','構造']},
-  en:{name:'英語',color:'#B21B7E',cls:'sc-en',areas:['語彙','論文表現'],chapters:['TOEIC','Reading']}
+  la:{name:'線形代数',color:'#7C5FD4',areas:['行列演算','固有値','次元定理','線形写像','内積空間']},
+  ca:{name:'微積分',color:'#167A50',areas:['極限','微分','積分','多変数','テイラー展開']},
+  cf:{name:'複素関数',color:'#00A3CC',areas:['正則性','コーシー積分','留数定理','等角写像']},
+  de:{name:'常微分',color:'#E67E22',areas:['変数分離','1階線形','2階線形','ラプラス変換']},
+  ml:{name:'機械学習',color:'#145898',areas:['最適化','ニューラルネット','Transformer','正則化','情報理論']},
+  cs:{name:'計算機科学',color:'#7A5200',areas:['計算量','ソート','データ構造','グラフ','動的計画法']},
+  en:{name:'英語',color:'#B21B7E',areas:['語彙','文法','論文表現','TOEIC']}
 };
 
-let BANK = JSON.parse(localStorage.getItem('study_v28_bank')) || [
-  {cat:'la', q:'固有値 λ の定義式', a:'Av = λv', area:'固有値'},
-  {cat:'cf', q:'オイラーの公式', a:'e^(iθ) = cosθ + i sinθ', area:'正則性'},
-  {cat:'de', q:'L[sin at]', a:'a / (s² + a²)', area:'ラプラス変換'},
-  {cat:'cs', q:'クイックソート平均計算量', a:'O(n log n)', area:'ソート'}
+/* 問題バンク (フラッシュカード & 穴埋め兼用) */
+let BANK = JSON.parse(localStorage.getItem('study_v29_bank')) || [
+  // 線形代数
+  {cat:'la',q:'行列 A の固有値 λ の定義式は？',a:'Av = λv（v≠0）',area:'固有値',fib:'Av = [__]v（v≠0）',fib_ans:'λ'},
+  {cat:'la',q:'行列式 det(A)=0 の時、行列 A は何と呼ばれるか？',a:'特異行列（非正則行列）',area:'行列演算',fib:'det(A)=[__] のとき特異行列',fib_ans:'0'},
+  {cat:'la',q:'n×n 行列 A が正則であるための必要十分条件（行列式）',a:'det(A) ≠ 0',area:'行列演算',fib:'det(A) [__] 0',fib_ans:'≠'},
+  {cat:'la',q:'固有多項式 det(A - λI) = 0 を何と呼ぶか？',a:'固有方程式（特性方程式）',area:'固有値',fib:'det(A - [__]I) = 0',fib_ans:'λ'},
+  {cat:'la',q:'ベクトル空間 V の基底の個数を何と呼ぶか？',a:'次元 (dim V)',area:'次元定理',fib:'基底の個数 = [__](V)',fib_ans:'dim'},
+  {cat:'la',q:'線形写像 f: V→W において ker(f) の次元は？（次元定理）',a:'dim(ker f) = dim V - dim(Im f)',area:'次元定理',fib:'dim(ker f) = dim V - dim([__] f)',fib_ans:'Im'},
+  // 微積分
+  {cat:'ca',q:'lim_{x→0} sin(x)/x = ?',a:'1',area:'極限',fib:'lim_{x→0} sin(x)/x = [__]',fib_ans:'1'},
+  {cat:'ca',q:'e^x のマクローリン展開（第3項まで）',a:'1 + x + x²/2! + x³/3! + ...',area:'テイラー展開',fib:'e^x = 1 + x + x²/[__]! + ...',fib_ans:'2'},
+  {cat:'ca',q:'∫e^x dx = ?',a:'e^x + C',area:'積分',fib:'∫e^x dx = [__] + C',fib_ans:'e^x'},
+  {cat:'ca',q:'合成関数の微分 d/dx[f(g(x))] = ?',a:"f'(g(x)) · g'(x)",area:'微分',fib:"d/dx[f(g(x))] = f'(g(x)) · [__]",fib_ans:"g'(x)"},
+  // 複素関数
+  {cat:'cf',q:'オイラーの公式',a:'e^(iθ) = cos θ + i sin θ',area:'正則性',fib:'e^(iθ) = [__] + i sin θ',fib_ans:'cos θ'},
+  {cat:'cf',q:'コーシー・リーマン方程式（実部 u, 虚部 v）',a:'∂u/∂x = ∂v/∂y, ∂u/∂y = -∂v/∂x',area:'正則性',fib:'∂u/∂x = ∂v/∂[__]',fib_ans:'y'},
+  {cat:'cf',q:'留数定理：∮f(z)dz = ?',a:'2πi × Σ(留数)',area:'留数定理',fib:'∮f(z)dz = [__]πi × Σ(留数)',fib_ans:'2'},
+  // 常微分
+  {cat:'de',q:'ラプラス変換 L[1] = ?',a:'1/s',area:'ラプラス変換',fib:'L[1] = [__]/s ... → 1/s',fib_ans:'1'},
+  {cat:'de',q:'L[e^(at)] = ?',a:'1/(s-a)',area:'ラプラス変換',fib:'L[e^(at)] = 1/(s-[__])',fib_ans:'a'},
+  {cat:'de',q:'L[sin(at)] = ?',a:'a/(s²+a²)',area:'ラプラス変換',fib:'L[sin(at)] = a/(s²+[__]²)',fib_ans:'a'},
+  {cat:'de',q:'変数分離形 dy/dx = g(x)h(y) の解法',a:'h(y)⁻¹ dy = g(x) dx として両辺積分',area:'変数分離',fib:'h(y)⁻¹ [__] = g(x) dx として積分',fib_ans:'dy'},
+  // 機械学習
+  {cat:'ml',q:'SGDの更新式',a:'θ ← θ - η∇L(θ)',area:'最適化',fib:'θ ← θ - [__]∇L(θ)',fib_ans:'η'},
+  {cat:'ml',q:'Transformer の注意機構 Attention(Q,K,V) = ?',a:'softmax(QKᵀ/√d_k)V',area:'Transformer',fib:'Attention = softmax(QKᵀ/√[__])V',fib_ans:'d_k'},
+  {cat:'ml',q:'L2正則化を加えたコスト関数',a:'L(θ) + λ||θ||²',area:'正則化',fib:'L(θ) + λ||θ||[__]',fib_ans:'²'},
+  {cat:'ml',q:'クロスエントロピー損失（2クラス）',a:'-[y log p + (1-y) log(1-p)]',area:'情報理論',fib:'-[y log p + (1-y) log([__]-p)]',fib_ans:'1'},
+  // 計算機科学
+  {cat:'cs',q:'クイックソートの平均計算量',a:'O(n log n)',area:'ソート',fib:'クイックソート平均: O(n [__] n)',fib_ans:'log'},
+  {cat:'cs',q:'バブルソートの最悪計算量',a:'O(n²)',area:'ソート',fib:'バブルソート最悪: O(n[__])',fib_ans:'²'},
+  {cat:'cs',q:'ダイクストラ法の計算量（優先度付きキュー使用）',a:'O((V+E) log V)',area:'グラフ',fib:'ダイクストラ: O((V+E) [__] V)',fib_ans:'log'},
+  {cat:'cs',q:'DP（動的計画法）の基本原理',a:'最適部分構造：部分問題の最適解から全体の最適解を構成',area:'動的計画法',fib:'最適[__]構造を利用して部分問題を解く',fib_ans:'部分'}
 ];
 
-const QUIZZES = { la:[{q:'det(A)=0の時Aは？',o:['正則','特異','単位'],a:1}] };
-
-/* ══════════════════════════════════════
-   AI ENGINE (v1beta + MODELS PATH FIXED)
-══════════════════════════════════════ */
-window.saveApiKey = () => {
-  const key = document.getElementById('api-key-input').value;
-  if(!key) return alert('キーを入力してください');
-  localStorage.setItem('studyflow_gemini_v28', key);
-  alert('APIキーを保存しました。'); location.reload();
+/* 4択問題バンク */
+const QUIZZES = {
+  la:[
+    {q:'2×2行列 A = [[a,b],[c,d]] の行列式は？',o:['ad-bc','ab-cd','ad+bc','ab+cd'],a:0,exp:'det(A) = ad - bc が基本公式。行列式は面積の変換比を表す。'},
+    {q:'固有値の積は何に等しい？',o:['det(A)','tr(A)','rank(A)','||A||'],a:0,exp:'固有値の積 = det(A)、固有値の和 = tr(A)（トレース）。'},
+    {q:'直交行列 Q の性質は？',o:['QᵀQ = I','QQ = I','Q + Qᵀ = I','det(Q) = 0'],a:0,exp:'直交行列はQᵀQ = I（転置が逆行列）。det(Q) = ±1。'},
+    {q:'rank-nullity定理: rank(A) + nullity(A) = ?',o:['n（列数）','m（行数）','det(A)','tr(A)'],a:0,exp:'rank + nullity = 定義域の次元（列数 n）。次元定理の基本形。'},
+  ],
+  ca:[
+    {q:'ロルの定理が成立する条件（f が [a,b] で連続、(a,b) で微分可能、かつ）',o:['f(a)=f(b)','f(a)=0','f\'(a)=0','f が単調増加'],a:0,exp:'f(a)=f(b) のとき、c∈(a,b) で f\'(c)=0 が成立（ロルの定理）。'},
+    {q:'∫₀^∞ e^(-x) dx = ?',o:['1','0','∞','e'],a:0,exp:'∫₀^∞ e^(-x) dx = [-e^(-x)]₀^∞ = 0 - (-1) = 1。'},
+    {q:'sin(x) のマクローリン展開の第1項（x以外）',o:['- x³/6','x²/2','x³/6','- x²/2'],a:0,exp:'sin(x) = x - x³/3! + x⁵/5! - ...' },
+  ],
+  cf:[
+    {q:'正則関数の虚部から実部を求める定理は？',o:['コーシー・リーマン方程式','留数定理','コーシーの積分公式','リーマン写像定理'],a:0,exp:'C-R方程式: ∂u/∂x=∂v/∂y, ∂u/∂y=-∂v/∂x から相互に求められる。'},
+    {q:'単純閉曲線 C の内部に極が1つある時の留数定理',o:['∮f dz = 2πi·Res','∮f dz = Res','∮f dz = 0','∮f dz = πi·Res'],a:0,exp:'∮_C f(z)dz = 2πi × (内部の留数の和)。'},
+  ],
+  de:[
+    {q:'L[cos(at)] = ?',o:['s/(s²+a²)','a/(s²+a²)','1/(s²+a²)','s/(s+a)'],a:0,exp:'L[cos(at)] = s/(s²+a²)、L[sin(at)] = a/(s²+a²)。'},
+    {q:'初期値問題でラプラス変換を使う利点は？',o:['微分方程式が代数方程式になる','計算量が増える','初期値が不要になる','数値解しか得られない'],a:0,exp:'微分演算が s の乗算になるため、ODE が代数方程式に変換される。'},
+  ],
+  ml:[
+    {q:'ReLU活性化関数の定義',o:['max(0, x)','1/(1+e^(-x))','tanh(x)','x²'],a:0,exp:'ReLU(x) = max(0, x)。勾配消失問題を軽減する。'},
+    {q:'バッチ正規化の効果として正しいものは？',o:['学習を安定・高速化','パラメータ数を削減','モデルを浅くする','テスト精度のみ上げる'],a:0,exp:'バッチ正規化は各層の入力分布を安定させ、高い学習率での学習を可能にする。'},
+    {q:'Transformerの Self-Attention で使われる行列は？',o:['Q, K, V','W, U, b','X, Y, Z','P, Q, R'],a:0,exp:'Query, Key, Value の3行列を使う。Attention(Q,K,V)=softmax(QKᵀ/√d_k)V。'},
+  ],
+  cs:[
+    {q:'マージソートの時間計算量（最悪）',o:['O(n log n)','O(n²)','O(n)','O(log n)'],a:0,exp:'マージソートは常に O(n log n)。クイックソートの最悪は O(n²)。'},
+    {q:'幅優先探索 (BFS) に使うデータ構造',o:['キュー','スタック','ヒープ','ハッシュテーブル'],a:0,exp:'BFS はキュー（FIFO）を使う。深さ優先 (DFS) はスタック（LIFO）。'},
+    {q:'ハッシュテーブルの平均検索計算量',o:['O(1)','O(n)','O(log n)','O(n²)'],a:0,exp:'ハッシュ関数で直接アクセスするため平均 O(1)。最悪は O(n)（衝突が全て起きた場合）。'},
+  ],
+  en:[
+    {q:'"significant" の意味として最も適切なものは？',o:['重要な・著しい','一般的な','複雑な','定期的な'],a:0,exp:'significant = 重要な、著しい。"a significant increase" = 著しい増加。'},
+    {q:'論文での "proposed method outperforms" の意味',o:['提案手法が上回る','提案手法が下回る','手法を提案する','手法を比較する'],a:0,exp:'outperform = 〜を上回る、超える。論文の結果述べる節で頻出。'},
+  ]
 };
 
-let lastAIRes = "";
-async function askGemini() {
-  const key = localStorage.getItem('studyflow_gemini_v28');
-  if(!key) return alert("キーを設定してください。");
-  
-  const subj = document.getElementById('ai-subj-sel').value;
-  const out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt'), btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
-  
-  out.style.display = 'block'; txt.innerText = "生成中..."; debug.style.display = "none"; debug.innerText = ""; btn.disabled = true;
+/* 英語単語バンク (Firebase同期対象) */
+const EN_WORDS_DEFAULT = [
+  {word:'eigenvalue',phonetic:'/ˈaɪɡənˌvæljuː/',meaning:'固有値',example:'The eigenvalues of a symmetric matrix are always real.',tag:'線形代数'},
+  {word:'convergence',phonetic:'/kənˈvɜːrdʒəns/',meaning:'収束',example:'We analyze the convergence of the iterative algorithm.',tag:'解析学'},
+  {word:'hypothesis',phonetic:'/haɪˈpɒθəsɪs/',meaning:'仮説',example:'The null hypothesis is rejected at the 5% significance level.',tag:'統計'},
+  {word:'gradient',phonetic:'/ˈɡreɪdiənt/',meaning:'勾配・傾き',example:'Gradient descent minimizes the loss function.',tag:'機械学習'},
+  {word:'residual',phonetic:'/rɪˈzɪdjuəl/',meaning:'残差・残留',example:'Residual connections help train deep networks.',tag:'機械学習'},
+  {word:'latent',phonetic:'/ˈleɪtənt/',meaning:'潜在的な',example:'The latent space encodes meaningful representations.',tag:'AI研究'},
+  {word:'multimodal',phonetic:'/ˌmʌltiˈmoʊdəl/',meaning:'マルチモーダル',example:'Multimodal learning integrates text, audio, and vision.',tag:'AI研究'},
+  {word:'robust',phonetic:'/roʊˈbʌst/',meaning:'頑健な・堅牢な',example:'The model is robust to noisy inputs.',tag:'論文表現'},
+  {word:'benchmark',phonetic:'/ˈbentʃmɑːrk/',meaning:'ベンチマーク・基準',example:'We evaluate on standard NLP benchmarks.',tag:'論文表現'},
+  {word:'outperform',phonetic:'/ˌaʊtpərˈfɔːrm/',meaning:'〜を上回る・凌駕する',example:'Our method outperforms existing baselines.',tag:'論文表現'},
+];
 
-  // モデルリスト（models/プレフィックスを除去した形）
-  const models = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-flash-8b"];
-  let success = false;
-
-  for(let m of models) {
-    try {
-      // 指示通りのURL構成: /v1beta/models/${m}
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-      
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${subj}に関する具体的な数値を用いた大学院入試レベルの計算問題を1問作成し、解説と解答を詳細に付けて。日本語で。` }] }]
-        })
-      });
-
-      const data = await res.json();
-      
-      if (data.error) {
-        debug.style.display = "block";
-        debug.innerText += `[Model ${m} failed] Code: ${data.error.code}, Msg: ${data.error.message}\n`;
-        continue;
-      }
-
-      if (data.candidates && data.candidates[0].content) {
-        lastAIRes = data.candidates[0].content.parts[0].text;
-        txt.innerText = lastAIRes;
-        success = true;
-        break;
-      }
-    } catch(e) { console.error(e); }
-  }
-
-  if(!success) txt.innerText = "生成に失敗。詳細ログを確認し、キーの権限設定をチェックしてください。";
-  btn.disabled = false;
-}
-window.askGemini = askGemini;
+/* 正答率・学習記録 */
+let accuracy = JSON.parse(localStorage.getItem('study_v29_acc')) || {};
+let logs = JSON.parse(localStorage.getItem('study_v29_logs')) || [];
+let enWords = JSON.parse(localStorage.getItem('study_v29_en')) || [...EN_WORDS_DEFAULT];
+let studyMode = 'fc', studySubj = 'la', studyIdx = 0;
+let enMode = 'card', enIdx = 0;
+let fbLogs = {}, fbEnWords = {};
 
 /* ══════════════════════════════════════
-   GALAXY (V18/25 STABLE Full Design)
+   FIREBASE SYNC
+══════════════════════════════════════ */
+function fbSyncLogs() {
+  const r = ref(db, 'studylogs');
+  onValue(r, snap => {
+    fbLogs = snap.val() || {};
+    document.getElementById('db-count').textContent = `📊 ${Object.keys(fbLogs).length}件のログ`;
+    renderLogs();
+    updateStreak();
+    renderAnalytics();
+  });
+}
+
+function fbSyncEnWords() {
+  const r = ref(db, 'enwords');
+  onValue(r, snap => {
+    const d = snap.val();
+    if (d) {
+      fbEnWords = d;
+      enWords = Object.values(d);
+      localStorage.setItem('study_v29_en', JSON.stringify(enWords));
+    }
+    renderEnContent();
+  });
+}
+
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+window.toast = toast;
+
+/* ══════════════════════════════════════
+   TAB NAVIGATION
+══════════════════════════════════════ */
+window.switchTab = (t) => {
+  document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('#main-tabs .tab').forEach((el,i) => {
+    el.classList.remove('active');
+    const names = ['plan','study','english','chapter','galaxy','ai','analytics','log'];
+    if(names[i] === t) el.classList.add('active');
+  });
+  document.getElementById('panel-' + t).classList.add('active');
+  if(t === 'galaxy') setTimeout(initGalaxy, 120);
+  if(t === 'study') renderStudy();
+  if(t === 'english') renderEnContent();
+  if(t === 'chapter') renderChapterSelect();
+  if(t === 'analytics') renderAnalytics();
+  if(t === 'log') renderLogs();
+};
+
+/* ══════════════════════════════════════
+   ACCURACY HELPERS
+══════════════════════════════════════ */
+function recordAcc(cat, correct) {
+  if(!accuracy[cat]) accuracy[cat] = {ok:0,ng:0};
+  correct ? accuracy[cat].ok++ : accuracy[cat].ng++;
+  localStorage.setItem('study_v29_acc', JSON.stringify(accuracy));
+}
+function getAcc(cat) {
+  const d = accuracy[cat];
+  if(!d || d.ok+d.ng===0) return null;
+  return Math.round(d.ok/(d.ok+d.ng)*100);
+}
+window.recordAcc = recordAcc;
+
+/* ══════════════════════════════════════
+   PLAN PANEL
+══════════════════════════════════════ */
+function renderPlan() {
+  const diff = t => Math.max(0, Math.ceil((new Date(t)-new Date())/(1000*60*60*24)));
+  document.getElementById('d-toeic').textContent = diff('2026-05-17');
+  document.getElementById('d-naist').textContent = diff('2026-07-06');
+  document.getElementById('d-kobe').textContent = diff('2026-08-24');
+
+  // Subject grid
+  const grid = document.getElementById('subj-grid');
+  grid.innerHTML = '';
+  Object.entries(SUBJECTS).forEach(([k,s]) => {
+    const acc = getAcc(k);
+    const total = BANK.filter(b=>b.cat===k).length;
+    const pct = acc ?? 0;
+    grid.innerHTML += `
+      <div class="subj-card">
+        <div class="subj-name" style="color:${s.color}">${s.name}</div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${s.color}"></div></div>
+        <div class="prog-text">正答率 ${acc!==null?acc+'%':'未解答'} · ${total}問</div>
+      </div>`;
+  });
+
+  // Rings
+  const rw = document.getElementById('rings-wrap');
+  rw.innerHTML = '';
+  const allLogs = [...logs, ...Object.values(fbLogs)];
+  Object.entries(SUBJECTS).forEach(([k,s]) => {
+    const weekMins = allLogs
+      .filter(l => l.cat===k && Date.now()-new Date(l.date)<7*24*3600*1000)
+      .reduce((a,l) => a+(l.dur||0), 0);
+    const goal = 120; // 週120分目標
+    const pct = Math.min(1, weekMins/goal);
+    const r=30, circ=2*Math.PI*r;
+    rw.innerHTML += `
+      <div class="ring-wrap">
+        <svg class="ring" width="80" height="80" viewBox="0 0 80 80">
+          <circle class="ring-bg" cx="40" cy="40" r="${r}"/>
+          <circle class="ring-fill" cx="40" cy="40" r="${r}"
+            stroke="${s.color}" stroke-dasharray="${circ}"
+            stroke-dashoffset="${circ*(1-pct)}"/>
+        </svg>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center;max-width:72px">${s.name}</div>
+        <div style="font-size:10px;color:var(--text3)">${weekMins}分</div>
+      </div>`;
+  });
+}
+
+/* ══════════════════════════════════════
+   STUDY PANEL
+══════════════════════════════════════ */
+window.setStudyMode = (m, btn) => {
+  studyMode = m; studyIdx = 0;
+  document.querySelectorAll('#panel-study .mode-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderStudy();
+};
+window.setSubj = (k) => { studySubj=k; studyIdx=0; renderStudy(); };
+
+function renderSubjChips() {
+  const c = document.getElementById('subj-chips');
+  c.innerHTML = Object.entries(SUBJECTS).map(([k,s]) =>
+    `<button class="chip${k===studySubj?' active':''}" onclick="setSubj('${k}')" style="${k===studySubj?'border-color:'+s.color+';color:'+s.color+';background:'+s.color+'20':''}">${s.name}</button>`
+  ).join('');
+}
+
+function renderStudy() {
+  renderSubjChips();
+  const cont = document.getElementById('study-content');
+  if(studyMode === 'fc') renderFC(cont);
+  else if(studyMode === 'fib') renderFIB(cont);
+  else renderQuiz(cont);
+}
+
+/* --- FLASHCARD --- */
+function renderFC(cont) {
+  const data = BANK.filter(b=>b.cat===studySubj);
+  if(!data.length){cont.innerHTML='<div class="card">データがありません。</div>';return;}
+  const it = data[studyIdx % data.length];
+  const acc = getAcc(studySubj);
+  cont.innerHTML = `
+    <div style="margin-bottom:12px">
+      <span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span>
+      ${acc!==null?`<span style="float:right;font-size:12px;color:var(--text3)">正答率 ${acc}%</span>`:''}
+    </div>
+    <div class="fc-card" id="fc-main" onclick="flipFC()">
+      <div id="fc-q">${it.q}</div>
+    </div>
+    <div class="fc-hint">タップで答えを表示</div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn-p btn-sm btn-g" onclick="fcAnswer(true)">✓ 正解</button>
+      <button class="btn-p btn-sm" style="background:var(--red)" onclick="fcAnswer(false)">✗ 不正解</button>
+      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ スキップ</button>
+    </div>
+    <div id="fc-ans" style="display:none;margin-top:16px;padding:16px;background:var(--alight);border-radius:var(--r2);font-size:15px;color:var(--accent);font-weight:600;border:1px solid var(--aborder)">${it.a}</div>
+  `;
+}
+window.flipFC = () => {
+  const c = document.getElementById('fc-main');
+  const a = document.getElementById('fc-ans');
+  c.classList.toggle('flipped');
+  if(a) a.style.display = a.style.display==='none'?'block':'none';
+};
+window.fcAnswer = (correct) => {
+  recordAcc(studySubj, correct);
+  toast(correct?'✓ 正解！':'✗ もう一度', correct?'ok':'err');
+  studyIdx++;
+  setTimeout(renderStudy, 400);
+};
+
+/* --- FILL IN BLANK --- */
+function renderFIB(cont) {
+  const data = BANK.filter(b=>b.cat===studySubj && b.fib);
+  if(!data.length){cont.innerHTML='<div class="card">穴埋め問題がありません。</div>';return;}
+  const it = data[studyIdx % data.length];
+  const dispQ = it.fib.replace('[__]', `<input class="fib-input" id="fib-inp" placeholder="?" autocomplete="off">`);
+  cont.innerHTML = `
+    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span></div>
+    <div class="fib-wrap">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">元の問題: ${it.q}</div>
+      <div class="fib-q">${dispQ}</div>
+      <div class="btn-row">
+        <button class="btn-p btn-sm" onclick="checkFIB('${it.fib_ans.replace(/'/g,"\\'")}')">確認</button>
+        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="showFIBAns('${it.fib_ans.replace(/'/g,"\\'")}','${it.a.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">答えを見る</button>
+      </div>
+      <div class="fib-result" id="fib-res"></div>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ 次の問題</button>
+    </div>
+  `;
+  document.getElementById('fib-inp').addEventListener('keydown', e => {
+    if(e.key==='Enter') checkFIB(it.fib_ans);
+  });
+}
+window.checkFIB = (ans) => {
+  const inp = document.getElementById('fib-inp');
+  const res = document.getElementById('fib-res');
+  if(!inp||!res) return;
+  const user = inp.value.trim().replace(/\s/g,'').toLowerCase();
+  const correct_ans = ans.trim().replace(/\s/g,'').toLowerCase();
+  const ok = user===correct_ans || user.replace(/\^/g,'')===correct_ans.replace(/\^/g,'');
+  inp.className = 'fib-input ' + (ok?'correct':'wrong');
+  res.className = 'fib-result ' + (ok?'ok':'ng');
+  res.style.display='block';
+  res.textContent = ok ? `✓ 正解！「${ans}」` : `✗ 正解は「${ans}」`;
+  recordAcc(studySubj, ok);
+};
+window.showFIBAns = (ans, full) => {
+  const inp = document.getElementById('fib-inp');
+  const res = document.getElementById('fib-res');
+  if(inp) { inp.value=ans; inp.className='fib-input'; }
+  if(res) { res.className='fib-result ng'; res.style.display='block'; res.textContent=`答え: 「${ans}」 （${full}）`; }
+};
+
+/* --- QUIZ --- */
+function renderQuiz(cont) {
+  const data = (QUIZZES[studySubj]||[]);
+  if(!data.length){cont.innerHTML='<div class="card">4択問題がありません。</div>';return;}
+  const it = data[studyIdx % data.length];
+  const opts = it.o.map((o,i) => `<button class="quiz-opt" id="qo${i}" onclick="answerQuiz(${i},${it.a},'${(it.exp||'').replace(/'/g,"\\'")}')">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+  cont.innerHTML = `
+    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span></div>
+    <div class="card">
+      <div class="quiz-q">${it.q}</div>
+      <div class="quiz-opts">${opts}</div>
+      <div class="quiz-explain" id="quiz-exp">${it.exp||''}</div>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ 次の問題</button>
+    </div>
+  `;
+}
+window.answerQuiz = (sel, correct, exp) => {
+  document.querySelectorAll('.quiz-opt').forEach((b,i) => {
+    b.disabled = true;
+    if(i===correct) b.classList.add('correct');
+    else if(i===sel) b.classList.add('wrong');
+  });
+  const ok = sel===correct;
+  recordAcc(studySubj, ok);
+  toast(ok?'✓ 正解！':'✗ 不正解', ok?'ok':'err');
+  const expEl = document.getElementById('quiz-exp');
+  if(expEl && exp) expEl.style.display='block';
+};
+
+/* ══════════════════════════════════════
+   ENGLISH PANEL
+══════════════════════════════════════ */
+window.setEnMode = (m, btn) => {
+  enMode=m; enIdx=0;
+  document.querySelectorAll('#panel-english .mode-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderEnContent();
+};
+
+function renderEnContent() {
+  const cont = document.getElementById('en-content');
+  if(enMode==='add') { renderEnAdd(cont); return; }
+  if(!enWords.length){cont.innerHTML='<div class="card">単語がありません。</div>';return;}
+  if(enMode==='card') renderEnCard(cont);
+  else renderEnQuiz(cont);
+}
+
+function renderEnCard(cont) {
+  const w = enWords[enIdx % enWords.length];
+  cont.innerHTML = `
+    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${enIdx%enWords.length+1} / ${enWords.length}</span></div>
+    <div class="en-card" onclick="flipEnCard()" id="en-main">
+      <div class="en-tag">${w.tag||'語彙'}</div>
+      <div class="en-word">${w.word}</div>
+      <div class="en-phonetic">${w.phonetic||''}</div>
+      <div class="en-meaning" id="en-m">${w.meaning}</div>
+      <div class="en-example" id="en-ex">${w.example||''}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:12px">タップで意味を表示</div>
+    </div>
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn-p btn-sm btn-g" onclick="enAns(true)">✓ 覚えた</button>
+      <button class="btn-p btn-sm" style="background:var(--red)" onclick="enAns(false)">✗ もう一度</button>
+      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="enIdx++;renderEnContent()">→ 次</button>
+    </div>
+  `;
+}
+window.flipEnCard = () => {
+  document.getElementById('en-m').style.display='block';
+  document.getElementById('en-ex').style.display='block';
+};
+window.enAns = (ok) => {
+  recordAcc('en', ok);
+  toast(ok?'✓ 覚えた！':'📚 復習しよう', ok?'ok':'err');
+  enIdx++;
+  setTimeout(renderEnContent, 300);
+};
+
+function renderEnQuiz(cont) {
+  const w = enWords[enIdx % enWords.length];
+  const others = enWords.filter((_,i)=>i!==enIdx%enWords.length).sort(()=>Math.random()-.5).slice(0,3);
+  const opts = [w, ...others].sort(()=>Math.random()-.5);
+  const correctIdx = opts.indexOf(w);
+  cont.innerHTML = `
+    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${enIdx%enWords.length+1} / ${enWords.length}</span></div>
+    <div class="card">
+      <div class="quiz-q" style="font-family:'Syne',sans-serif;font-size:24px">${w.word}</div>
+      <div class="quiz-opts">
+        ${opts.map((o,i)=>`<button class="quiz-opt" onclick="enQuizAns(${i},${correctIdx})">${o.meaning}</button>`).join('')}
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn-p btn-sm" style="background:var(--text3)" onclick="enIdx++;renderEnContent()">→ 次</button></div>
+  `;
+}
+window.enQuizAns = (sel, correct) => {
+  document.querySelectorAll('#panel-english .quiz-opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===correct) b.classList.add('correct');
+    else if(i===sel) b.classList.add('wrong');
+  });
+  const ok=sel===correct;
+  recordAcc('en',ok);
+  toast(ok?'✓ 正解！':'✗ 不正解',ok?'ok':'err');
+};
+
+function renderEnAdd(cont) {
+  cont.innerHTML = `
+    <div class="card">
+      <div class="stitle">新しい単語を追加</div>
+      <input type="text" id="en-new-word" placeholder="単語 (例: abstraction)">
+      <input type="text" id="en-new-phonetic" placeholder="発音記号 (例: /æbˈstrækʃən/)">
+      <input type="text" id="en-new-meaning" placeholder="意味 (例: 抽象化)">
+      <input type="text" id="en-new-example" placeholder="例文">
+      <input type="text" id="en-new-tag" placeholder="タグ (例: AI研究)">
+      <button class="btn-p btn-g" onclick="addEnWord()">➕ 追加 & Firebase同期</button>
+    </div>
+    <div class="stitle" style="margin-top:8px">登録済み単語一覧</div>
+    <div>${enWords.map((w,i)=>`
+      <div class="log-item">
+        <div>
+          <div class="log-topic">${w.word}</div>
+          <div class="log-meta">${w.meaning} · ${w.tag||'語彙'}</div>
+        </div>
+        <button onclick="delEnWord(${i})" style="background:var(--rbg);border:1px solid var(--rborder);color:var(--red);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px">削除</button>
+      </div>`).join('')}</div>
+  `;
+}
+window.addEnWord = async () => {
+  const w={
+    word:document.getElementById('en-new-word').value.trim(),
+    phonetic:document.getElementById('en-new-phonetic').value.trim(),
+    meaning:document.getElementById('en-new-meaning').value.trim(),
+    example:document.getElementById('en-new-example').value.trim(),
+    tag:document.getElementById('en-new-tag').value.trim()||'語彙',
+    added:new Date().toISOString()
+  };
+  if(!w.word||!w.meaning){toast('単語と意味は必須です','err');return;}
+  enWords.push(w);
+  localStorage.setItem('study_v29_en',JSON.stringify(enWords));
+  try {
+    await push(ref(db,'enwords'), w);
+    toast('Firebase に同期しました！');
+  } catch(e) { toast('ローカルに保存しました'); }
+  renderEnContent();
+};
+window.delEnWord = (i) => {
+  enWords.splice(i,1);
+  localStorage.setItem('study_v29_en',JSON.stringify(enWords));
+  renderEnContent();
+  toast('削除しました');
+};
+
+/* ══════════════════════════════════════
+   CHAPTER TEST
+══════════════════════════════════════ */
+let testState = null;
+
+function renderChapterSelect() {
+  const cont = document.getElementById('chapter-content');
+  cont.innerHTML = `
+    <div class="stitle">科目を選んで章末テストを開始</div>
+    <div class="subj-grid">
+      ${Object.entries(SUBJECTS).map(([k,s]) => {
+        const total = [...BANK.filter(b=>b.cat===k), ...(QUIZZES[k]||[])].length;
+        const acc = getAcc(k);
+        return `<div class="subj-card" style="cursor:pointer;border:2px solid transparent;transition:0.2s" 
+          onmouseover="this.style.borderColor='${s.color}'" onmouseout="this.style.borderColor='transparent'"
+          onclick="startChapterTest('${k}')">
+          <div class="subj-name" style="color:${s.color}">${s.name}</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${total}問 · ${acc!==null?'前回'+acc+'%':'未受験'}</div>
+          <button class="btn-p" style="background:${s.color};padding:8px">テスト開始 →</button>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+window.startChapterTest = (subj) => {
+  const fc = BANK.filter(b=>b.cat===subj);
+  const qz = (QUIZZES[subj]||[]).map(q=>({...q,type:'quiz'}));
+  const all = [
+    ...fc.slice(0,5).map(f=>({...f,type:'fc'})),
+    ...qz.slice(0,5)
+  ].sort(()=>Math.random()-.5).slice(0,10);
+
+  testState = {subj, items:all, idx:0, score:0, total:all.length, answers:[]};
+  renderTestQuestion();
+};
+
+function renderTestQuestion() {
+  const cont = document.getElementById('chapter-content');
+  const {items, idx, score, total} = testState;
+  if(idx >= total){ renderTestResult(); return; }
+  const it = items[idx];
+  const pct = idx/total*100;
+  const s = SUBJECTS[testState.subj];
+
+  let qHTML = '';
+  if(it.type==='fc'){
+    qHTML = `
+      <div class="quiz-q">${it.q}</div>
+      <div style="margin-bottom:16px"><textarea id="test-inp" rows="2" placeholder="答えを入力..." style="resize:vertical"></textarea></div>
+      <div class="btn-row">
+        <button class="btn-p btn-sm btn-g" onclick="testFCCorrect(true,'${it.a.replace(/'/g,"\\'")}')">✓ 正解（自己採点）</button>
+        <button class="btn-p btn-sm" style="background:var(--red)" onclick="testFCCorrect(false,'${it.a.replace(/'/g,"\\'")}')">✗ 不正解</button>
+        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="document.getElementById('test-reveal').style.display='block'">答えを見る</button>
+      </div>
+      <div id="test-reveal" style="display:none;margin-top:12px;padding:14px;background:var(--alight);border-radius:8px;color:var(--accent);font-weight:600">答え: ${it.a}</div>
+    `;
+  } else {
+    const opts = it.o.map((o,i)=>`<button class="quiz-opt" id="to${i}" onclick="testQuizAns(${i},${it.a})">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+    qHTML = `<div class="quiz-q">${it.q}</div><div class="quiz-opts">${opts}</div>
+      <div class="quiz-explain" id="test-exp">${it.exp||''}</div>`;
+  }
+
+  cont.innerHTML = `
+    <div class="test-header">
+      <div><span style="font-size:12px;color:var(--text3)">問 ${idx+1} / ${total}</span></div>
+      <div class="test-progress">スコア ${score} / ${idx}</div>
+    </div>
+    <div class="test-score-bar"><div class="test-score-fill" style="width:${pct}%;background:${s.color}"></div></div>
+    <div class="card">${qHTML}</div>
+    <div class="btn-row" style="margin-top:8px">
+      <span style="font-size:11px;color:var(--text3)">科目: ${s.name}</span>
+    </div>
+  `;
+}
+
+window.testFCCorrect = (ok, ans) => {
+  if(ok) testState.score++;
+  testState.answers.push({ok});
+  testState.idx++;
+  recordAcc(testState.subj, ok);
+  toast(ok?'✓ 正解！':'✗ 不正解', ok?'ok':'err');
+  setTimeout(renderTestQuestion, 400);
+};
+
+window.testQuizAns = (sel, correct) => {
+  document.querySelectorAll('#chapter-content .quiz-opt').forEach((b,i)=>{
+    b.disabled=true;
+    if(i===correct) b.classList.add('correct');
+    else if(i===sel) b.classList.add('wrong');
+  });
+  const ok=sel===correct;
+  if(ok) testState.score++;
+  testState.answers.push({ok});
+  recordAcc(testState.subj, ok);
+  const exp=document.getElementById('test-exp');
+  if(exp) exp.style.display='block';
+  toast(ok?'✓ 正解！':'✗ 不正解',ok?'ok':'err');
+  setTimeout(()=>{ testState.idx++; renderTestQuestion(); }, 900);
+};
+
+function renderTestResult() {
+  const cont = document.getElementById('chapter-content');
+  const {score, total, subj} = testState;
+  const pct = Math.round(score/total*100);
+  const s = SUBJECTS[subj];
+  let grade, badge;
+  if(pct>=90){ grade='🏆 優秀！院試レベル到達'; badge='<span class="badge badge-gold">Gold</span>'; }
+  else if(pct>=70){ grade='✓ 合格ライン'; badge='<span class="badge badge-pass">Pass</span>'; }
+  else { grade='📚 もう一度復習しよう'; badge='<span class="badge badge-fail">要復習</span>'; }
+
+  cont.innerHTML = `
+    <div class="test-result">
+      <div>${badge}</div>
+      <div class="test-result-score" style="color:${s.color}">${pct}%</div>
+      <div class="test-result-label">${score} / ${total} 問正解</div>
+      <div class="test-result-msg">${grade}</div>
+      <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+        <button class="btn-p btn-sm" onclick="startChapterTest('${subj}')">もう一度</button>
+        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="renderChapterSelect()">科目選択に戻る</button>
+      </div>
+    </div>
+  `;
+  // Save to log automatically
+  addLogEntry(`${s.name} 章末テスト`, subj, 20);
+}
+
+/* ══════════════════════════════════════
+   GALAXY
 ══════════════════════════════════════ */
 function initGalaxy() {
   const wrap = document.getElementById('galaxy-container');
   const width = wrap.clientWidth, height = wrap.clientHeight;
-  const nodes = [{id:'YOU', r:25, fx: width/2, fy: height/2, name:'YOU'}];
+  const nodes = [{id:'YOU', r:25, fx: width/2, fy: height/2, name:'YOU', type:'center'}];
   const links = [];
 
   Object.keys(SUBJECTS).forEach(s => {
-    nodes.push({id: s, name: SUBJECTS[s].name, r:18, type:'subj'});
-    links.push({source:'YOU', target: s});
+    nodes.push({id:s, name:SUBJECTS[s].name, r:18, type:'subj', color:SUBJECTS[s].color});
+    links.push({source:'YOU', target:s});
     SUBJECTS[s].areas.forEach(area => {
-      const aid = s + '_' + area;
-      nodes.push({id: aid, name: area, group: s, r:10, type:'area'});
-      links.push({source: s, target: aid});
+      const aid=s+'_'+area;
+      nodes.push({id:aid, name:area, group:s, r:10, type:'area'});
+      links.push({source:s, target:aid});
     });
   });
 
-  BANK.forEach((k, i) => {
-    const kid = `k${i}`;
-    nodes.push({id: kid, name: k.q, detail: k.a, group: k.cat, r:6, type:'fact'});
-    const pid = k.area ? k.cat + '_' + k.area : k.cat;
-    links.push({source: pid, target: kid});
+  BANK.forEach((k,i) => {
+    const kid=`k${i}`;
+    nodes.push({id:kid, name:k.q.slice(0,30), detail:k.a, group:k.cat, r:6, type:'fact'});
+    const pid = k.area ? k.cat+'_'+k.area : k.cat;
+    links.push({source:pid, target:kid});
   });
 
-  const svg = d3.select("#galaxy-svg"); svg.selectAll("*").remove();
-  const g = svg.append("g");
-  svg.call(d3.zoom().on("zoom", (e) => g.attr("transform", e.transform)));
+  const svg = d3.select('#galaxy-svg'); svg.selectAll('*').remove();
+  const g = svg.append('g');
+  svg.call(d3.zoom().scaleExtent([0.3,4]).on('zoom', e=>g.attr('transform',e.transform)));
 
   const sim = d3.forceSimulation(nodes)
-    .force("link", d3.forceLink(links).id(d => d.id).distance(60))
-    .force("charge", d3.forceManyBody().strength(-350))
-    .force("center", d3.forceCenter(width/2, height/2))
-    .force("collision", d3.forceCollide().radius(d => d.r + 12));
+    .force('link', d3.forceLink(links).id(d=>d.id).distance(70))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(width/2, height/2))
+    .force('collision', d3.forceCollide().radius(d=>d.r+12));
 
-  const link = g.append("g").selectAll("line").data(links).join("line").attr("stroke", "#2A2845").attr("stroke-opacity", 0.6);
-  const node = g.append("g").selectAll("circle").data(nodes).join("circle")
-    .attr("r", d => d.r).attr("fill", d => SUBJECTS[d.group || d.id]?.color || "#fff")
-    .attr("stroke", d => d.id==='YOU'?'#fff':'none').attr("stroke-width", 2)
-    .on("click", (e, d) => {
-      if(d.detail) {
-        const info = document.getElementById('galaxy-info'); info.style.display = 'block';
-        info.innerHTML = `<strong>${d.name}</strong><hr style="border:0;border-top:1px solid #333;margin:8px 0">${d.detail}`;
+  // Stars background
+  for(let i=0;i<120;i++){
+    g.append('circle')
+      .attr('cx', Math.random()*width*2-width/2)
+      .attr('cy', Math.random()*height*2-height/2)
+      .attr('r', Math.random()*1.5)
+      .attr('fill', 'white')
+      .attr('opacity', Math.random()*0.7+0.1);
+  }
+
+  const link = g.append('g').selectAll('line').data(links).join('line')
+    .attr('stroke','#2A2845').attr('stroke-opacity',0.5).attr('stroke-width',1);
+
+  const node = g.append('g').selectAll('circle').data(nodes).join('circle')
+    .attr('r', d=>d.r)
+    .attr('fill', d => d.type==='center'?'#fff': d.color||SUBJECTS[d.group]?.color||'#7C5FD4')
+    .attr('opacity', d=>d.type==='fact'?0.7:1)
+    .attr('stroke', d=>d.type==='center'?'#fff':d.color||SUBJECTS[d.group]?.color||'#7C5FD4')
+    .attr('stroke-width', 2).attr('stroke-opacity',0.4)
+    .style('cursor','pointer')
+    .on('click', (e,d) => {
+      if(d.detail||d.type==='subj') {
+        const info = document.getElementById('galaxy-info');
+        const c = SUBJECTS[d.id]?.color || SUBJECTS[d.group]?.color || '#7C5FD4';
+        document.getElementById('galaxy-info-content').innerHTML =
+          `<div style="color:${c};font-weight:700;margin-bottom:6px">${d.name}</div>`+
+          (d.detail?`<div style="color:#ccc;font-size:13px">${d.detail}</div>`:'');
+        info.style.display='block';
       }
     });
 
-  const label = g.append("g").selectAll("text").data(nodes.filter(n => n.r > 9)).join("text")
-    .text(d => d.name).attr("fill", "#ccc").attr("font-size", "10px").attr("dx", 22).attr("dy", 4);
+  const label = g.append('g').selectAll('text').data(nodes.filter(n=>n.r>9)).join('text')
+    .text(d=>d.name).attr('fill','#bbb').attr('font-size','10px').attr('dx',d=>d.r+4).attr('dy',4)
+    .style('pointer-events','none');
 
-  sim.on("tick", () => {
-    link.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
-    node.attr("cx", d => d.x).attr("cy", d => d.y);
-    label.attr("x", d => d.x).attr("y", d => d.y);
+  sim.on('tick', ()=>{
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    node.attr('cx',d=>d.x).attr('cy',d=>d.y);
+    label.attr('x',d=>d.x).attr('y',d=>d.y);
   });
 }
 
 /* ══════════════════════════════════════
-   UI & NAVIGATION & SYSTEM
+   AI PANEL
 ══════════════════════════════════════ */
-let curMode = 'fc', curSubj = 'la', curIdx = 0;
-window.switchTab = (t) => {
-  document.querySelectorAll('.panel, .tab').forEach(el => el.classList.remove('active'));
-  document.getElementById('panel-' + t).classList.add('active');
-  const activeTabBtn = Array.from(document.querySelectorAll('.tab')).find(btn => btn.innerText.includes(t==='plan'?'プラン':t==='study'?'演習':t==='galaxy'?'銀河':'AI'));
-  if(activeTabBtn) activeTabBtn.classList.add('active');
-  if(t === 'galaxy') setTimeout(initGalaxy, 100);
-  if(t === 'study') renderStudy();
+window.saveApiKey = () => {
+  const key = document.getElementById('api-key-input').value;
+  if(!key){toast('キーを入力してください','err');return;}
+  localStorage.setItem('studyflow_gemini_v29', key);
+  toast('APIキーを保存しました！');
 };
 
-function renderStudy() {
-  const cont = document.getElementById('study-content');
-  const data = curMode === 'fc' ? BANK.filter(b=>b.cat===curSubj) : (QUIZZES[curSubj] || []);
-  if(!data.length) { cont.innerHTML = "データがありません。"; return; }
-  const it = data[curIdx % data.length];
-  if(curMode === 'fc') {
-    cont.innerHTML = `<div class="fc-card" onclick="this.innerText='${it.a}'">${it.q}</div><button class="btn-p" style="margin-top:20px" onclick="curIdx++;renderStudy()">次のカード</button>`;
-  } else {
-    cont.innerHTML = `<div class="card"><div>${it.q}</div>${it.o.map((o,i)=>`<button class="chip" style="display:block;width:100%;margin-top:10px;text-align:left" onclick="alert(i===${it.a}?'正解':'不正解')">${o}</button>`).join('')}</div>`;
+let lastAIRes = '';
+window.askGemini = async () => {
+  const key = localStorage.getItem('studyflow_gemini_v29');
+  if(!key){toast('Gemini APIキーを設定してください','err');return;}
+  const subj = document.getElementById('ai-subj-sel').value;
+  const type = document.getElementById('ai-type-sel').value;
+  const out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt');
+  const btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
+  out.style.display='block'; txt.textContent='生成中...'; debug.style.display='none'; btn.disabled=true;
+
+  const prompt = `${subj}に関する大学院入試レベルの${type}を1問作成してください。具体的な数値や式を用いて、解答と詳細な解説を日本語で記述してください。`;
+  const models = ['gemini-1.5-flash','gemini-2.0-flash','gemini-1.5-flash-8b'];
+  let success = false;
+
+  for(const m of models){
+    try{
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+      });
+      const data = await res.json();
+      if(data.error){
+        debug.style.display='block';
+        debug.textContent += `[${m}] ${data.error.code}: ${data.error.message}\n`;
+        continue;
+      }
+      if(data.candidates?.[0]?.content){
+        lastAIRes = data.candidates[0].content.parts[0].text;
+        txt.textContent = lastAIRes;
+        success=true; break;
+      }
+    }catch(e){console.error(e);}
   }
+  if(!success) txt.textContent='生成失敗。デバッグログを確認してください。';
+  btn.disabled=false;
+};
+
+window.saveAI = () => {
+  if(!lastAIRes){toast('まず問題を生成してください','err');return;}
+  const subj = document.getElementById('ai-subj-sel').value;
+  const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','TOEIC英語':'en'};
+  const cat = catMap[subj]||'la';
+  BANK.push({cat,q:'[AI生成] '+lastAIRes.slice(0,60)+'...',a:lastAIRes,area:'AI生成'});
+  localStorage.setItem('study_v29_bank',JSON.stringify(BANK));
+  toast('演習バンクに追加しました！');
+};
+window.copyAI = () => {
+  navigator.clipboard?.writeText(lastAIRes).then(()=>toast('コピーしました！'));
+};
+
+/* ══════════════════════════════════════
+   ANALYTICS
+══════════════════════════════════════ */
+function renderAnalytics() {
+  const allLogs = [...logs, ...Object.values(fbLogs)];
+  const totalMin = allLogs.reduce((a,l)=>a+(l.dur||0),0);
+  const totalSessions = allLogs.length;
+  const totalQ = Object.values(accuracy).reduce((a,v)=>a+v.ok+v.ng,0);
+  const avgAcc = Object.values(accuracy).length
+    ? Math.round(Object.values(accuracy).reduce((a,v)=>a+(v.ok+v.ng>0?v.ok/(v.ok+v.ng):0),0)/Object.values(accuracy).length*100)
+    : 0;
+
+  document.getElementById('ana-summary').innerHTML = `
+    <div class="ana-card"><div class="ana-val">${Math.round(totalMin/60*10)/10}h</div><div class="ana-label">総学習時間</div></div>
+    <div class="ana-card"><div class="ana-val">${totalSessions}</div><div class="ana-label">セッション数</div></div>
+    <div class="ana-card"><div class="ana-val">${totalQ}</div><div class="ana-label">解答問題数</div></div>
+    <div class="ana-card"><div class="ana-val">${avgAcc}%</div><div class="ana-label">平均正答率</div></div>
+  `;
+
+  // Accuracy ranking
+  const ranking = Object.entries(SUBJECTS).map(([k,s])=>{
+    const acc = getAcc(k);
+    return {name:s.name,color:s.color,acc};
+  }).sort((a,b)=>(b.acc??-1)-(a.acc??-1));
+
+  document.getElementById('acc-ranking').innerHTML = ranking.map((r,i)=>`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <div style="width:20px;font-size:12px;color:var(--text3)">#${i+1}</div>
+      <div style="width:72px;font-size:13px;font-weight:600;color:${r.color}">${r.name}</div>
+      <div style="flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden">
+        <div style="height:100%;width:${r.acc??0}%;background:${r.color};border-radius:4px;transition:width .5s"></div>
+      </div>
+      <div style="width:40px;font-size:13px;font-weight:700;text-align:right">${r.acc!==null?r.acc+'%':'—'}</div>
+    </div>`).join('');
+
+  // Heatmap (last 28 days)
+  const hmap = document.getElementById('heatmap-wrap');
+  const days = Array.from({length:28},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-27+i);
+    return d.toISOString().slice(0,10);
+  });
+  const dayMins = {};
+  allLogs.forEach(l=>{
+    const d=new Date(l.date).toISOString().slice(0,10);
+    dayMins[d]=(dayMins[d]||0)+(l.dur||0);
+  });
+  const maxMin = Math.max(1,...Object.values(dayMins));
+  const rows=[];
+  for(let w=0;w<4;w++){
+    const cells = days.slice(w*7,(w+1)*7).map(d=>{
+      const m=dayMins[d]||0;
+      const int=Math.round(m/maxMin*255);
+      const col=m>0?`rgba(124,95,212,${0.2+m/maxMin*0.8})`:'var(--bg3)';
+      return `<div class="heatmap-cell" style="background:${col}" title="${d}: ${m}分"></div>`;
+    }).join('');
+    rows.push(`<div class="heatmap-row">${cells}</div>`);
+  }
+  hmap.innerHTML = `<div style="display:flex;flex-direction:column;gap:3px">${rows.join('')}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:8px">過去28日間の学習強度 (濃いほど学習時間が長い)</div>`;
 }
 
+/* ══════════════════════════════════════
+   LOG
+══════════════════════════════════════ */
+function addLogEntry(topic, cat, dur) {
+  const entry = {topic, cat, dur, date: new Date().toISOString()};
+  logs.push(entry);
+  localStorage.setItem('study_v29_logs', JSON.stringify(logs));
+  try{ push(ref(db,'studylogs'), entry); }catch(e){}
+}
+
+window.addLog = async () => {
+  const topic = document.getElementById('log-chap').value.trim();
+  const cat = document.getElementById('log-subj-sel').value;
+  const dur = parseInt(document.getElementById('log-dur').value)||0;
+  if(!topic){toast('トピックを入力してください','err');return;}
+  addLogEntry(topic, cat, dur);
+  toast('ログを保存しました！');
+  document.getElementById('log-chap').value='';
+  document.getElementById('log-dur').value='';
+  renderLogs();
+  renderPlan();
+};
+
+function renderLogs() {
+  const allLogs = [
+    ...logs.map(l=>({...l,src:'local'})),
+    ...Object.values(fbLogs).map(l=>({...l,src:'fb'}))
+  ].sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+  const list = document.getElementById('log-list');
+  if(!list) return;
+  list.innerHTML = allLogs.slice(0,30).map(l=>`
+    <div class="log-item">
+      <div>
+        <div class="log-topic">${l.topic||'（無題）'}</div>
+        <div class="log-meta">${SUBJECTS[l.cat]?.name||l.cat||'不明'} · ${new Date(l.date).toLocaleDateString('ja-JP')} ${l.src==='fb'?'☁️':''}</div>
+      </div>
+      <div class="log-dur">${l.dur||0}分</div>
+    </div>`).join('');
+}
+
+function updateStreak() {
+  const allLogs = [...logs, ...Object.values(fbLogs)];
+  const dates = [...new Set(allLogs.map(l=>new Date(l.date).toDateString()))];
+  let streak=0, d=new Date();
+  while(dates.includes(d.toDateString())){
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  document.getElementById('streak-count').textContent = `🔥 ${streak}日連続`;
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
 function init() {
-  const diff = (t) => Math.max(0, Math.ceil((new Date(t) - new Date()) / (1000*60*60*24)));
-  document.getElementById('d-toeic').innerText = diff('2026-05-17');
-  document.getElementById('d-naist').innerText = diff('2026-07-06');
-  document.getElementById('d-kobe').innerText = diff('2026-08-24');
-
-  const chips = document.getElementById('subj-chips');
-  chips.innerHTML = Object.keys(SUBJECTS).map(k => `<button class="chip" onclick="window.setSubj('${k}')">${SUBJECTS[k].name}</button>`).join('');
-
-  window.setSubj = (k) => { curSubj = k; renderStudy(); };
-  window.setMode = (m) => { curMode = m; renderStudy(); };
-
-  const savedKey = localStorage.getItem('studyflow_gemini_v28');
-  if(savedKey) document.getElementById('api-key-input').value = savedKey;
-
+  renderPlan();
+  renderSubjChips();
   renderStudy();
+  renderEnContent();
+
+  const savedKey = localStorage.getItem('studyflow_gemini_v29');
+  if(savedKey) document.getElementById('api-key-input').value=savedKey;
+  document.getElementById('db-count').textContent = `📊 ${BANK.length}問`;
+
+  fbSyncLogs();
+  fbSyncEnWords();
   setTimeout(initGalaxy, 500);
 }
 init();
