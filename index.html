@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyFlow v29 — 院試対策・AIリサーチ統合版</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  }
+};
+</script>  
 <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -1036,6 +1044,19 @@ function initGalaxy() {
 
 // プロンプト生成ロジック（具体的数値を出すように指示）
 const buildStudyPrompt = (subj, type) => {
+//サブカテゴリのリストを作成してランダムに選ばせる指示
+  const topicLibrary = {
+    '線形代数': '行列の積, 逆行列, 行列式(3x3含む), 固有値・固有ベクトル, 連立一次方程式(掃き出し法), 線形写像',
+    '微積分': '合成関数の微分, 部分積分, 置換積分, 広義積分, 偏微分, 重積分, テイラー展開',
+    'アルゴリズム': '二分探索, ソート(クイック・マージ), , グラフ探索(DFS・BFS), ダイクストラ法, 計算量推定, データ表現, 論理計算, 組み合わせ回路, 順序回路, 計算機アーキテクチャ, オペレーティングシステム',
+    '機械学習': '単回帰・重回帰分析, ロジスティック回帰, 勾配降下法, 決定木, ニューラルネットワークの基礎, 適合率・再現率',
+    '複素関数論': '複素数の演算, コーシー・リーマンの方程式, 複素積分, 留数定理, ローラン展開',
+    '常微分方程式': '変数分離形, 1階線形微分方程式, 2階定数係数斉次・非斉次微分方程式, ラプラス変換',
+    '英語(TOEIC)':  'Part5, Part6, Part7'
+  };
+
+  const topics = topicLibrary[subj] || '基礎から応用まで';
+  
   // 基本となる共通指示
   let prompt = `
 # 指示: ${subj}の${type}に関する基礎練習問題を作成せよ。
