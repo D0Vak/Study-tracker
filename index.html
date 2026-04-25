@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>StudyFlow v29 — 院試対策・AIリサーチ統合版</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
@@ -1031,6 +1032,15 @@ function initGalaxy() {
 /* ══════════════════════════════════════
    AI PANEL
 ══════════════════════════════════════ */
+// 1. プロンプト生成ロジックを分離（見やすさ改善）
+const buildStudyPrompt = (subj, type) => `
+# 指示: ${subj}の${type}に関する基礎練習問題
+# 制約: 
+- 具体的数値（整数）を使用。
+- 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】の構成。
+- Markdown/LaTeX形式。挨拶不要。
+`.trim();
+  
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
   if(!key){toast('キーを入力してください','err');return;}
@@ -1046,7 +1056,7 @@ window.askGemini = async () => {
   const type = document.getElementById('ai-type-sel').value;
   const out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt');
   const btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
-  out.style.display='block'; txt.textContent='生成中...'; debug.style.display='none'; btn.disabled=true;
+  const debug = document.getElementById('ai-debug-log');
   
   out.style.display='block'; 
   txt.textContent='生成中...'; 
@@ -1054,24 +1064,7 @@ window.askGemini = async () => {
   debug.textContent = ''; // ログをリセット
   btn.disabled=true;
   
-  const prompt = `
-  #指示
-  ${subj}の${type}について、基礎から体系的に理解するための練習問題を1問作成してください。
-  
-  #制約条件
-  １．数値設定：具体的な数値や式を用いてください。
-  ２．計算難易度：手計算で１０分以内に完結し、かつ「解放の本質」が、学べる数値設定にしてください（固有値が整数になるなど）。
-  ３．構成：
-      ー【問題】具体的な行列と問いたい内容（例：逆行列を求めよ）
-      ー【解放のポイント】解くために必要な定義や公式の短い解説
-      ー【詳細なステップ解説】計算過程を１行ずつ丁寧に記述
-      ー【最終回答】
-  ４．言語：日本語で記述してください。
-
-  #出力形式
-  Markdown形式で、数式はLaTeXを使用して分かりやすく表示してください。
-  `;
-  
+  const prompt = buildStudyPrompt(subj, type);
   const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001', 'gemini-1.5-flash-latest'];
   let success = false;
 
@@ -1091,7 +1084,8 @@ window.askGemini = async () => {
       }
       if(data.candidates?.[0]?.content){
         lastAIRes = data.candidates[0].content.parts[0].text;
-        txt.innerText = lastAIRes;
+        txt.style.lineHeight = "1.8";
+        txt.innerHTML = marked.parse(lastAIRes);
         success=true; break;
       }
     }catch(e){
