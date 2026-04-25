@@ -1073,7 +1073,7 @@ window.askGemini = async () => {
 
   const prompt = buildStudyPrompt(subj, type);
   // 安定して動作するモデルのリスト
-  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+  const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001'];
   let success = false;
 
   for(const m of models){
