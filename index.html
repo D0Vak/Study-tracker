@@ -264,39 +264,53 @@ svg.ring{transform:rotate(-90deg)}
   </div>
 
   <!-- AI PANEL -->
-  <div id="panel-ai" class="panel">
-    <div class="api-config-area">
-      <div class="stitle">🔑 Gemini API キー</div>
-      <input type="password" id="api-key-input" placeholder="AIzaSy...">
-      <button class="btn-p btn-sm" onclick="saveApiKey()" style="width:auto">保存</button>
-    </div>
-    <div class="card">
-      <div class="stitle">AI問題生成 (Gemini)</div>
-      <select id="ai-subj-sel">
-        <option value="複素関数論">複素関数論</option>
-        <option value="常微分方程式">常微分方程式</option>
-        <option value="線形代数">線形代数</option>
-        <option value="機械学習">機械学習</option>
-        <option value="アルゴリズム">アルゴリズム</option>
-        <option value="TOEIC英語">英語 (TOEIC)</option>
-      </select>
-      <select id="ai-type-sel">
-        <option value="計算問題">計算問題</option>
-        <option value="穴埋め問題">穴埋め問題</option>
-        <option value="4択問題">4択問題</option>
-        <option value="概念説明">概念説明問題</option>
-      </select>
-      <button class="btn-p" id="ai-btn" onclick="askGemini()">🤖 問題を生成</button>
-      <div id="ai-output" style="display:none;margin-top:20px" class="card">
-        <div id="ai-txt" style="white-space:pre-wrap;font-size:14px;line-height:1.8"></div>
-        <div class="btn-row" style="margin-top:16px">
-          <button class="btn-p btn-sm btn-g" onclick="saveAI()">演習に追加</button>
-          <button class="btn-p btn-sm btn-b" onclick="copyAI()">コピー</button>
-        </div>
-      </div>
-      <div id="ai-debug-log"></div>
-    </div>
+<div id="panel-ai" class="panel">
+  <div class="api-config-area">
+    <div class="stitle">🔑 Gemini API キー</div>
+    <input type="password" id="api-key-input" placeholder="AIzaSy...">
+    <button class="btn-p btn-sm" onclick="saveApiKey()" style="width:auto">保存</button>
   </div>
+
+  <div class="card">
+    <div class="stitle">AI問題生成 (Gemini)</div>
+    
+    <!-- 科目選択：onchangeを追加 -->
+    <select id="ai-subj-sel" onchange="updateSubtopics()">
+      <option value="線形代数">線形代数</option>
+      <option value="微積分">微積分</option>
+      <option value="アルゴリズム">アルゴリズム</option>
+      <option value="機械学習">機械学習</option>
+      <option value="複素関数論">複素関数論</option>
+      <option value="常微分方程式">常微分方程式</option>
+      <option value="英語(TOEIC)">英語 (TOEIC)</option>
+    </select>
+
+    <!-- 新設：トピック選択 -->
+    <select id="ai-topic-sel">
+      <option value="ランダム">トピックをランダムに選択</option>
+    </select>
+
+    <!-- 形式選択 -->
+    <select id="ai-type-sel">
+      <option value="計算問題">計算問題</option>
+      <option value="穴埋め問題">穴埋め問題</option>
+      <option value="4択問題">4択問題</option>
+      <option value="概念説明">概念説明問題</option>
+    </select>
+
+    <button class="btn-p" id="ai-btn" onclick="askGemini()">🤖 問題を生成</button>
+
+    <!-- 出力エリア -->
+    <div id="ai-output" style="display:none;margin-top:20px" class="card">
+      <div id="ai-txt" style="white-space:pre-wrap;font-size:14px;line-height:1.8"></div>
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn-p btn-sm btn-g" onclick="saveAI()">演習に追加</button>
+        <button class="btn-p btn-sm btn-b" onclick="copyAI()">コピー</button>
+      </div>
+    </div>
+    <div id="ai-debug-log"></div>
+  </div>
+</div>
 
   <!-- ANALYTICS PANEL -->
   <div id="panel-analytics" class="panel">
@@ -356,6 +370,16 @@ const SUBJECTS = {
   ml:{name:'機械学習',color:'#145898',areas:['最適化','ニューラルネット','Transformer','正則化','情報理論']},
   cs:{name:'計算機科学',color:'#7A5200',areas:['計算量','ソート','データ構造','グラフ','動的計画法']},
   en:{name:'英語',color:'#B21B7E',areas:['語彙','文法','論文表現','TOEIC']}
+};
+
+const TOPIC_LIBRARY = {
+  '線形代数': ['行列の積', '逆行列', '行列式(3x3)', '固有値・固有ベクトル', '掃き出し法', '線形写像'],
+  '微積分': ['合成関数の微分', '部分積分', '置換積分', '広義積分', '偏微分', '重積分', 'テイラー展開'],
+  'アルゴリズム': ['二分探索', 'ソート', '動的計画法', 'グラフ探索', '計算量推定', '計算機アーキテクチャ'],
+  '機械学習': ['回帰分析', '勾配降下法', '決定木', 'ニューラルネットワーク', '適合率・再現率'],
+  '複素関数論': ['複素数の演算', '複素積分', '留数定理'],
+  '常微分方程式': ['変数分離形', '1階線形', 'ラプラス変換'],
+  '英語(TOEIC)': ['Part5(短文穴埋め)', 'Part6(長文穴埋め)', 'Part7(読解)']
 };
 
 /* 問題バンク (フラッシュカード & 穴埋め兼用) */
@@ -1044,50 +1068,28 @@ function initGalaxy() {
 
 // プロンプト生成ロジック（具体的数値を出すように指示）
 const buildStudyPrompt = (subj, type) => {
-//サブカテゴリのリストを作成してランダムに選ばせる指示
-  const topicLibrary = {
-    '線形代数': '行列の積, 逆行列, 行列式(3x3含む), 固有値・固有ベクトル, 連立一次方程式(掃き出し法), 線形写像',
-    '微積分': '合成関数の微分, 部分積分, 置換積分, 広義積分, 偏微分, 重積分, テイラー展開',
-    'アルゴリズム': '二分探索, ソート(クイック・マージ), , グラフ探索(DFS・BFS), ダイクストラ法, 計算量推定, データ表現, 論理計算, 組み合わせ回路, 順序回路, 計算機アーキテクチャ, オペレーティングシステム',
-    '機械学習': '単回帰・重回帰分析, ロジスティック回帰, 勾配降下法, 決定木, ニューラルネットワークの基礎, 適合率・再現率',
-    '複素関数論': '複素数の演算, コーシー・リーマンの方程式, 複素積分, 留数定理, ローラン展開',
-    '常微分方程式': '変数分離形, 1階線形微分方程式, 2階定数係数斉次・非斉次微分方程式, ラプラス変換',
-    '英語(TOEIC)':  'Part5, Part6, Part7'
-  };
-
-  const topics = topicLibrary[subj] || '基礎から応用まで';
+  const selectedTopic = document.getElementById('ai-topic-sel').value;
+  const available = TOPIC_LIBRARY[subj] ? TOPIC_LIBRARY[subj].join(', ') : '基礎概念';
   
-  // 基本となる共通指示
-  let prompt = `
-# 指示: ${subj}の${type}に関する基礎練習問題を作成せよ。
+  const topicDirective = (selectedTopic === "ランダム")
+    ? `以下のリストから重複を避けてランダムに1つ選んで出題せよ: [${available}]`
+    : `本日の指定トピックは「${selectedTopic}」である。このテーマに厳密に沿った問題を作成せよ。`;
+
+  return `
+# 指示: ${subj}に関する${type}を作成せよ。
+# トピック選定:
+${topicDirective}
+
 # 構成: 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】
+# 数式ルール:
+- 文中の数式は \\( ... \\) 、独立行は $$ ... $$ を使用。
+- 行列の改行は \\\\\\\\ (バックスラッシュ4つ) を厳守せよ。
+- 行列は \\\\begin{pmatrix} ... \\\\end{pmatrix} を使用せよ。
+
 # ルール:
 - 日本語で記述。挨拶不要。
-- 数値は具体的かつ計算しやすいものにすること。
-- 数式は必ず $...$ または $$...$$ で囲むこと。
+- 具体的かつ計算しやすい整数値を設定すること。
   `.trim();
-
-  // 線形代数の場合のみ、行列の厳格な書き方を追加する
-  if (subj === '線形代数' || subj === '機械学習') {
-    prompt += `
-# 行列記述ルール:
-- 行列は必ず pmatrix 環境を使用し、横一行にせず必ず改行すること。
-- 行列の改行コードは \\\\\\\\ (バックスラッシュ4つ) を使用せよ。
-  例: $$ A = \\\\begin{pmatrix} 1 & 2 \\\\\\\\ 3 & 4 \\\\end{pmatrix} $$
-    `.trim();
-  } else if (subj === 'アルゴリズム') {
-    prompt += `
-# アルゴリズム用ルール:
-- 行列は使用せず、擬似コードや図解的な説明、計算量（O記法）などを用いて概念を説明せよ。
-    `.trim();
-  } else if (subj === '英語(TOEIC)'){
-    prompt += `
-# 英語用ルール:
-- 行列は使用せず、TOEICのPart5,6,7の類題などを用いて問題を生成せよ。
-    `.trim();
-  }
-
-  return prompt;
 };
   
 // AI生成した結果を一時保存する変数
@@ -1163,6 +1165,23 @@ window.askGemini = async () => {
   btn.disabled = false;
 };
 
+window.updateSubtopics = () => {
+  const subj = document.getElementById('ai-subj-sel').value;
+  const topicSel = document.getElementById('ai-topic-sel');
+  if(!topicSel) return;
+  
+  topicSel.innerHTML = '<option value="ランダム">トピックをランダムに選択</option>';
+  
+  if(TOPIC_LIBRARY[subj]) {
+    TOPIC_LIBRARY[subj].forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t; 
+      opt.textContent = t;
+      topicSel.appendChild(opt);
+    });
+  }
+};
+  
 window.saveAI = () => {
   if(!lastAIRes){ toast('まず問題を生成してください','err'); return; }
   const subj = document.getElementById('ai-subj-sel').value;
@@ -1306,6 +1325,7 @@ function updateStreak() {
    INIT
 ══════════════════════════════════════ */
 function init() {
+  window.updateSubtopics();
   renderPlan();
   renderSubjChips();
   renderStudy();
