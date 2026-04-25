@@ -285,11 +285,6 @@ svg.ring{transform:rotate(-90deg)}
       <option value="英語(TOEIC)">英語 (TOEIC)</option>
     </select>
 
-    <!-- 新設：トピック選択 -->
-    <select id="ai-topic-sel">
-      <option value="ランダム">トピックをランダムに選択</option>
-    </select>
-
     <!-- 形式選択 -->
     <select id="ai-type-sel">
       <option value="計算問題">計算問題</option>
@@ -1068,17 +1063,15 @@ function initGalaxy() {
 
 // プロンプト生成ロジック（具体的数値を出すように指示）
 const buildStudyPrompt = (subj, type) => {
-  const selectedTopic = document.getElementById('ai-topic-sel').value;
-  const available = TOPIC_LIBRARY[subj] ? TOPIC_LIBRARY[subj].join(', ') : '基礎概念';
+  // ライブラリから該当する科目のリストを取得（なければデフォルト）
+  const list = TOPIC_LIBRARY[subj] || ['基礎概念'];
   
-  const topicDirective = (selectedTopic === "ランダム")
-    ? `以下のリストから重複を避けてランダムに1つ選んで出題せよ: [${available}]`
-    : `本日の指定トピックは「${selectedTopic}」である。このテーマに厳密に沿った問題を作成せよ。`;
+  // リストの中から1つを完全にランダムで選ぶ
+  const randomTopic = list[Math.floor(Math.random() * list.length)];
 
   return `
-# 指示: ${subj}に関する${type}を作成せよ。
-# トピック選定:
-${topicDirective}
+# 指示: ${subj}の「${randomTopic}」に関する${type}を作成せよ。
+# 条件: 指定トピックは「${randomTopic}」である。このテーマに厳密に沿った問題を作成せよ。
 
 # 構成: 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】
 # 数式ルール:
@@ -1163,23 +1156,6 @@ window.askGemini = async () => {
   
   if(!success) txt.textContent = '生成失敗。デバッグログを確認してください。';
   btn.disabled = false;
-};
-
-window.updateSubtopics = () => {
-  const subj = document.getElementById('ai-subj-sel').value;
-  const topicSel = document.getElementById('ai-topic-sel');
-  if(!topicSel) return;
-  
-  topicSel.innerHTML = '<option value="ランダム">トピックをランダムに選択</option>';
-  
-  if(TOPIC_LIBRARY[subj]) {
-    TOPIC_LIBRARY[subj].forEach(t => {
-      const opt = document.createElement('option');
-      opt.value = t; 
-      opt.textContent = t;
-      topicSel.appendChild(opt);
-    });
-  }
 };
   
 window.saveAI = () => {
