@@ -1048,7 +1048,23 @@ window.askGemini = async () => {
   const btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
   out.style.display='block'; txt.textContent='生成中...'; debug.style.display='none'; btn.disabled=true;
 
-  const prompt = `${subj}に関する大学院入試レベルの${type}を1問作成してください。具体的な数値や式を用いて、解答と詳細な解説を日本語で記述してください。`;
+  const prompt = `
+  #指示
+  ${subj}の${type}について、基礎から体系的に理解するための練習問題を1問作成してください。
+  
+  #制約条件
+  １．数値設定：具体的な数値や式を用いてください。
+  ２．計算難易度：手計算で１０分以内に完結し、かつ「解放の本質」が、学べる数値設定にしてください（固有値が整数になるなど）。
+  ３．構成：
+      ー【問題】具体的な行列と問いたい内容（例：逆行列を求めよ）
+      ー【解放のポイント】解くために必要な定義や公式の短い解説
+      ー【詳細なステップ解説】計算過程を１行ずつ丁寧に記述
+      ー【最終回答】
+  ４．言語：日本語で記述してください。
+
+  #出力形式
+  Markdown形式で、数式はLaTeXを使用して分かりやすく表示してください。
+  `;
   const models = ['models/gemini-1.5-flash','models/gemini-2.0-flash','models/gemini-1.5-flash-8b'];
   let success = false;
 
