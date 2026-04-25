@@ -576,23 +576,31 @@ function renderPlan() {
   const rw = document.getElementById('rings-wrap');
   rw.innerHTML = '';
   const allLogs = [...logs, ...Object.values(fbLogs)];
+  
   Object.entries(SUBJECTS).forEach(([k,s]) => {
+    // 過去7日間の学習時間を集計
     const weekMins = allLogs
-      .filter(l => l.cat===k && Date.now()-new Date(l.date)<7*24*3600*1000)
-      .reduce((a,l) => a+(l.dur||0), 0);
-    const goal = 120; // 週120分目標
-    const pct = Math.min(1, weekMins/goal);
+      .filter(l => {
+        const logDate = new Date(l.date || l.added);
+        const diffTime = Date.now() - logDate.getTime();
+        return l.cat === k && diffTime < 7 * 24 * 3600 * 1000;
+      })
+      .reduce((a,l) => a + (parseInt(l.dur) || 0), 0);
+
+    const goal = 120; // 目標：週120分
+    const pct = Math.min(1, weekMins / goal);
     const r=30, circ=2*Math.PI*r;
+    
     rw.innerHTML += `
       <div class="ring-wrap">
         <svg class="ring" width="80" height="80" viewBox="0 0 80 80">
           <circle class="ring-bg" cx="40" cy="40" r="${r}"/>
           <circle class="ring-fill" cx="40" cy="40" r="${r}"
             stroke="${s.color}" stroke-dasharray="${circ}"
-            stroke-dashoffset="${circ*(1-pct)}"/>
+            stroke-dashoffset="${circ * (1 - pct)}"/>
         </svg>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);text-align:center;max-width:72px">${s.name}</div>
-        <div style="font-size:10px;color:var(--text3)">${weekMins}分</div>
+        <div style="font-size:10px;font-weight:700;color:var(--text2);text-align:center;margin-top:4px">${s.name}</div>
+        <div style="font-size:10px;color:${s.color};font-weight:800">${weekMins}m</div>
       </div>`;
   });
 }
@@ -625,25 +633,33 @@ function renderStudy() {
 
 /* --- FLASHCARD --- */
 function renderFC(cont) {
-  const data = BANK.filter(b=>b.cat===studySubj);
-  if(!data.length){cont.innerHTML='<div class="card">データがありません。</div>';return;}
+  const data = BANK.filter(b => b.cat === studySubj);
+  if(!data.length){ cont.innerHTML='<div class="card">まだ知識データがありません。AI生成で増やしましょう。</div>'; return; }
+  
   const it = data[studyIdx % data.length];
-  const acc = getAcc(studySubj);
   cont.innerHTML = `
-    <div style="margin-bottom:12px">
-      <span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span>
-      ${acc!==null?`<span style="float:right;font-size:12px;color:var(--text3)">正答率 ${acc}%</span>`:''}
+    <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+      <span class="badge" style="background:var(--bg3); color:var(--accent)">${it.area || '基礎概念'}</span>
+      <span style="font-size:11px;color:var(--text3)">${studyIdx % data.length + 1} / ${data.length}</span>
     </div>
-    <div class="fc-card" id="fc-main" onclick="flipFC()">
-      <div id="fc-q">${it.q}</div>
+    <div class="card" style="border-left: 5px solid ${SUBJECTS[studySubj].color};">
+      <div style="font-size:13px; color:var(--text3); margin-bottom:8px;">【学習トピック】</div>
+      <div style="font-size:18px; font-weight:700; line-height:1.6; margin-bottom:20px;">${it.q}</div>
+      
+      <button class="btn-p" id="reveal-btn" onclick="document.getElementById('knowledge-content').style.display='block'; this.style.display='none'">
+        💡 内容を理解する / 解答を表示
+      </button>
+
+      <div id="knowledge-content" style="display:none; border-top:1px solid var(--border); padding-top:15px; margin-top:15px;">
+        <div style="font-size:13px; color:var(--text3); margin-bottom:8px;">【体系的理解・解説】</div>
+        <div style="font-size:15px; line-height:1.8; color:var(--text); white-space:pre-wrap;">${it.a}</div>
+        
+        <div class="btn-row" style="margin-top:20px">
+          <button class="btn-p btn-sm btn-g" onclick="fcAnswer(true)">✅ 理解した</button>
+          <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++; renderStudy()">後で復習</button>
+        </div>
+      </div>
     </div>
-    <div class="fc-hint">タップで答えを表示</div>
-    <div class="btn-row" style="margin-top:16px">
-      <button class="btn-p btn-sm btn-g" onclick="fcAnswer(true)">✓ 正解</button>
-      <button class="btn-p btn-sm" style="background:var(--red)" onclick="fcAnswer(false)">✗ 不正解</button>
-      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ スキップ</button>
-    </div>
-    <div id="fc-ans" style="display:none;margin-top:16px;padding:16px;background:var(--alight);border-radius:var(--r2);font-size:15px;color:var(--accent);font-weight:600;border:1px solid var(--aborder)">${it.a}</div>
   `;
 }
 window.flipFC = () => {
@@ -654,7 +670,14 @@ window.flipFC = () => {
 };
 window.fcAnswer = (correct) => {
   recordAcc(studySubj, correct);
-  toast(correct?'✓ 正解！':'✗ もう一度', correct?'ok':'err');
+  
+  // 「理解した」を押した時に、学習ログ(5分分)を自動で追加してリングを回す
+  if(correct) {
+    const s = SUBJECTS[studySubj];
+    addLogEntry(`演習: ${s.name}`, studySubj, 5); 
+  }
+
+  toast(correct ? '✅ 知識を吸収しました' : '📚 重点的に復習しましょう', correct ? 'ok' : 'err');
   studyIdx++;
   setTimeout(renderStudy, 400);
 };
@@ -1003,13 +1026,26 @@ function initGalaxy() {
     });
   });
 
-  BANK.forEach((k,i) => {
-    const kid=`k${i}`;
-    nodes.push({id:kid, name:k.q.slice(0,30), detail:k.a, group:k.cat, r:6, type:'fact'});
-    const pid = k.area ? k.cat+'_'+k.area : k.cat;
-    links.push({source:pid, target:kid});
-  });
+  // BANK（専門演習の知識）をそのまま銀河の星にする
+  BANK.forEach((k, i) => {
+    const kid = `k${i}`;
+    // 専門科目の知識のみを表示（英語は除外するとスッキリします）
+    if(k.cat === 'en') return; 
 
+    nodes.push({
+      id: kid, 
+      name: k.q.slice(0, 15) + '...', // カードの問いを星の名前に
+      detail: k.a, // クリックで解説を表示
+      group: k.cat, 
+      r: 5, 
+      type: 'fact'
+    });
+    
+    // 分野ハブがあればそこに、なければ科目ハブに繋ぐ
+    const pid = k.area ? k.cat + '_' + k.area : k.cat;
+    links.push({source: pid, target: kid});
+  });
+  
   const svg = d3.select('#galaxy-svg'); svg.selectAll('*').remove();
   const g = svg.append('g');
   svg.call(d3.zoom().scaleExtent([0.3,4]).on('zoom', e=>g.attr('transform',e.transform)));
