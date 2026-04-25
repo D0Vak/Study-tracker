@@ -1066,24 +1066,32 @@ function initGalaxy() {
    AI PANEL ENGINE
 ══════════════════════════════════════ */
 
-// プロンプト生成ロジック（具体的数値を出すように指示）
+let lastAIRes = '';
+let lastUsedTopic = ''; // 生成されたトピックを保存時に使うために記憶する
+
+// プロンプト生成ロジック
 const buildStudyPrompt = (subj, type) => {
-  // ライブラリから該当する科目のリストを取得（なければデフォルト）
-  const list = TOPIC_LIBRARY[subj] || ['基礎概念'];
+  // ドロップダウンから選択されている値（「ランダム」or「具体的なトピック」）を取得
+  const topicSel = document.getElementById('ai-topic-sel');
+  const selectedTopic = topicSel ? topicSel.value : "ランダム";
   
+  const list = TOPIC_LIBRARY[subj] || ['基礎概念'];
   let topicDirective = "";
+  
   if (selectedTopic === "ランダム") {
-    // ランダムが選ばれていたら中身をランダムに決める
-    const randomTopic = list[Math.floor(Math.random() * list.length)];
-    topicDirective = `以下のリストからランダムに1つ選んで出題せよ: [${list.join(', ')}]。今回は特に「${randomTopic}」を重点的に。`;
+    // ランダムが選ばれていたら、内部で1つ選ぶ
+    lastUsedTopic = list[Math.floor(Math.random() * list.length)];
+    topicDirective = `以下のリストからトピックを1つ厳選し、そのトピックに集中した問題を作成せよ: [${list.join(', ')}]。\n今回の指定トピック: 「${lastUsedTopic}」`;
   } else {
-    // 特定のトピックが選ばれていたらそれを指定する
-    topicDirective = `本日の指定トピックは「${selectedTopic}」である。このテーマに厳密に沿った問題を作成せよ。`;
+    // 特定のトピックが選ばれていたら、それを使う
+    lastUsedTopic = selectedTopic;
+    topicDirective = `本日の指定トピックは「${lastUsedTopic}」である。このテーマに厳密に沿った問題を作成せよ。`;
   }
   
   return `
-# 指示: ${subj}の「${randomTopic}」に関する${type}を作成せよ。
-# 条件: 指定トピックは「${randomTopic}」である。このテーマに厳密に沿った問題を作成せよ。
+# 指示: ${subj}の「${lastUsedTopic}」に関する${type}を作成せよ。
+# トピック詳細:
+${topicDirective}
 
 # 構成: 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】
 # 数式ルール:
@@ -1096,11 +1104,6 @@ const buildStudyPrompt = (subj, type) => {
 - 具体的かつ計算しやすい整数値を設定すること。
   `.trim();
 };
-  
-// AI生成した結果を一時保存する変数
-let lastAIRes = '';
-
-// --- 関数をwindowに登録（HTMLのonclickから呼べるようにする） ---
 
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
@@ -1123,11 +1126,10 @@ window.askGemini = async () => {
   out.style.display = 'block'; 
   txt.textContent = '生成中...'; 
   debug.style.display = 'none'; 
-  debug.textContent = ''; // ログをリセット
+  debug.textContent = ''; 
   btn.disabled = true;
 
   const prompt = buildStudyPrompt(subj, type);
-  // 安定して動作するモデルのリスト
   const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001'];
   let success = false;
 
@@ -1144,21 +1146,16 @@ window.askGemini = async () => {
       if(data.error){
         debug.style.display = 'block';
         debug.textContent += `[${m}] ${data.error.code}: ${data.error.message}\n`;
-        continue; // 次のモデルへ
+        continue;
       }
       
       if(data.candidates?.[0]?.content){
         lastAIRes = data.candidates[0].content.parts[0].text;
         txt.style.lineHeight = "1.8";
-        // marked.js を使用してMarkdownを綺麗に表示
         txt.innerHTML = marked.parse(lastAIRes);
-
-        //MathJaxを適用
-        if(window.MathJax){
-          MathJax.typesetPromise([txt]);
-        }
+        if(window.MathJax) MathJax.typesetPromise([txt]);
         success = true; 
-        break; // 成功したのでループ終了
+        break;
       }
     } catch(e) {
       debug.style.display = 'block';
@@ -1174,16 +1171,11 @@ window.updateSubtopics = () => {
   const subj = document.getElementById('ai-subj-sel').value;
   const topicSel = document.getElementById('ai-topic-sel');
   if(!topicSel) return;
-  
-  // 一旦中身を「ランダム」だけにする
   topicSel.innerHTML = '<option value="ランダム">トピックをランダムに選択</option>';
-  
-  // TOPIC_LIBRARYから中身を補充する
   if(TOPIC_LIBRARY[subj]) {
     TOPIC_LIBRARY[subj].forEach(t => {
       const opt = document.createElement('option');
-      opt.value = t; 
-      opt.textContent = t;
+      opt.value = t; opt.textContent = t;
       topicSel.appendChild(opt);
     });
   }
@@ -1195,17 +1187,16 @@ window.saveAI = () => {
   const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','TOEIC英語':'en'};
   const cat = catMap[subj] || 'la';
 
-  // BANK（学習データ）に保存
   if(typeof BANK !== 'undefined'){
       BANK.push({
           cat: cat,
-          q: `[AI生成] ${subj}の${document.getElementById('ai-type-sel').value}`,
+          // 記憶しておいた具体的なトピック名（逆行列など）を名前に含める
+          q: `[AI] ${lastUsedTopic}（${document.getElementById('ai-type-sel').value}）`,
           a: lastAIRes,
-          area: 'AI生成'
+          area: lastUsedTopic // 銀河系で正しいトピックの位置に配置されるようにする
       });
       localStorage.setItem('study_v29_bank', JSON.stringify(BANK));
-      toast('演習バンクに追加しました！');
-      // 銀河系を更新
+      toast(`${lastUsedTopic}の問題を演習バンクに追加しました！`);
       if(typeof initGalaxy === 'function') initGalaxy();
   }
 };
