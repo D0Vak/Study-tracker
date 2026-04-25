@@ -1028,164 +1028,112 @@ function initGalaxy() {
     label.attr('x',d=>d.x).attr('y',d=>d.y);
   });
 }
-<div id="panel-ai" class="panel">
-  </div>
 
-<script>
 /* ══════════════════════════════════════
-   AI PANEL
+   AI PANEL ENGINE
 ══════════════════════════════════════ */
 
-// プロンプト生成ロジックを分離
+// プロンプト生成ロジック（具体的数値を出すように指示）
 const buildStudyPrompt = (subj, type) => `
-# 指示: ${subj}の${type}に関する基礎練習問題
+# 指示: ${subj}の${type}に関する基礎練習問題を作成してください。
 # 制約: 
 - 具体的数値（整数）を使用。
-- 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】の構成。
-- Markdown/LaTeX形式。挨拶不要。
+- 【問題】【解法のポイント】【詳細ステップ解説】【最終回答】の構成にすること。
+- Markdown/LaTeX形式（$...$）を使用。挨拶は不要。
 `.trim();
+
+// AI生成した結果を一時保存する変数
+let lastAIRes = '';
+
+// --- 関数をwindowに登録（HTMLのonclickから呼べるようにする） ---
 
 window.saveApiKey = () => {
   const key = document.getElementById('api-key-input').value;
-  if(!key){toast('キーを入力してください','err');return;}
+  if(!key){ toast('キーを入力してください','err'); return; }
   localStorage.setItem('studyflow_gemini_v29', key);
   toast('APIキーを保存しました！');
 };
 
-let lastAIRes = '';
 window.askGemini = async () => {
   const key = localStorage.getItem('studyflow_gemini_v29');
-  if(!key){toast('Gemini APIキーを設定してください','err');return;}
+  if(!key){ toast('Gemini APIキーを設定してください','err'); return; }
   
   const subj = document.getElementById('ai-subj-sel').value;
   const type = document.getElementById('ai-type-sel').value;
   const out = document.getElementById('ai-output');
   const txt = document.getElementById('ai-txt');
   const btn = document.getElementById('ai-btn');
-  const debug = document.getElementById('ai-debug-log'); // 修正：重複を削除
+  const debug = document.getElementById('ai-debug-log');
 
-  out.style.display='block'; 
-  txt.textContent='生成中...'; 
-  debug.style.display='none'; 
-  debug.textContent = ''; 
-  btn.disabled=true;
+  out.style.display = 'block'; 
+  txt.textContent = '生成中...'; 
+  debug.style.display = 'none'; 
+  debug.textContent = ''; // ログをリセット
+  btn.disabled = true;
 
   const prompt = buildStudyPrompt(subj, type);
-  const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001', 'gemini-1.5-flash-latest'];
+  // 安定して動作するモデルのリスト
+  const models = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
   let success = false;
 
   for(const m of models){
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-      const res = await fetch(url,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
       });
       const data = await res.json();
       
       if(data.error){
-        debug.style.display='block';
+        debug.style.display = 'block';
         debug.textContent += `[${m}] ${data.error.code}: ${data.error.message}\n`;
-        continue;
+        continue; // 次のモデルへ
       }
       
       if(data.candidates?.[0]?.content){
         lastAIRes = data.candidates[0].content.parts[0].text;
         txt.style.lineHeight = "1.8";
-        // marked.js が head で読み込まれていれば動きます
+        // marked.js を使用してMarkdownを綺麗に表示
         txt.innerHTML = marked.parse(lastAIRes);
-        success=true; break;
+        success = true; 
+        break; // 成功したのでループ終了
       }
     } catch(e) {
-      console.error(e);
-      debug.style.display='block';
-      debug.textContent += `[${m}] Network Error\n`;
+      debug.style.display = 'block';
+      debug.textContent += `[${m}] 接続エラー\n`;
     }
   }
-  if(!success) txt.textContent='生成失敗。デバッグログを確認してください。';
-  btn.disabled=false;
+  
+  if(!success) txt.textContent = '生成失敗。デバッグログを確認してください。';
+  btn.disabled = false;
 };
 
 window.saveAI = () => {
-  if(!lastAIRes){toast('まず問題を生成してください','err');return;}
+  if(!lastAIRes){ toast('まず問題を生成してください','err'); return; }
   const subj = document.getElementById('ai-subj-sel').value;
   const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','TOEIC英語':'en'};
-  const cat = catMap[subj]||'la';
-  // BANKが他で定義されている前提です
+  const cat = catMap[subj] || 'la';
+
+  // BANK（学習データ）に保存
   if(typeof BANK !== 'undefined'){
-      BANK.push({cat,q:'[AI生成] '+lastAIRes.slice(0,60)+'...',a:lastAIRes,area:'AI生成'});
-      localStorage.setItem('study_v29_bank',JSON.stringify(BANK));
-      toast('演習バンクに追加しました！');
-  }
-};
-
-window.copyAI = () => {
-  navigator.clipboard?.writeText(lastAIRes).then(()=>toast('コピーしました！'));
-};
-</script>
-
-let lastAIRes = '';
-window.askGemini = async () => {
-  const key = localStorage.getItem('studyflow_gemini_v29');
-  if(!key){toast('Gemini APIキーを設定してください','err');return;}
-  const subj = document.getElementById('ai-subj-sel').value;
-  const type = document.getElementById('ai-type-sel').value;
-  const out = document.getElementById('ai-output'), txt = document.getElementById('ai-txt');
-  const btn = document.getElementById('ai-btn'), debug = document.getElementById('ai-debug-log');
-  const debug = document.getElementById('ai-debug-log');
-  
-  out.style.display='block'; 
-  txt.textContent='生成中...'; 
-  debug.style.display='none'; 
-  debug.textContent = ''; // ログをリセット
-  btn.disabled=true;
-  
-  const prompt = buildStudyPrompt(subj, type);
-  const models = ['gemini-3.1-flash-lite-preview', 'gemini-3-flash-preview', 'gemini-2.0-flash-001', 'gemini-1.5-flash-latest'];
-  let success = false;
-
-  for(const m of models){
-    try{
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${key}`;
-      const res = await fetch(url,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+      BANK.push({
+          cat: cat,
+          q: `[AI生成] ${subj}の${document.getElementById('ai-type-sel').value}`,
+          a: lastAIRes,
+          area: 'AI生成'
       });
-      const data = await res.json();
-      if(data.error){
-        debug.style.display='block';
-        debug.textContent += `[${m}] ${data.error.code}: ${data.error.message}\n`;
-        continue;
-      }
-      if(data.candidates?.[0]?.content){
-        lastAIRes = data.candidates[0].content.parts[0].text;
-        txt.style.lineHeight = "1.8";
-        txt.innerHTML = marked.parse(lastAIRes);
-        success=true; break;
-      }
-    }catch(e){
-      console.error(e);
-      debug.style.display='block';
-      debug.textContent += `[${m}] Network Error\n`;
-    }
+      localStorage.setItem('study_v29_bank', JSON.stringify(BANK));
+      toast('演習バンクに追加しました！');
+      // 銀河系を更新
+      if(typeof initGalaxy === 'function') initGalaxy();
   }
-  if(!success) txt.textContent='生成失敗。デバッグログを確認してください。';
-  btn.disabled=false;
 };
 
-window.saveAI = () => {
-  if(!lastAIRes){toast('まず問題を生成してください','err');return;}
-  const subj = document.getElementById('ai-subj-sel').value;
-  const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','TOEIC英語':'en'};
-  const cat = catMap[subj]||'la';
-  BANK.push({cat,q:'[AI生成] '+lastAIRes.slice(0,60)+'...',a:lastAIRes,area:'AI生成'});
-  localStorage.setItem('study_v29_bank',JSON.stringify(BANK));
-  toast('演習バンクに追加しました！');
-};
 window.copyAI = () => {
-  navigator.clipboard?.writeText(lastAIRes).then(()=>toast('コピーしました！'));
+  if(!lastAIRes) return;
+  navigator.clipboard.writeText(lastAIRes).then(() => toast('コピーしました！'));
 };
 
 /* ══════════════════════════════════════
