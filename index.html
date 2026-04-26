@@ -476,6 +476,30 @@ let studyMode = 'fc', studySubj = 'la', studyIdx = 0;
 let enMode = 'card', enIdx = 0;
 let fbLogs = {}, fbEnWords = {};
 
+  /* ══════════════════════════════════════
+   RESEARCH & KNOWLEDGE GRAPH MAPPING
+══════════════════════════════════════ */
+const RESEARCH_THEME = {
+  id: 'cpd',
+  name: '変化点検出 (CPD)',
+  color: '#FF4757',
+  children: {
+    'statistical': { name: '統計的手法', methods: ['CUSUM', 'PELT', 'BOCPD'] },
+    'kernel': { name: 'カーネル法/距離', methods: ['MMD', 'KCP', 'DTW'] },
+    'deep': { name: '深層学習', methods: ['LSTM', 'Transformer', 'AutoEncoder'] },
+    'matrix': { name: '行列・部分空間', methods: ['SST (部分空間追跡)', 'PCA'] }
+  }
+};
+
+// 基礎科目から研究手法への「架け橋」を定義
+const KNOWLEDGE_BRIDGES = [
+  { from: 'la', to: 'matrix', desc: '固有値分解やSVDが部分空間の比較に使用される' },
+  { from: 'la', to: 'kernel', desc: 'グラム行列の計算や正定値性の理解に必要' },
+  { from: 'ca', to: 'deep', desc: '勾配降下法によるネットワークの最適化に必須' },
+  { from: 'ml', to: 'statistical', desc: 'ベイズ推定がBOCPDの基礎となる' },
+  { from: 'cs', to: 'statistical', desc: 'PELT法などの動的計画法による計算量削減' }
+];
+  
 /* ══════════════════════════════════════
    FIREBASE SYNC
 ══════════════════════════════════════ */
@@ -1012,90 +1036,112 @@ function renderTestResult() {
 ══════════════════════════════════════ */
 function initGalaxy() {
   const wrap = document.getElementById('galaxy-container');
+  if (!wrap) return;
   const width = wrap.clientWidth, height = wrap.clientHeight;
-  const nodes = [{id:'YOU', r:25, fx: width/2, fy: height/2, name:'YOU', type:'center'}];
+  
+  const nodes = [];
   const links = [];
 
-  Object.keys(SUBJECTS).forEach(s => {
-    nodes.push({id:s, name:SUBJECTS[s].name, r:18, type:'subj', color:SUBJECTS[s].color});
-    links.push({source:'YOU', target:s});
-    SUBJECTS[s].areas.forEach(area => {
-      const aid=s+'_'+area;
-      nodes.push({id:aid, name:area, group:s, r:10, type:'area'});
-      links.push({source:s, target:aid});
-    });
-  });
+  // 1. 中心ノード (RESEARCH THEME)
+  nodes.push({ id: 'RESEARCH', name: RESEARCH_THEME.name, r: 30, type: 'core', color: RESEARCH_THEME.color });
 
-  // BANK（専門演習の知識）をそのまま銀河の星にする
-  BANK.forEach((k, i) => {
-    const kid = `k${i}`;
-    // 専門科目の知識のみを表示（英語は除外するとスッキリします）
-    if(k.cat === 'en') return; 
-
-    nodes.push({
-      id: kid, 
-      name: k.q.slice(0, 15) + '...', // カードの問いを星の名前に
-      detail: k.a, // クリックで解説を表示
-      group: k.cat, 
-      r: 5, 
-      type: 'fact'
-    });
+  // 2. 研究手法ノードの展開
+  Object.entries(RESEARCH_THEME.children).forEach(([key, val]) => {
+    nodes.push({ id: key, name: val.name, r: 18, type: 'res_area', color: RESEARCH_THEME.color });
+    links.push({ source: 'RESEARCH', target: key, distance: 100 });
     
-    // 分野ハブがあればそこに、なければ科目ハブに繋ぐ
-    const pid = k.area ? k.cat + '_' + k.area : k.cat;
-    links.push({source: pid, target: kid});
+    val.methods.forEach(m => {
+      nodes.push({ id: m, name: m, r: 10, type: 'method', color: '#FFA502' });
+      links.push({ source: key, target: m, distance: 60 });
+    });
   });
-  
-  const svg = d3.select('#galaxy-svg'); svg.selectAll('*').remove();
+
+  // 3. 基礎科目ノードの展開
+  Object.entries(SUBJECTS).forEach(([id, s]) => {
+    nodes.push({ id: id, name: s.name, r: 20, type: 'subj', color: s.color });
+    // 科目からその下の学習項目(BANK)へ
+    BANK.filter(b => b.cat === id).forEach((k, i) => {
+      const kid = `k_${id}_${i}`;
+      nodes.push({ id: kid, name: k.q.slice(0, 10), detail: k.a, r: 6, type: 'fact', color: s.color });
+      links.push({ source: id, target: kid, distance: 50 });
+    });
+  });
+
+  // 4. 「知識の架け橋」リンクの追加
+  KNOWLEDGE_BRIDGES.forEach(b => {
+    links.push({ source: b.from, target: b.to, type: 'bridge', desc: b.desc });
+  });
+
+  // --- D3 Simulation ---
+  const svg = d3.select('#galaxy-svg');
+  svg.selectAll('*').remove();
   const g = svg.append('g');
-  svg.call(d3.zoom().scaleExtent([0.3,4]).on('zoom', e=>g.attr('transform',e.transform)));
+
+  const zoom = d3.zoom().scaleExtent([0.1, 5]).on('zoom', (e) => g.attr('transform', e.transform));
+  svg.call(zoom);
 
   const sim = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d=>d.id).distance(70))
-    .force('charge', d3.forceManyBody().strength(-300))
-    .force('center', d3.forceCenter(width/2, height/2))
-    .force('collision', d3.forceCollide().radius(d=>d.r+12));
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.distance || 80))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => d.r + 15));
 
-  // Stars background
-  for(let i=0;i<120;i++){
-    g.append('circle')
-      .attr('cx', Math.random()*width*2-width/2)
-      .attr('cy', Math.random()*height*2-height/2)
-      .attr('r', Math.random()*1.5)
-      .attr('fill', 'white')
-      .attr('opacity', Math.random()*0.7+0.1);
-  }
-
+  // エッジ（線）の描画
   const link = g.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke','#2A2845').attr('stroke-opacity',0.5).attr('stroke-width',1);
+    .attr('stroke', d => d.type === 'bridge' ? '#666' : '#333')
+    .attr('stroke-dasharray', d => d.type === 'bridge' ? '4 2' : '0')
+    .attr('stroke-width', d => d.type === 'bridge' ? 2 : 1)
+    .attr('stroke-opacity', 0.6);
 
-  const node = g.append('g').selectAll('circle').data(nodes).join('circle')
-    .attr('r', d=>d.r)
-    .attr('fill', d => d.type==='center'?'#fff': d.color||SUBJECTS[d.group]?.color||'#7C5FD4')
-    .attr('opacity', d=>d.type==='fact'?0.7:1)
-    .attr('stroke', d=>d.type==='center'?'#fff':d.color||SUBJECTS[d.group]?.color||'#7C5FD4')
-    .attr('stroke-width', 2).attr('stroke-opacity',0.4)
-    .style('cursor','pointer')
-    .on('click', (e,d) => {
-      if(d.detail||d.type==='subj') {
-        const info = document.getElementById('galaxy-info');
-        const c = SUBJECTS[d.id]?.color || SUBJECTS[d.group]?.color || '#7C5FD4';
-        document.getElementById('galaxy-info-content').innerHTML =
-          `<div style="color:${c};font-weight:700;margin-bottom:6px">${d.name}</div>`+
-          (d.detail?`<div style="color:#ccc;font-size:13px">${d.detail}</div>`:'');
-        info.style.display='block';
+  // ノード（点）の描画
+  const node = g.append('g').selectAll('g').data(nodes).join('g')
+    .call(d3.drag().on('start', dragstarted).on('drag', dragged).on('end', dragended));
+
+  node.append('circle')
+    .attr('r', d => d.r)
+    .attr('fill', d => d.color)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1.5)
+    .style('cursor', 'pointer')
+    .on('click', (e, d) => {
+      const info = document.getElementById('galaxy-info');
+      const content = document.getElementById('galaxy-info-content');
+      
+      let html = `<h4 style="color:${d.color}">${d.name}</h4>`;
+      if (d.detail) html += `<p>${d.detail}</p>`;
+      
+      // ブリッジ情報の表示
+      const connectedBridges = links.filter(l => l.type === 'bridge' && (l.source.id === d.id || l.target.id === d.id));
+      if (connectedBridges.length > 0) {
+        html += `<div style="margin-top:10px; border-top:1px solid #444; padding-top:5px; font-size:11px;"><b>研究・応用との繋がり:</b><br>`;
+        connectedBridges.forEach(b => {
+          html += `・${b.desc}<br>`;
+        });
+        html += `</div>`;
       }
+      
+      content.innerHTML = html;
+      info.style.display = 'block';
     });
 
-  const label = g.append('g').selectAll('text').data(nodes.filter(n=>n.r>9)).join('text')
-    .text(d=>d.name).attr('fill','#bbb').attr('font-size','10px').attr('dx',d=>d.r+4).attr('dy',4)
-    .style('pointer-events','none');
+  node.append('text')
+    .text(d => d.name)
+    .attr('fill', '#fff')
+    .attr('font-size', d => d.type === 'core' ? '14px' : '10px')
+    .attr('dx', d => d.r + 5)
+    .attr('dy', '4px')
+    .style('pointer-events', 'none')
+    .style('text-shadow', '0 0 4px #000');
 
-  sim.on('tick', ()=>{
-    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
-    node.attr('cx',d=>d.x).attr('cy',d=>d.y);
-    label.attr('x',d=>d.x).attr('y',d=>d.y);
+  sim.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
   });
+
+  function dragstarted(e, d) { if (!e.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+  function dragged(e, d) { d.fx = e.x; d.fy = e.y; }
+  function dragended(e, d) { if (!e.active) sim.alphaTarget(0); d.fx = null; d.fy = null; }
 }
 
 /* ══════════════════════════════════════
@@ -1371,7 +1417,7 @@ function init() {
 
   fbSyncLogs();
   fbSyncEnWords();
-  setTimeout(initGalaxy, 500);
+  setTimeout(window. initGalaxy, 500);
 }
 init();
 </script>
