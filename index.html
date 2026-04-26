@@ -385,15 +385,14 @@ const TOPIC_LIBRARY = {
 };
 
 /* 問題バンクの整理 */
+/* --- 300行目付近：BANK定義 --- */
 let BANK = JSON.parse(localStorage.getItem('study_v29_bank')) || [
-  // 線形代数
   {cat:'la', type:'fc', q:'固有値・固有ベクトル', a:'行列Aに対して Av=λv を満たすスカラーλとベクトルv。行列の「本質的な伸びる方向と倍率」を表す。', area:'固有値'},
-  {cat:'la', type:'fc', q:'行列式 (Determinant)', a:'行列による空間の「体積拡大率」。det(A)=0なら次元が潰れて逆行列を持たない（特異行列）。', area:'行列演算'},
-  {cat:'la', type:'fc', q:'ランク (Rank)', a:'行列の列ベクトル（または行ベクトル）のうち、線形独立なものの最大数。像の次元 dim(Im A) に一致する。', area:'次元定理'},
-  // 微積分
-  {cat:'ca', type:'fc', q:'テイラー展開', a:'複雑な関数を、ある点の周りで多項式近似すること。無限次まで取ると元の関数に一致（解析的）。', area:'テイラー展開'},
-  {cat:'ca', type:'fc', q:'重積分', a:'多変数関数に対する積分。領域Dにおける体積を求める操作。変形にはヤコビアンが必要。', area:'積分'}
+  {cat:'la', type:'fc', q:'行列式 (Determinant)', a:'行列による空間の「体積拡大率」。det(A)=0なら次元が潰れて逆行列を持たない。', area:'行列演算'},
+  {cat:'la', type:'fc', q:'ランク (Rank)', a:'行列の列ベクトルのうち、線形独立なものの最大数。像の次元 dim(Im A) に一致する。', area:'次元定理'},
+  {cat:'ca', type:'fc', q:'テイラー展開', a:'複雑な関数を、ある点の周りで多項式近似すること。無限次まで取ると元の関数に一致する。', area:'テイラー展開'}
 ];
+// QUIZZESとの統合部分はそのまま（isAIは持たせない）
 const QUIZZES = {
   la:[
     {q:'2×2行列 A = [[a,b],[c,d]] の行列式は？',o:['ad-bc','ab-cd','ad+bc','ab+cd'],a:0,exp:'det(A) = ad - bc が基本公式。行列式は面積の変換比を表す。', type: 'quiz'},
@@ -585,9 +584,10 @@ function renderPlan() {
 }
 
 /* ══════════════════════════════════════
-   STUDY PANEL
+   STUDY PANEL (専門演習) 新エンジン
 ══════════════════════════════════════ */
-// モード切替
+
+// サブタブ（モード）切替
 window.setStudyMode = (m, btn) => {
   studyMode = m; 
   studyIdx = 0;
@@ -598,254 +598,158 @@ window.setStudyMode = (m, btn) => {
   renderStudy();
 };
 
-// 描画メインルーチン
+// 科目切替
+window.setSubj = (k) => { 
+  studySubj = k; 
+  studyIdx = 0; 
+  renderStudy(); 
+};
+
+// 科目チップ描画
+function renderSubjChips() {
+  const c = document.getElementById('subj-chips');
+  if(!c) return;
+  c.innerHTML = Object.entries(SUBJECTS).map(([k,s]) =>
+    `<button class="chip${k===studySubj?' active':''}" onclick="setSubj('${k}')" 
+     style="${k===studySubj?'border-color:'+s.color+';color:'+s.color+';background:'+s.color+'20':''}">${s.name}</button>`
+  ).join('');
+}
+
+// 描画メイン
 function renderStudy() {
   renderSubjChips();
   const cont = document.getElementById('study-content');
+  if(!cont) return;
+
   const allData = BANK.filter(b => b.cat === studySubj);
   
-  // データのフィルタリング
+  // データのフィルタリング（AIストックか、通常のカード/クイズか）
   let filtered;
   if (studyMode === 'ai_bank') {
     filtered = allData.filter(d => d.isAI === true);
   } else {
-    // 通常モード（FC, FIB, QUIZ）かつ AIではないもの
+    // 選択されたタイプ（fc, fib, quiz）かつ AIではないもの
     filtered = allData.filter(d => d.type === studyMode && !d.isAI);
   }
 
   if (!filtered.length) {
-    cont.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text3)">
-      <div style="font-size:40px;margin-bottom:10px">📭</div>
-      このカテゴリにデータがありません。${studyMode==='ai_bank'?'AI生成で保存してください。':''}
+    cont.innerHTML = `<div class="card" style="text-align:center;padding:60px;color:var(--text3)">
+      <div style="font-size:48px;margin-bottom:15px">📭</div>
+      <div>このカテゴリにデータがありません。</div>
+      <div style="font-size:12px;margin-top:10px">${studyMode==='ai_bank'?'「AI生成」タブから問題を保存してください。':'データを追加してください。'}</div>
     </div>`;
     return;
   }
 
   const it = filtered[studyIdx % filtered.length];
   
-  // 表示
-  if (studyMode === 'fc' || (studyMode === 'ai_bank' && it.type === 'fc')) {
-    renderFC_New(cont, it, filtered.length);
-  } else if (studyMode === 'fib' || (studyMode === 'ai_bank' && it.type === 'fib')) {
-    renderFIB_New(cont, it, filtered.length);
-  } else {
-    renderQuiz_New(cont, it, filtered.length);
+  // 形式に合わせて描画関数を呼び出す
+  if (it.type === 'fc') {
+    renderFC_Study(cont, it, filtered.length);
+  } else if (it.type === 'fib') {
+    renderFIB_Study(cont, it, filtered.length);
+  } else if (it.type === 'quiz') {
+    renderQuiz_Study(cont, it, filtered.length);
   }
 }
 
-// 専門用語フラッシュカードの描画（簡潔版）
-function renderFC_New(cont, it, total) {
+// 1. フラッシュカード描画（専門用語解説スタイル）
+function renderFC_Study(cont, it, total) {
   cont.innerHTML = `
-    <div style="margin-bottom:12px; display:flex; justify-content:space-between;">
-      <span class="badge" style="background:var(--accent);color:#fff">${it.area}</span>
-      <span style="font-size:11px;color:var(--text3)">${studyIdx % total + 1} / ${total}</span>
+    <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+      <span class="badge" style="background:var(--accent);color:#fff">${it.area || '重要概念'}</span>
+      <span style="font-size:11px;color:var(--text3)">${(studyIdx % total) + 1} / ${total}</span>
     </div>
-    <div class="fc-card" id="fc-main" onclick="this.classList.toggle('flipped')">
-      <div class="fc-front">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;font-weight:400">用語</div>
-        ${it.q}
-        <div class="fc-hint">タップして解説を表示</div>
-      </div>
-      <div class="fc-back" style="display:none">
-         <div style="font-size:12px;color:var(--accent);margin-bottom:10px;font-weight:400">体系的理解</div>
-         <div style="font-size:16px;font-weight:500;text-align:left">${it.a}</div>
+    <div class="fc-card" id="fc-main" style="min-height:260px; display:flex; align-items:center; justify-content:center;">
+      <div id="fc-content" style="width:100%">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:15px;">専門用語</div>
+        <div style="font-size:24px;font-weight:800;letter-spacing:-0.5px">${it.q}</div>
+        <div style="font-size:11px;color:var(--accent);margin-top:20px;font-weight:600">タップして体系的な解説を表示</div>
       </div>
     </div>
-    <div class="btn-row" style="margin-top:16px;justify-content:center">
+    <div class="btn-row" style="margin-top:20px; justify-content:center">
       <button class="btn-p btn-sm btn-g" onclick="recordAcc('${studySubj}',true); studyIdx++; renderStudy()">✅ 習得した</button>
       <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++; renderStudy()">次へ →</button>
     </div>
   `;
-  // 前後の反転制御
+
   const card = cont.querySelector('#fc-main');
+  let isFlipped = false;
   card.onclick = () => {
-    const back = card.querySelector('.fc-back');
-    const front = card.querySelector('.fc-front');
-    if(back.style.display === 'none') {
-      back.style.display = 'block';
-      front.style.display = 'none';
+    isFlipped = !isFlipped;
+    const inner = cont.querySelector('#fc-content');
+    if(isFlipped) {
+      card.style.background = 'var(--alight)';
+      inner.innerHTML = `
+        <div style="font-size:12px;color:var(--accent);margin-bottom:15px;">体系的理解・解説</div>
+        <div style="font-size:16px;font-weight:500;text-align:left;line-height:1.7;padding:0 20px;white-space:pre-wrap;">${marked.parse(it.a)}</div>
+      `;
+      if(window.MathJax) MathJax.typesetPromise([inner]);
     } else {
-      back.style.display = 'none';
-      front.style.display = 'block';
+      card.style.background = 'var(--bg2)';
+      renderStudy(); // 元に戻す
     }
   };
 }
-  
-window.setSubj = (k) => { studySubj=k; studyIdx=0; renderStudy(); };
 
-function renderSubjChips() {
-  const c = document.getElementById('subj-chips');
-  c.innerHTML = Object.entries(SUBJECTS).map(([k,s]) =>
-    `<button class="chip${k===studySubj?' active':''}" onclick="setSubj('${k}')" style="${k===studySubj?'border-color:'+s.color+';color:'+s.color+';background:'+s.color+'20':''}">${s.name}</button>`
-  ).join('');
-}
-
-function renderStudy() {
-  renderSubjChips();
-  renderStudyContent();
-}
-
-function renderStudyContent() {
-  const cont = document.getElementById('study-content');
-  if (!studySubj) {
-    cont.innerHTML = '<div class="card">科目を選択してください。</div>';
-    return;
-  }
-  const data = BANK.filter(b => b.cat === studySubj);
-  if (!data.length) {
-    cont.innerHTML = '<div class="card">まだ知識データがありません。AI生成で増やしましょう。</div>';
-    return;
-  }
-
-  const it = data[studyIdx % data.length];
-
+// 2. 穴埋め描画
+function renderFIB_Study(cont, it, total) {
+  const dispQ = it.fib ? it.fib.replace('[__]', `<input class="fib-input" id="fib-inp" placeholder="?" autocomplete="off" style="width:120px">`) : it.q;
   cont.innerHTML = `
-    <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-      <span class="badge" style="background:var(--bg3); color:var(--accent)">${it.area || '基礎概念'}</span>
-      <span style="font-size:11px;color:var(--text3)">${studyIdx % data.length + 1} / ${data.length}</span>
+    <div style="margin-bottom:12px; display:flex; justify-content:space-between;">
+      <span class="badge" style="background:var(--teal);color:#fff">穴埋め演習</span>
+      <span style="font-size:11px;color:var(--text3)">${(studyIdx % total) + 1} / ${total}</span>
     </div>
-    <div class="card" style="border-left: 5px solid ${SUBJECTS[studySubj].color};">
-      ${renderStudyItem(it)}
-    </div>
-  `;
-}
-
-function renderStudyItem(item) {
-  if (item.type === 'fc') {
-    return renderFC(item);
-  } else if (item.type === 'fib') {
-    return renderFIB(item);
-  } else if (item.type === 'quiz') {
-    return renderQuiz(item);
-  } else {
-    return `<p>問題形式が不明です。</p>`;
-  }
-}
-  
-/* --- FLASHCARD --- */
-function renderFC(cont) {
-  const data = BANK.filter(b => b.cat === studySubj);
-  if(!data.length){ cont.innerHTML='<div class="card">まだ知識データがありません。AI生成で増やしましょう。</div>'; return; }
-  
-  const it = data[studyIdx % data.length];
-  cont.innerHTML = `
-    <div style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-      <span class="badge" style="background:var(--bg3); color:var(--accent)">${it.area || '基礎概念'}</span>
-      <span style="font-size:11px;color:var(--text3)">${studyIdx % data.length + 1} / ${data.length}</span>
-    </div>
-    <div class="card" style="border-left: 5px solid ${SUBJECTS[studySubj].color};">
-      <div style="font-size:13px; color:var(--text3); margin-bottom:8px;">【学習トピック】</div>
-      <div style="font-size:18px; font-weight:700; line-height:1.6; margin-bottom:20px;">${it.q}</div>
-      
-      <button class="btn-p" id="reveal-btn" onclick="document.getElementById('knowledge-content').style.display='block'; this.style.display='none'">
-        💡 内容を理解する / 解答を表示
-      </button>
-
-      <div id="knowledge-content" style="display:none; border-top:1px solid var(--border); padding-top:15px; margin-top:15px;">
-        <div style="font-size:13px; color:var(--text3); margin-bottom:8px;">【体系的理解・解説】</div>
-        <div style="font-size:15px; line-height:1.8; color:var(--text); white-space:pre-wrap;">${it.a}</div>
-        
-        <div class="btn-row" style="margin-top:20px">
-          <button class="btn-p btn-sm btn-g" onclick="fcAnswer(true)">✅ 理解した</button>
-          <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++; renderStudy()">後で復習</button>
-        </div>
+    <div class="card" style="padding:40px; text-align:center">
+      <div style="font-size:18px; line-height:2; margin-bottom:20px">${dispQ}</div>
+      <div id="fib-res" style="margin-top:15px; font-weight:700; display:none"></div>
+      <div class="btn-row" style="justify-content:center; margin-top:20px">
+        <button class="btn-p btn-sm" onclick="checkFIB_New('${it.fib_ans}')">判定</button>
+        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++; renderStudy()">次へ</button>
       </div>
     </div>
   `;
 }
-window.flipFC = () => {
-  const c = document.getElementById('fc-main');
-  const a = document.getElementById('fc-ans');
-  c.classList.toggle('flipped');
-  if(a) a.style.display = a.style.display==='none'?'block':'none';
-};
-  
-window.fcAnswer = (correct) => {
-  recordAcc(studySubj, correct);
-  if (correct) {
-      const s = SUBJECTS[studySubj];
-      addLogEntry(`演習: ${s.name}`, studySubj, 5);
-  }
-  toast(correct ? '✓ 知識を吸収しました' : '📚 重点的に復習しましょう', correct ? 'ok' : 'err');
-  studyIdx++;
-  renderStudyContent(); // 修正
-};
-
-/* --- FILL IN BLANK --- */
-function renderFIB(cont) {
-  const data = BANK.filter(b=>b.cat===studySubj && b.fib);
-  if(!data.length){cont.innerHTML='<div class="card">穴埋め問題がありません。</div>';return;}
-  const it = data[studyIdx % data.length];
-  const dispQ = it.fib.replace('[__]', `<input class="fib-input" id="fib-inp" placeholder="?" autocomplete="off">`);
-  cont.innerHTML = `
-    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span></div>
-    <div class="fib-wrap">
-      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">元の問題: ${it.q}</div>
-      <div class="fib-q">${dispQ}</div>
-      <div class="btn-row">
-        <button class="btn-p btn-sm" onclick="checkFIB('${it.fib_ans.replace(/'/g,"\\'")}')">確認</button>
-        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="showFIBAns('${it.fib_ans.replace(/'/g,"\\'")}','${it.a.replace(/'/g,"\\'").replace(/"/g,'\\"')}')">答えを見る</button>
-      </div>
-      <div class="fib-result" id="fib-res"></div>
-    </div>
-    <div class="btn-row" style="margin-top:8px">
-      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ 次の問題</button>
-    </div>
-  `;
-  document.getElementById('fib-inp').addEventListener('keydown', e => {
-    if(e.key==='Enter') checkFIB(it.fib_ans);
-  });
-}
-  
-window.checkFIB = (ans) => {
+window.checkFIB_New = (ans) => {
   const inp = document.getElementById('fib-inp');
   const res = document.getElementById('fib-res');
-  if(!inp||!res) return;
-  const user = inp.value.trim().replace(/\s/g,'').toLowerCase();
-  const correct_ans = ans.trim().replace(/\s/g,'').toLowerCase();
-  const ok = user===correct_ans || user.replace(/\^/g,'')===correct_ans.replace(/\^/g,'');
-  inp.className = 'fib-input ' + (ok?'correct':'wrong');
-  res.className = 'fib-result ' + (ok?'ok':'ng');
-  res.style.display='block';
-  res.textContent = ok ? `✓ 正解！「${ans}」` : `✗ 正解は「${ans}」`;
+  const ok = inp.value.trim().toLowerCase() === ans.toLowerCase();
+  res.style.display = 'block';
+  res.style.color = ok ? 'var(--green)' : 'var(--red)';
+  res.textContent = ok ? '✅ 正解！' : `❌ 正解は: ${ans}`;
   recordAcc(studySubj, ok);
 };
-window.showFIBAns = (ans, full) => {
-  const inp = document.getElementById('fib-inp');
-  const res = document.getElementById('fib-res');
-  if(inp) { inp.value=ans; inp.className='fib-input'; }
-  if(res) { res.className='fib-result ng'; res.style.display='block'; res.textContent=`答え: 「${ans}」 （${full}）`; }
-};
 
-/* --- QUIZ --- */
-function renderQuiz(cont) {
-  const data = (QUIZZES[studySubj]||[]);
-  if(!data.length){cont.innerHTML='<div class="card">4択問題がありません。</div>';return;}
-  const it = data[studyIdx % data.length];
-  const opts = it.o.map((o,i) => `<button class="quiz-opt" id="qo${i}" onclick="answerQuiz(${i},${it.a},'${(it.exp||'').replace(/'/g,"\\'")}')">${String.fromCharCode(65+i)}. ${o}</button>`).join('');
+// 3. 4択クイズ描画
+function renderQuiz_Study(cont, it, total) {
   cont.innerHTML = `
-    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${studyIdx%data.length+1} / ${data.length}</span></div>
+    <div style="margin-bottom:12px; display:flex; justify-content:space-between;">
+      <span class="badge" style="background:var(--blue);color:#fff">4択クイズ</span>
+      <span style="font-size:11px;color:var(--text3)">${(studyIdx % total) + 1} / ${total}</span>
+    </div>
     <div class="card">
-      <div class="quiz-q">${it.q}</div>
-      <div class="quiz-opts">${opts}</div>
-      <div class="quiz-explain" id="quiz-exp">${it.exp||''}</div>
-    </div>
-    <div class="btn-row" style="margin-top:8px">
-      <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++;renderStudy()">→ 次の問題</button>
+      <div class="quiz-q" style="margin-bottom:20px">${it.q}</div>
+      <div class="quiz-opts">
+        ${it.o ? it.o.map((opt, i) => `<button class="quiz-opt" onclick="answerQuiz_New(${i}, ${it.a}, this)">${opt}</button>`).join('') : '選択肢データがありません'}
+      </div>
+      <div id="quiz-exp" class="quiz-explain" style="display:none; margin-top:15px; background:var(--bg3); padding:15px; border-radius:8px; font-size:13px">
+        ${it.exp || '解説はありません。'}
+      </div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn-p btn-sm" style="background:var(--text3)" onclick="studyIdx++; renderStudy()">次の問題 →</button>
+      </div>
     </div>
   `;
 }
-window.answerQuiz = (sel, correct, exp) => {
-  document.querySelectorAll('.quiz-opt').forEach((b,i) => {
+window.answerQuiz_New = (sel, correct, btn) => {
+  const opts = btn.parentElement.querySelectorAll('.quiz-opt');
+  opts.forEach((b, i) => {
     b.disabled = true;
-    if(i===correct) b.classList.add('correct');
-    else if(i===sel) b.classList.add('wrong');
+    if(i === correct) b.classList.add('correct');
+    else if(i === sel) b.classList.add('wrong');
   });
-  const ok = sel===correct;
-  recordAcc(studySubj, ok);
-  toast(ok?'✓ 正解！':'✗ 不正解', ok?'ok':'err');
-  const expEl = document.getElementById('quiz-exp');
-  if(expEl && exp) expEl.style.display='block';
+  document.getElementById('quiz-exp').style.display = 'block';
+  recordAcc(studySubj, sel === correct);
 };
 
 /* ══════════════════════════════════════
@@ -1345,8 +1249,8 @@ window.saveAI = () => {
   BANK.push({
     cat: cat,
     type: type,
-    isAI: true, // ここが重要：AI問題サブタブに表示されるようになる
-    q: `[AI解析] ${lastUsedTopic}`,
+    isAI: true, // これにより専門演習の「AIストック」に分類される
+    q: `[AI解説] ${lastUsedTopic}`,
     a: lastAIRes,
     area: lastUsedTopic
   });
@@ -1354,11 +1258,12 @@ window.saveAI = () => {
   localStorage.setItem('study_v29_bank', JSON.stringify(BANK));
   toast(`${lastUsedTopic}をAIストックに追加しました！`);
   
-  // 専門演習のAIタブへ移動させる
+  // 専門演習タブのAIストックモードへ移動
   switchTab('study');
-  setStudyMode('ai_bank', document.querySelectorAll('#study-mode-tabs .mode-tab')[3]);
+  const aiStockBtn = document.querySelectorAll('#study-mode-tabs .mode-tab')[3];
+  setStudyMode('ai_bank', aiStockBtn);
 };
-
+  
 window.copyAI = () => {
   if(!lastAIRes) return;
   navigator.clipboard.writeText(lastAIRes).then(() => toast('コピーしました！'));
