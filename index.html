@@ -278,6 +278,7 @@ svg.ring{transform:rotate(-90deg)}
     
     <!-- 科目選択：onchangeを追加 -->
     <select id="ai-subj-sel" onchange="updateSubtopics()">
+      <option value="体系的用語解説">体系的用語解説 (カード用)</option>
       <option value="線形代数">線形代数</option>
       <option value="微積分">微積分</option>
       <option value="アルゴリズム">アルゴリズム</option>
@@ -297,7 +298,7 @@ svg.ring{transform:rotate(-90deg)}
       <option value="計算問題">計算問題</option>
       <option value="穴埋め問題">穴埋め問題</option>
       <option value="4択問題">4択問題</option>
-      <option value="概念説明">概念説明問題</option>
+      <option value="体系的用語解説">体系的用語解説</option>
     </select>
 
     <button class="btn-p" id="ai-btn" onclick="askGemini()">🤖 問題を生成</button>
@@ -333,7 +334,7 @@ svg.ring{transform:rotate(-90deg)}
         <option value="la">線形代数</option><option value="ca">微積分</option>
         <option value="cf">複素関数</option><option value="de">常微分</option>
         <option value="ml">機械学習</option><option value="cs">計算機科学</option>
-        <option value="en">英語</option>
+        <option value="cpd">変化点検出</option><option value="en">英語</option>
       </select>
       <input type="number" id="log-dur" placeholder="分" min="1" max="600">
       <button class="btn-p" onclick="addLog()">💾 保存</button>
@@ -362,47 +363,67 @@ const fbApp = initializeApp(FB);
 const db = getDatabase(fbApp);
 
 /* ══════════════════════════════════════
-   SUBJECTS & CORE DATA
+   SUBJECTS & CORE DATA (研究テーマ追加)
 ══════════════════════════════════════ */
 const SUBJECTS = {
-  la:{name:'線形代数',color:'#7C5FD4',areas:['行列演算','固有値','次元定理','線形写像','内積空間']},
-  ca:{name:'微積分',color:'#167A50',areas:['極限','微分','積分','多変数','テイラー展開']},
-  cf:{name:'複素関数',color:'#00A3CC',areas:['正則性','コーシー積分','留数定理','等角写像']},
-  de:{name:'常微分',color:'#E67E22',areas:['変数分離','1階線形','2階線形','ラプラス変換']},
-  ml:{name:'機械学習',color:'#145898',areas:['最適化','ニューラルネット','Transformer','正則化','情報理論']},
-  cs:{name:'計算機科学',color:'#7A5200',areas:['計算量','ソート','データ構造','グラフ','動的計画法']},
-  en:{name:'英語',color:'#B21B7E',areas:['語彙','文法','論文表現','TOEIC']}
+  la:{name:'線形代数',color:'#7C5FD4',areas:['行列演算','固有値','次元定理']},
+  ca:{name:'微積分',color:'#167A50',areas:['極限','微分','積分']},
+  ml:{name:'機械学習',color:'#145898',areas:['最適化','Deep Learning']},
+  // --- 研究テーマ：変化点検出を追加 ---
+  cpd:{name:'変化点検出',color:'#FF4757',areas:['統計的検定','モデル・トレンド','カーネル','ベイズ','深層学習']},
+  cs:{name:'計算機科学',color:'#7A5200',areas:['計算量','アルゴリズム']},
+  en:{name:'英語',color:'#B21B7E',areas:['語彙','論文表現']}
 };
 
-const TOPIC_LIBRARY = {
-  '線形代数': ['行列の積', '逆行列', '行列式(3x3)', '固有値・固有ベクトル', '掃き出し法', '線形写像'],
-  '微積分': ['合成関数の微分', '部分積分', '置換積分', '広義積分', '偏微分', '重積分', 'テイラー展開'],
-  'アルゴリズム': ['二分探索', 'ソート', '動的計画法', 'グラフ探索', '計算量推定', '計算機アーキテクチャ'],
-  '機械学習': ['回帰分析', '勾配降下法', '決定木', 'ニューラルネットワーク', '適合率・再現率'],
-  '複素関数論': ['複素数の演算', '複素積分', '留数定理'],
-  '常微分方程式': ['変数分離形', '1階線形', 'ラプラス変換'],
-  '英語(TOEIC)': ['Part5(短文穴埋め)', 'Part6(長文穴埋め)', 'Part7(読解)']
-};
-
-/* 問題バンクの整理 */
-/* --- 300行目付近：BANK定義 --- */
+/* ══════════════════════════════════════
+   知識ライブラリ (数学基礎 + 体系的CPD)
+══════════════════════════════════════ */
 let BANK = JSON.parse(localStorage.getItem('study_v29_bank')) || [
-  {cat:'la', type:'fc', q:'固有値・固有ベクトル', a:'行列Aに対して Av=λv を満たすスカラーλとベクトルv。行列の「本質的な伸びる方向と倍率」を表す。', area:'固有値'},
-  {cat:'la', type:'fc', q:'行列式 (Determinant)', a:'行列による空間の「体積拡大率」。det(A)=0なら次元が潰れて逆行列を持たない。', area:'行列演算'},
-  {cat:'la', type:'fc', q:'ランク (Rank)', a:'行列の列ベクトルのうち、線形独立なものの最大数。像の次元 dim(Im A) に一致する。', area:'次元定理'},
-  {cat:'ca', type:'fc', q:'テイラー展開', a:'複雑な関数を、ある点の周りで多項式近似すること。無限次まで取ると元の関数に一致する。', area:'テイラー展開'}
+  // --- 線形代数 (la) ---
+  {cat:'la', type:'fc', q:'正定値行列 (Positive Definite)', a:'任意の0でないベクトルxに対し、xᵀAx > 0 となる対称行列。すべての固有値が正であり、最適化問題の2次形式で極小値の存在を保証する。', area:'行列の性質'},
+  {cat:'la', type:'fib', q:'直交行列の性質', fib:'直交行列 Q において、その転置行列 Qᵀ は [__] と一致する。', fib_ans:'Q⁻¹', area:'行列の性質'},
+  
+  // --- 変化点検出 (cpd) : 1. 統計的検定 ---
+  {cat:'cpd', type:'fc', q:'CUSUM (Cumulative Sum)', a:'累積和を用いた検定。平均値の微小な変化を蓄積して感度よく検出する。オンライン検出の古典的かつ強力な手法。', area:'統計制検定'},
+  {cat:'cpd', type:'fib', q:'複数変化点の最適化', fib:'PELT法は、[__] を用いて複数の変化点を効率的に探索する（枝刈り付き）。', fib_ans:'動的計画法', area:'統計的検定'},
+
+  // --- 変化点検出 (cpd) : 2. モデル・トレンド ---
+  {cat:'cpd', type:'fc', q:'Piecewise Constant Model', a:'領域ごとに定数となるモデル。PELTなどのコスト関数によく用いられ、平均の「段差」を検出するのに適している。', area:'モデル・トレンド'},
+
+  // --- 変化点検出 (cpd) : 3. カーネル・距離 ---
+  {cat:'cpd', type:'fc', q:'MMD (Maximum Mean Discrepancy)', a:'再生核ヒルベルト空間(RKHS)における2つの分布の平均の距離。事前の分布仮定なしに分布そのものの変化を直接評価できる。', area:'カーネル・距離'},
+
+  // --- 変化点検出 (cpd) : 4. ベイズモデル ---
+  {cat:'cpd', type:'fc', q:'BOCPD (Run Length)', a:'Bayesian Online Change Point Detection。現在の状態がどれだけ続いているかを示す「ランレングス」の事後分布を逐次更新する。', area:'ベイズモデル'},
+
+  // --- 変化点検出 (cpd) : 5. 機械学習 ---
+  {cat:'cpd', type:'fib', q:'AutoEncoderの異常度', fib:'AEを用いた変化点検出では、変化後のデータによる [__] 誤差の増大を利用する。', fib_ans:'再構成', area:'機械学習'},
+
+  // --- 他の数学・計算機科学 ---
+  {cat:'ca', type:'fc', q:'ヤコビ行列 (Jacobian)', a:'多変数関数においてすべての偏微分を並べた行列。重積分の変数変換における面積・体積の拡大率を決定する。', area:'多変数微分'},
+  {cat:'cs', type:'fc', q:'動的計画法 (DP)', a:'大きな問題を小さな部分問題に分割し、結果を記録して再利用する手法。PELTなどの変化点探索にも応用される。', area:'アルゴリズム'}
 ];
-// QUIZZESとの統合部分はそのまま（isAIは持たせない）
+
 const QUIZZES = {
-  la:[
-    {q:'2×2行列 A = [[a,b],[c,d]] の行列式は？',o:['ad-bc','ab-cd','ad+bc','ab+cd'],a:0,exp:'det(A) = ad - bc が基本公式。行列式は面積の変換比を表す。', type: 'quiz'},
-    // ... (他のクイズデータも同様に type: 'quiz' を追加）
+  cpd: [
+    {q:'データの平均値の変化をオンライン（逐次的）に検出するのに最も適した古典的な手法は？', o:['CUSUM','MMD','PELT','GAM'], a:0, exp:'CUSUM（累積和）は、平均の微小な偏差を蓄積することで、オンラインでの平均変化を高速に捉えます。', type:'quiz'},
+    {q:'PELT法がBinary Segmentationと比較して優れている点は？', o:['計算量が常にO(n log n)である','ペナルティ項により変化点数を自動決定できる','オンライン処理に特化している','非定常なトレンドを除去できる'], a:1, exp:'PELTはコスト関数にペナルティを加えることで、統計的に最適な変化点数を決定できます。', type:'quiz'}
   ],
+  la: [
+    {q:'n次正方行列 A が正則（逆行列を持つ）であるための必要十分条件は？', o:['det(A) ≠ 0','rank(A) < n','固有値に0が含まれる','Aが対称行列'], a:0, exp:'行列式が0でないことは、空間が潰れていないことを意味し、逆写像が存在します。', type:'quiz'}
+  ],
+  ml: [
+    {q:'勾配消失問題の解決策として最も適切な活性化関数は？', o:['ReLU','Sigmoid','Tanh','Step'], a:0, exp:'ReLUは正の領域で勾配が1であるため、層が深くなっても勾配が消失しにくい性質があります。', type:'quiz'}
+  ]
 };
 
+// --- データの統合ロジック ---
 Object.entries(QUIZZES).forEach(([category, quizList]) => {
-  const formattedQuizzes = quizList.map(q => ({ ...q, cat: category, type: 'quiz' }));
-  BANK = BANK.concat(formattedQuizzes);
+  quizList.forEach(q => {
+    if(!BANK.some(b => b.q === q.q)){
+      BANK.push({ ...q, cat: category, type: 'quiz' });
+    }
+  });
 });
   
 /* 英語単語バンク (Firebase同期対象) */
@@ -1136,6 +1157,25 @@ const buildStudyPrompt = (subj, type) => {
     lastUsedTopic = selectedTopic;
     topicDirective = `本日の指定トピックは「${lastUsedTopic}」である。このテーマに厳密に沿った問題を作成せよ。`;
   }
+  // 「体系的用語解説」専用のフォーマット
+  if (type === "体系的用語解説") {
+    return `
+# 指示: ${subj}の重要用語「${lastUsedTopic}」について、大学院入試・研究レベルの体系的解説を作成せよ。
+
+# 構成ルール (厳守):
+1. **【概念の定義】**: 1行で本質を簡潔に。
+2. **【数学的・技術的背景】**: 
+   - 数式（\\( ... \\) または $$ ... $$）を用いた厳密な定義や導出。
+   - 行列を用いる場合は \\\\begin{pmatrix} 形式を使用。
+3. **【研究・応用における役割】**: 
+   - 特に「変化点検出」や「時系列解析」における有用性。
+   - 他の手法との比較（メリット・デメリット）。
+4. **【重要キーワード】**: 関連する用語を3つ。
+# ルール:
+- 日本語で記述。挨拶不要。
+- 具体的かつ明快な説明を心がけること。
+`.trim();
+  }
   
   return `
 # 指示: ${subj}の「${lastUsedTopic}」に関する${type}を作成せよ。
@@ -1235,7 +1275,7 @@ window.saveAI = () => {
   const subj = document.getElementById('ai-subj-sel').value;
   const typeKey = document.getElementById('ai-type-sel').value;
   
-  const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','英語(TOEIC)':'en'};
+  const catMap = {'線形代数':'la','微積分':'ca','複素関数論':'cf','常微分方程式':'de','機械学習':'ml','アルゴリズム':'cs','英語(TOEIC)':'en','変化点検出':'cpd'};
   const cat = catMap[subj] || 'la';
 
   // AI生成問題の形式判定
