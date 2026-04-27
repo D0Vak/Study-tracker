@@ -399,15 +399,12 @@ const QUIZZES = {
     // ... (他のクイズデータも同様に type: 'quiz' を追加）
   ],
 };
-// 既存のBANKとQUIZZESを統合
-BANK = BANK.concat(QUIZZES.la.map(q => ({ ...q, cat: 'la' })));
-BANK = BANK.concat(QUIZZES.ca.map(q => ({ ...q, cat: 'ca' })));
-BANK = BANK.concat(QUIZZES.cf.map(q => ({ ...q, cat: 'cf' })));
-BANK = BANK.concat(QUIZZES.de.map(q => ({ ...q, cat: 'de' })));
-BANK = BANK.concat(QUIZZES.ml.map(q => ({ ...q, cat: 'ml' })));
-BANK = BANK.concat(QUIZZES.cs.map(q => ({ ...q, cat: 'cs' })));
-BANK = BANK.concat(QUIZZES.en.map(q => ({ ...q, cat: 'en' })));
 
+Object.entries(QUIZZES).forEach(([category, quizList]) => {
+  const formattedQuizzes = quizList.map(q => ({ ...q, cat: category, type: 'quiz' }));
+  BANK = BANK.concat(formattedQuizzes);
+});
+  
 /* 英語単語バンク (Firebase同期対象) */
 const EN_WORDS_DEFAULT = [
   {word:'eigenvalue',phonetic:'/ˈaɪɡənˌvæljuː/',meaning:'固有値',example:'The eigenvalues of a symmetric matrix are always real.',tag:'線形代数'},
@@ -628,8 +625,8 @@ function renderStudy() {
   if (studyMode === 'ai_bank') {
     filtered = allData.filter(d => d.isAI === true);
   } else {
-    // 選択されたタイプ（fc, fib, quiz）かつ AIではないもの
-    filtered = allData.filter(d => (d.type || 'fc') === studyMode && !d.isAI);
+    // typeが未定義なら 'fc' とみなす安全策
+    filtered = allData.filter(d => (d.type || 'fc') === studyMode && d.isAI !== true);
   }
 
   if (!filtered.length) {
