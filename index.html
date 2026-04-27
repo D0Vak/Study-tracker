@@ -629,7 +629,7 @@ function renderStudy() {
     filtered = allData.filter(d => d.isAI === true);
   } else {
     // 選択されたタイプ（fc, fib, quiz）かつ AIではないもの
-    filtered = allData.filter(d => d.type === studyMode && !d.isAI);
+    filtered = allData.filter(d => (d.type || 'fc') === studyMode && !d.isAI);
   }
 
   if (!filtered.length) {
