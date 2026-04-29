@@ -50,11 +50,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;box-shadow:var(--sh)}
 
 /* COUNTDOWN */
-.cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.cdown-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
 @media(max-width:580px){.cdown-grid{grid-template-columns:1fr}}
-.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--sh)}
-.cd-days{font-family:'Inter',sans-serif;font-size:38px;font-weight:800;color:var(--accent)}
-.cd-label{font-size:12px;color:var(--text2);margin-top:4px}
+.cdown-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px 18px 16px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.cd-exam-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:.5px;margin-bottom:2px}
+.cd-exam-date{font-size:11px;color:var(--text3);margin-bottom:10px}
+.cd-days{font-family:'Inter',sans-serif;font-size:48px;font-weight:800;line-height:1;margin-bottom:2px}
+.cd-days-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.5px;margin-bottom:8px}
+.cd-urgency-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:800;margin-bottom:10px}
+.cd-progress-track{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
+.cd-progress-fill{height:100%;border-radius:3px;transition:width .6s}
+.cd-progress-label{font-size:10px;color:var(--text3);margin-top:4px}
 
 /* SUBJECTS GRID */
 .subj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px}
@@ -125,6 +131,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .en-meaning{font-size:16px;color:rgba(255,255,255,0.9);display:none}
 .en-example{font-size:13px;color:rgba(255,255,255,0.6);font-style:italic;margin-top:8px;display:none}
 .en-tag{display:inline-block;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.8);margin-bottom:12px}
+/* ENGLISH 3D FLIP */
+.en-card-wrap{perspective:800px;min-height:200px;cursor:pointer;margin-bottom:4px}
+.en-card-inner{position:relative;width:100%;min-height:200px;transition:transform .45s;transform-style:preserve-3d}
+.en-card-wrap.flipped .en-card-inner{transform:rotateY(180deg)}
+.en-card-front,.en-card-back{position:absolute;width:100%;min-height:200px;backface-visibility:hidden;border-radius:var(--r);padding:28px 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.en-card-front{background:linear-gradient(135deg,#1a1040 0%,#2d1b69 100%);color:#fff}
+.en-card-back{background:linear-gradient(135deg,#0a2a1a 0%,#1a4a2d 100%);color:#fff;transform:rotateY(180deg)}
+.en-progress-dots{display:flex;gap:6px;justify-content:center;margin-bottom:12px;flex-wrap:wrap}
+.en-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:.2s;flex-shrink:0}
+.en-dot.known{background:#4ade80}
+.en-dot.unknown{background:#f87171}
+.en-dot.current{background:#fff;transform:scale(1.4)}
+.en-filter-chips{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;flex-wrap:wrap}
 
 /* ANALYTICS */
 .ana-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
@@ -200,16 +219,31 @@ svg.ring{transform:rotate(-90deg)}
     <div class="stitle">試験カウントダウン</div>
     <div class="cdown-grid">
       <div class="cdown-card" style="border-top:3px solid var(--teal)">
+        <div class="cd-exam-name" style="color:var(--teal)">TOEIC</div>
+        <div class="cd-exam-date">2026年5月17日（日）</div>
         <div class="cd-days" id="d-toeic">--</div>
-        <div class="cd-label">TOEIC <span style="color:var(--text3)">5/17</span></div>
+        <div class="cd-days-label">DAYS LEFT</div>
+        <div class="cd-urgency-badge" id="badge-toeic">--</div>
+        <div class="cd-progress-track"><div class="cd-progress-fill" id="prog-toeic" style="background:var(--teal)"></div></div>
+        <div class="cd-progress-label" id="plabel-toeic">経過 --%</div>
       </div>
       <div class="cdown-card" style="border-top:3px solid var(--accent)">
+        <div class="cd-exam-name" style="color:var(--accent)">NAIST 院試</div>
+        <div class="cd-exam-date">2026年7月6日（月）</div>
         <div class="cd-days" id="d-naist">--</div>
-        <div class="cd-label">NAIST <span style="color:var(--text3)">7/6</span></div>
+        <div class="cd-days-label">DAYS LEFT</div>
+        <div class="cd-urgency-badge" id="badge-naist">--</div>
+        <div class="cd-progress-track"><div class="cd-progress-fill" id="prog-naist" style="background:var(--accent)"></div></div>
+        <div class="cd-progress-label" id="plabel-naist">経過 --%</div>
       </div>
       <div class="cdown-card" style="border-top:3px solid var(--blue)">
+        <div class="cd-exam-name" style="color:var(--blue)">神戸大学 院試</div>
+        <div class="cd-exam-date">2026年8月24日（月）</div>
         <div class="cd-days" id="d-kobe">--</div>
-        <div class="cd-label">神戸大 <span style="color:var(--text3)">8/24</span></div>
+        <div class="cd-days-label">DAYS LEFT</div>
+        <div class="cd-urgency-badge" id="badge-kobe">--</div>
+        <div class="cd-progress-track"><div class="cd-progress-fill" id="prog-kobe" style="background:var(--blue)"></div></div>
+        <div class="cd-progress-label" id="plabel-kobe">経過 --%</div>
       </div>
     </div>
     <div class="stitle">科目別進捗</div>
@@ -288,8 +322,12 @@ svg.ring{transform:rotate(-90deg)}
       <option value="英語(TOEIC)">英語 (TOEIC)</option>
     </select>
 
-    <!-- トピック選択欄：これを復活させる -->
-    <select id="ai-topic-sel">
+    <!-- トピック選択モード切替 -->
+    <div class="mode-tabs" style="margin-bottom:8px">
+      <button class="mode-tab active" id="topic-mode-rand" onclick="setTopicMode('rand',this)">🎲 ランダム</button>
+      <button class="mode-tab" id="topic-mode-pick" onclick="setTopicMode('pick',this)">🎯 トピック選択</button>
+    </div>
+    <select id="ai-topic-sel" style="display:none">
       <option value="ランダム">トピックをランダムに選択</option>
     </select>
     
@@ -378,7 +416,7 @@ const SUBJECTS = {
 /* ══════════════════════════════════════
    知識ライブラリ (数学基礎 + 体系的CPD)
 ══════════════════════════════════════ */
-let BANK = JSON.parse(localStorage.getItem('study_v29_bank')) || [
+let BANK = JSON.parse(localStorage.getItem('study_v30_bank')) || [
   // --- 線形代数 (la) ---
   {cat:'la', type:'fc', q:'正定値行列 (Positive Definite)', a:'任意の0でないベクトルxに対し、xᵀAx > 0 となる対称行列。すべての固有値が正であり、最適化問題の2次形式で極小値の存在を保証する。', area:'行列の性質'},
   {cat:'la', type:'fib', q:'直交行列の性質', fib:'直交行列 Q において、その転置行列 Qᵀ は [__] と一致する。', fib_ans:'Q⁻¹', area:'行列の性質'},
@@ -401,7 +439,82 @@ let BANK = JSON.parse(localStorage.getItem('study_v29_bank')) || [
 
   // --- 他の数学・計算機科学 ---
   {cat:'ca', type:'fc', q:'ヤコビ行列 (Jacobian)', a:'多変数関数においてすべての偏微分を並べた行列。重積分の変数変換における面積・体積の拡大率を決定する。', area:'多変数微分'},
-  {cat:'cs', type:'fc', q:'動的計画法 (DP)', a:'大きな問題を小さな部分問題に分割し、結果を記録して再利用する手法。PELTなどの変化点探索にも応用される。', area:'アルゴリズム'}
+  {cat:'cs', type:'fc', q:'動的計画法 (DP)', a:'大きな問題を小さな部分問題に分割し、結果を記録して再利用する手法。PELTなどの変化点探索にも応用される。', area:'アルゴリズム'},
+
+  // ═══════════════════════════
+  // 線形代数 (la) — 追加10項目
+  // ═══════════════════════════
+  {cat:'la', type:'fc', q:'行列のランク (Rank)', a:'行列の線形独立な行（または列）の最大数。A ∈ ℝᵐˣⁿ に対し rank(A) ≤ min(m,n)。連立方程式の解の有無と一意性を決定する。', area:'行列演算'},
+  {cat:'la', type:'fib', q:'行列式と逆行列の関係', fib:'n次正方行列 A の逆行列が存在するための必要十分条件は det(A) [__] 0 である。', fib_ans:'≠', area:'行列演算'},
+  {cat:'la', type:'quiz', q:'対角行列 A = diag(1, 2, 3) の固有値はどれか？', o:['1, 2, 3','0, 1, 2','1, 4, 9','2, 4, 6'], a:0, exp:'対角行列の固有値は対角成分そのもの。特性多項式は (λ-1)(λ-2)(λ-3)=0。', area:'固有値'},
+  {cat:'la', type:'fc', q:'スペクトル定理', a:'実対称行列はすべて直交行列によって対角化可能。A = QΛQᵀ（Q：直交行列、Λ：固有値の対角行列）。PCAや2次形式の解析の基礎。', area:'固有値'},
+  {cat:'la', type:'fc', q:'特異値分解 (SVD)', a:'任意の行列 A ∈ ℝᵐˣⁿ を A = UΣVᵀ に分解。U・V は直交行列、Σ は非負対角行列（特異値σᵢ）。次元削減・低ランク近似・ノイズ除去に幅広く使用。', area:'固有値'},
+  {cat:'la', type:'fib', q:'SVDと低ランク近似', fib:'SVD A = UΣVᵀ において、最初の k 個の特異値だけを残した近似は「最良 [__] 近似」（エッカート-ヤング定理）。', fib_ans:'低ランク', area:'固有値'},
+  {cat:'la', type:'fc', q:'グラム-シュミット直交化', a:'線形独立なベクトル集合から正規直交基底を構築する手順。数値的に安定な Modified Gram-Schmidt が実装上好まれる。QR分解の計算アルゴリズム。', area:'行列演算'},
+  {cat:'la', type:'quiz', q:'正定値行列 A について、x ≠ 0 のとき常に成り立つのはどれか？', o:['xᵀAx > 0','xᵀAx = 0','det(A) < 0','固有値に負数が含まれる'], a:0, exp:'正定値の定義そのもの。全固有値が正、det > 0、主小行列式がすべて正も同値。', area:'行列の性質'},
+  {cat:'la', type:'fc', q:'核空間と像空間（次元定理）', a:'dim(Ker A) + dim(Im A) = n（n: 列数）。零化空間の次元（nullity）と列空間の次元（rank）の和が列数に等しい。連立方程式の解空間の分析に必須。', area:'次元定理'},
+  {cat:'la', type:'fib', q:'固有ベクトルの直交性', fib:'実対称行列において、異なる固有値に対応する固有ベクトルは互いに [__] である。', fib_ans:'直交', area:'固有値'},
+
+  // ═══════════════════════════
+  // 微積分 (ca) — 追加10項目
+  // ═══════════════════════════
+  {cat:'ca', type:'fc', q:'テイラー展開', a:'f(x) = f(a) + f′(a)(x-a) + f″(a)/2!(x-a)² + ... 関数を多項式で近似。機械学習では損失関数の局所的近似（ニュートン法）に使用。', area:'微分'},
+  {cat:'ca', type:'fib', q:'連鎖律（Chain Rule）', fib:'合成関数 f(g(x)) の微分は d/dx f(g(x)) = f′(g(x)) · [__] である。', fib_ans:"g′(x)", area:'微分'},
+  {cat:'ca', type:'fc', q:'ヘッセ行列 (Hessian)', a:'多変数関数の2階偏微分を並べた対称行列 H_ij = ∂²f/∂xᵢ∂xⱼ。正定値→極小、負定値→極大、不定値→鞍点を判定。ニュートン法やL-BFGSで使用。', area:'多変数微分'},
+  {cat:'ca', type:'quiz', q:'∫₀¹ x² dx の正確な値は？', o:['1/3','1/2','1/4','1'], a:0, exp:'∫xⁿdx = xⁿ⁺¹/(n+1) より [x³/3]₀¹ = 1/3。', area:'積分'},
+  {cat:'ca', type:'fc', q:'ラグランジュ乗数法', a:'制約 g(x,y)=0 の下で f(x,y) を最適化する手法。∇f = λ∇g を解く。機械学習ではSVMの最大マージン問題の定式化に直結する。', area:'微分'},
+  {cat:'ca', type:'fib', q:'重積分の変数変換', fib:'重積分の変数変換では、面積要素は |[__]| du dv となる（J はヤコビアン行列式）。', fib_ans:'J', area:'積分'},
+  {cat:'ca', type:'fc', q:'フーリエ変換', a:'f̂(ξ) = ∫f(t)e^{-2πiξt}dt。時間領域→周波数領域への変換。信号処理・畳み込み計算・スペクトル解析の基礎。FFTにより高速化。', area:'積分'},
+  {cat:'ca', type:'quiz', q:'関数 f(x)=x³ の変曲点のx座標は？', o:['x=0','x=1','x=-1','変曲点は存在しない'], a:0, exp:'f″(x)=6x、f″(0)=0 かつ f″の符号が変化するため x=0 が変曲点。', area:'微分'},
+  {cat:'ca', type:'fc', q:'勾配ベクトル (Gradient)', a:'多変数スカラー関数 f の各変数に対する偏微分を並べた ∇f = (∂f/∂x₁,...,∂f/∂xₙ)。最急降下方向を示す。勾配降下法の根幹。', area:'多変数微分'},
+  {cat:'ca', type:'fib', q:'極値の判定（1変数）', fib:'f′(a)=0 かつ f″(a) > 0 ならば x=a は [__] である。', fib_ans:'極小値', area:'微分'},
+
+  // ═══════════════════════════
+  // 変化点検出 (cpd) — 追加15項目
+  // ═══════════════════════════
+  {cat:'cpd', type:'fc', q:'PELT (Pruned Exact Linear Time)', a:'複数変化点を動的計画法で最適に探索するアルゴリズム。コスト関数にペナルティβを加え、期待変化点数を自動決定。枝刈りにより平均 O(n) で動作。', area:'統計的検定'},
+  {cat:'cpd', type:'quiz', q:'BOCPDにおいてランレングスが「リセット」されるのはどのタイミングか？', o:['変化点が検出されたとき','データの値が閾値を超えたとき','事前分布が更新されるとき','ウィンドウサイズを超えたとき'], a:0, exp:'ランレングスは変化点候補でゼロにリセットされ、そこから再計上される。', area:'ベイズモデル'},
+  {cat:'cpd', type:'fc', q:'KCP (Kernel Change Point)', a:'カーネル関数を用いて分布間の距離を計算し変化点を特定。MMDを統計的検定枠組みに組み込んだもの。データ分布の仮定が不要で汎用的。', area:'カーネル・距離'},
+  {cat:'cpd', type:'fib', q:'MMDの定義（RKHS）', fib:'MMD²(P,Q) = ||μ_P - μ_Q||² ただし μ_P は P の [__] 空間における平均埋め込み。', fib_ans:'RKHS（再生核ヒルベルト）', area:'カーネル・距離'},
+  {cat:'cpd', type:'fc', q:'DTW (Dynamic Time Warping)', a:'時系列間の非線形な対応付けによる距離計算。長さの異なる・位相のずれた時系列を比較可能。変化点前後のパターン類似度評価に使用。', area:'カーネル・距離'},
+  {cat:'cpd', type:'fc', q:'SST (Singular Spectrum Transformation)', a:'時系列の軌跡行列のSVDを用い、過去と未来の部分空間の差異で変化を検出。行列ベースの変化点検出アプローチ。', area:'行列・部分空間'},
+  {cat:'cpd', type:'quiz', q:'CUSUMの決定閾値hを下げると、どのような変化が起きるか？', o:['検出が早まるが誤警報が増える','検出が遅くなり誤警報も増える','変化点が検出されなくなる','精度が向上する'], a:0, exp:'hを下げるとわずかな累積でも警報が出るため検出感度↑、同時に偽陽性↑。', area:'統計的検定'},
+  {cat:'cpd', type:'fc', q:'変化点検出の評価指標', a:'F1スコア（適合率×再現率の調和平均）が標準。許容誤差（Tolerance window）を設定し、±T フレーム以内に検出できれば正解とみなすAnnotation-aware評価が実践的。', area:'評価・応用'},
+  {cat:'cpd', type:'fib', q:'PELTのペナルティ効果', fib:'PELTにおけるペナルティ β を大きくするほど、検出される変化点の数は [__] なる。', fib_ans:'少なく', area:'統計的検定'},
+  {cat:'cpd', type:'fc', q:'LSTM による変化点検出', a:'LSTMを用いた予測誤差の急増を変化点のシグナルとして使用。RNNが正常パターンを学習し、逸脱を検出。教師なし・半教師あり両方の設定が可能。', area:'深層学習'},
+  {cat:'cpd', type:'quiz', q:'SST（部分空間追跡）において、変化点の判定に使用される行列演算は？', o:['SVD（特異値分解）','LU分解','QR分解','コレスキー分解'], a:0, exp:'SSTは軌跡行列（Hankel行列）のSVDで部分空間を抽出し、隣接ウィンドウ間の部分空間角度を測定する。', area:'行列・部分空間'},
+  {cat:'cpd', type:'fc', q:'GAM とトレンド変化点', a:'時系列のトレンド・季節性・イベント効果を加法的に分解するモデル（ProphetはGAMの一種）。長期トレンドの変化点検出に有効。', area:'モデル・トレンド'},
+  {cat:'cpd', type:'fib', q:'BOCPDのハザード関数', fib:'BOCPDにおいて、変化点が起きる事前確率を規定するのは [__] 関数である。', fib_ans:'ハザード（hazard）', area:'ベイズモデル'},
+  {cat:'cpd', type:'fc', q:'Isolation Forest による異常検知', a:'データ点をランダム木で孤立させるまでの分割数が少ないほど異常度が高い。変化点前後の分布差を異常スコアで近似する際にも応用される。', area:'深層学習'},
+  {cat:'cpd', type:'quiz', q:'カーネル変化点検出において、カーネル幅（bandwidth）を大きくすると？', o:['細かい変化を見逃しやすくなる','過剰検出が増える','計算量が減る','MMD値が必ず下がる'], a:0, exp:'バンド幅が大きいと分布の違いが平滑化され、微細な変化への感度が落ちる（underfitting）。', area:'カーネル・距離'},
+
+  // ═══════════════════════════
+  // 機械学習 (ml) — 追加12項目
+  // ═══════════════════════════
+  {cat:'ml', type:'fc', q:'バイアス・バリアンストレードオフ', a:'予測誤差 = バイアス² + バリアンス + ノイズ。モデルが複雑すぎると高バリアンス（過学習）、単純すぎると高バイアス（過少学習）。正則化・アンサンブルで調整。', area:'最適化'},
+  {cat:'ml', type:'fib', q:'L2正則化の効果', fib:'L2正則化（Ridge）は重みを [__] 方向に縮小させ、大きな係数を抑制する。', fib_ans:'ゼロ', area:'最適化'},
+  {cat:'ml', type:'fc', q:'交差検証 (k-fold CV)', a:'データを k 分割し、1分割をテスト・残りを訓練として k 回学習。汎化性能の安定した推定に使用。小データでは k=5 or 10 が標準。', area:'最適化'},
+  {cat:'ml', type:'quiz', q:'ソフトマックス関数の出力の性質はどれか？', o:['全要素の和が1になる','最大要素のみが1になる','値が[-1,1]に収まる','要素が常に正になるが和は任意'], a:0, exp:'softmax(z)_i = exp(z_i)/Σexp(z_j)。全出力の和=1かつ各値>0なので確率分布を表す。', area:'Deep Learning'},
+  {cat:'ml', type:'fc', q:'バッチ正規化 (Batch Normalization)', a:'ミニバッチ内での各特徴量の平均・分散を正規化し、学習を安定化。Internal Covariate Shift を軽減。Transformerではレイヤー正規化が主流。', area:'Deep Learning'},
+  {cat:'ml', type:'fib', q:'SVMの最大マージン', fib:'SVM は2クラスの決定境界とサポートベクトルの [__] を最大化する超平面を求める。', fib_ans:'マージン', area:'最適化'},
+  {cat:'ml', type:'fc', q:'Adam オプティマイザ', a:'一次モーメント（平均勾配）と二次モーメント（分散）の適応的な推定に基づく手法。SGDより収束が速く安定。β₁=0.9, β₂=0.999, ε=1e-8 が標準設定。', area:'最適化'},
+  {cat:'ml', type:'quiz', q:'ドロップアウト（Dropout）の主目的は？', o:['アンサンブル効果による過学習防止','計算量削減','勾配消失の防止','バッチサイズの最適化'], a:0, exp:'学習時にランダムにニューロンを無効化することで、多様なサブネットワークのアンサンブルと等価になり過学習を抑制。', area:'Deep Learning'},
+  {cat:'ml', type:'fc', q:'Self-Attention機構', a:'Q（クエリ）・K（キー）・V（値）行列による重み付き和。Attention(Q,K,V)=softmax(QKᵀ/√dₖ)V。長距離依存を直接モデル化しRNNの逐次処理を並列化する。', area:'Deep Learning'},
+  {cat:'ml', type:'fib', q:'ガウス過程（GP）', fib:'ガウス過程は、任意の有限集合に対して共同 [__] 分布が成り立つ確率過程である。', fib_ans:'正規（ガウス）', area:'最適化'},
+  {cat:'ml', type:'fc', q:'ガウス過程回帰と変化点検出', a:'ガウス過程回帰を用いた時系列モデリングでは、予測分散が急増する領域を変化点候補として特定できる。ベイズ的不確実性評価が強み。', area:'最適化'},
+  {cat:'ml', type:'quiz', q:'XGBoostが通常の勾配ブースティングと異なる主な工夫はどれか？', o:['2次微分（ヘッセ行列）情報を利用した精密な葉の重み計算','ランダムサブサンプリングのみ','バギングの採用','ニューラルネットとの組み合わせ'], a:0, exp:'XGBoostは損失関数のテイラー2次展開を使い葉の重みを解析的に求める。これにより高精度かつ収束が速い。', area:'最適化'},
+
+  // ═══════════════════════════
+  // 計算機科学 (cs) — 追加8項目
+  // ═══════════════════════════
+  {cat:'cs', type:'fc', q:'メモ化 (Memoization)', a:'再帰計算の結果をキャッシュして重複計算を排除する技法。トップダウンの動的計画法。PELTなどの変化点探索アルゴリズムの計算量削減でも同じ思想が使われる。', area:'アルゴリズム'},
+  {cat:'cs', type:'quiz', q:'ダイクストラ法の計算量（ヒープ使用、頂点数V・辺数E）は？', o:['O((V+E) log V)','O(V²)','O(VE)','O(E log E)'], a:0, exp:'優先度付きキュー（二分ヒープ）を使うと O((V+E)logV)。密グラフではO(V²)の隣接行列版の方が速いこともある。', area:'アルゴリズム'},
+  {cat:'cs', type:'fc', q:'NP完全問題', a:'NP問題の中でもNPの全問題が多項式帰着できる最難クラス。SAT、3-SAT、部分集合和問題が代表例。多項式時間アルゴリズムが存在するかは未解決（P vs NP問題）。', area:'計算量'},
+  {cat:'cs', type:'fib', q:'BFSの時間計算量', fib:'BFS（幅優先探索）の時間計算量は隣接リスト表現のグラフで O([__]) である。', fib_ans:'V+E', area:'アルゴリズム'},
+  {cat:'cs', type:'fc', q:'トポロジカルソート', a:'DAG（有向非巡回グラフ）の頂点を「依存関係の順」に並べるアルゴリズム。カーン法（BFS）またはDFS後置処理で O(V+E)。タスクスケジューリングに応用。', area:'アルゴリズム'},
+  {cat:'cs', type:'quiz', q:'ハッシュテーブルの平均的な検索・挿入・削除の計算量は？', o:['O(1)','O(log n)','O(n)','O(n log n)'], a:0, exp:'良好なハッシュ関数と適切な負荷率で、期待O(1)。最悪（全衝突）はO(n)。', area:'データ構造'},
+  {cat:'cs', type:'fc', q:'最小全域木（MST）とクラスカル法', a:'グラフの全頂点を最小コストで連結する木。クラスカル法は辺を重みでソートし、閉路を作らない辺を貪欲に追加。Union-Find で O(E log E)。', area:'アルゴリズム'},
+  {cat:'cs', type:'fib', q:'二分探索の前提条件', fib:'二分探索が O(log n) で動作するためには、探索対象の配列が [__] されている必要がある。', fib_ans:'ソート（整列）', area:'アルゴリズム'}
 ];
 
 const QUIZZES = {
@@ -445,7 +558,7 @@ let accuracy = JSON.parse(localStorage.getItem('study_v29_acc')) || {};
 let logs = JSON.parse(localStorage.getItem('study_v29_logs')) || [];
 let enWords = JSON.parse(localStorage.getItem('study_v29_en')) || [...EN_WORDS_DEFAULT];
 let studyMode = 'fc', studySubj = 'la', studyIdx = 0;
-let enMode = 'card', enIdx = 0;
+let enMode = 'card', enIdx = 0, enTagFilter = null;
 let fbLogs = {}, fbEnWords = {};
 
   /* ══════════════════════════════════════
@@ -548,10 +661,39 @@ window.recordAcc = recordAcc;
    PLAN PANEL
 ══════════════════════════════════════ */
 function renderPlan() {
-  const diff = t => Math.max(0, Math.ceil((new Date(t)-new Date())/(1000*60*60*24)));
-  document.getElementById('d-toeic').textContent = diff('2026-05-17');
-  document.getElementById('d-naist').textContent = diff('2026-07-06');
-  document.getElementById('d-kobe').textContent = diff('2026-08-24');
+  const exams = [
+    { id:'toeic', date:'2026-05-17', start:'2026-01-01', color:'var(--teal)' },
+    { id:'naist',  date:'2026-07-06', start:'2026-01-01', color:'var(--accent)' },
+    { id:'kobe',   date:'2026-08-24', start:'2026-01-01', color:'var(--blue)' }
+  ];
+  const now = new Date();
+  exams.forEach(({ id, date, start }) => {
+    const examDate = new Date(date);
+    const startDate = new Date(start);
+    const daysLeft = Math.max(0, Math.ceil((examDate - now) / 86400000));
+    const totalDays = Math.ceil((examDate - startDate) / 86400000);
+    const elapsed = Math.max(0, Math.ceil((now - startDate) / 86400000));
+    const pct = Math.min(100, Math.round(elapsed / totalDays * 100));
+    const dEl = document.getElementById(`d-${id}`);
+    dEl.textContent = daysLeft;
+    let badgeText, badgeStyle;
+    if (daysLeft <= 14) {
+      badgeText = '🔴 直前期'; badgeStyle = `background:var(--rbg);color:var(--red);border:1px solid var(--rborder)`;
+      dEl.style.color = 'var(--red)';
+    } else if (daysLeft <= 30) {
+      badgeText = '🟡 1ヶ月前'; badgeStyle = `background:var(--abg2);color:var(--amber);border:1px solid var(--aborder2)`;
+      dEl.style.color = 'var(--amber)';
+    } else if (daysLeft <= 60) {
+      badgeText = '🟠 2ヶ月前'; badgeStyle = `background:var(--abg2);color:var(--amber);border:1px solid var(--aborder2)`;
+      dEl.style.color = 'var(--amber)';
+    } else {
+      badgeText = '🟢 余裕あり'; badgeStyle = `background:var(--gbg);color:var(--green);border:1px solid var(--gborder)`;
+    }
+    document.getElementById(`badge-${id}`).textContent = badgeText;
+    document.getElementById(`badge-${id}`).style.cssText = badgeStyle;
+    document.getElementById(`prog-${id}`).style.width = `${pct}%`;
+    document.getElementById(`plabel-${id}`).textContent = `経過 ${pct}% · 開始から${elapsed}日`;
+  });
 
   // Subject grid
   const grid = document.getElementById('subj-grid');
@@ -789,27 +931,56 @@ function renderEnContent() {
 }
 
 function renderEnCard(cont) {
-  const w = enWords[enIdx % enWords.length];
+  const tags = [...new Set(enWords.map(w => w.tag || '語彙'))];
+  const filterHtml = `
+    <div class="en-filter-chips">
+      <button class="chip${!enTagFilter?' active':''}" onclick="setEnTag(null,this)">すべて</button>
+      ${tags.map(t=>`<button class="chip${enTagFilter===t?' active':''}" onclick="setEnTag('${t}',this)">${t}</button>`).join('')}
+    </div>`;
+  const filtered = enTagFilter ? enWords.filter(w=>(w.tag||'語彙')===enTagFilter) : enWords;
+  if (!filtered.length) { cont.innerHTML = filterHtml + '<div class="card" style="text-align:center;padding:40px">単語がありません</div>'; return; }
+  const w = filtered[enIdx % filtered.length];
+  const idx = enIdx % filtered.length;
+  const acc = accuracy['en'] || {ok:0,ng:0};
+  const dotCount = Math.min(filtered.length, 12);
+  const dots = Array.from({length:dotCount},(_,i)=>
+    `<div class="en-dot ${i===idx%dotCount?'current':''}"></div>`).join('');
   cont.innerHTML = `
-    <div style="margin-bottom:12px"><span style="font-size:12px;color:var(--text3)">${enIdx%enWords.length+1} / ${enWords.length}</span></div>
-    <div class="en-card" onclick="flipEnCard()" id="en-main">
-      <div class="en-tag">${w.tag||'語彙'}</div>
-      <div class="en-word">${w.word}</div>
-      <div class="en-phonetic">${w.phonetic||''}</div>
-      <div class="en-meaning" id="en-m">${w.meaning}</div>
-      <div class="en-example" id="en-ex">${w.example||''}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:12px">タップで意味を表示</div>
+    ${filterHtml}
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--text3)">${idx+1} / ${filtered.length}</span>
+      <span style="font-size:12px;color:var(--green);font-weight:700">✓ ${acc.ok}語習得済</span>
     </div>
-    <div class="btn-row" style="margin-top:16px">
+    <div class="en-card-wrap" id="en-wrap" onclick="flipEnCard3d()">
+      <div class="en-card-inner">
+        <div class="en-card-front">
+          <div class="en-progress-dots">${dots}</div>
+          <div class="en-tag">${w.tag||'語彙'}</div>
+          <div class="en-word" style="font-size:34px">${w.word}</div>
+          <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-top:4px">${w.phonetic||''}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:18px">👆 タップで意味・例文を表示</div>
+        </div>
+        <div class="en-card-back">
+          <div class="en-tag">${w.tag||'語彙'}</div>
+          <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px">${w.word}</div>
+          <div style="font-size:24px;font-weight:700;margin:10px 0;color:#4ade80">${w.meaning}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.7);font-style:italic;line-height:1.6;max-width:300px">${w.example||''}</div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row" style="margin-top:14px;justify-content:center">
       <button class="btn-p btn-sm btn-g" onclick="enAns(true)">✓ 覚えた</button>
       <button class="btn-p btn-sm" style="background:var(--red)" onclick="enAns(false)">✗ もう一度</button>
       <button class="btn-p btn-sm" style="background:var(--text3)" onclick="enIdx++;renderEnContent()">→ 次</button>
-    </div>
-  `;
+    </div>`;
 }
-window.flipEnCard = () => {
-  document.getElementById('en-m').style.display='block';
-  document.getElementById('en-ex').style.display='block';
+window.flipEnCard3d = () => { document.getElementById('en-wrap')?.classList.toggle('flipped'); };
+window.flipEnCard = window.flipEnCard3d;
+window.setEnTag = (tag, btn) => {
+  enTagFilter = tag; enIdx = 0;
+  document.querySelectorAll('.en-filter-chips .chip').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderEnContent();
 };
 window.enAns = (ok) => {
   recordAcc('en', ok);
@@ -1035,23 +1206,21 @@ function initGalaxy() {
 
   // 2. 研究手法ノードの展開
   Object.entries(RESEARCH_THEME.children).forEach(([key, val]) => {
-    nodes.push({ id: key, name: val.name, r: 18, type: 'res_area', color: RESEARCH_THEME.color });
-    links.push({ source: 'RESEARCH', target: key, distance: 100 });
-    
+    nodes.push({ id: key, name: val.name, r: 22, type: 'res_area', color: RESEARCH_THEME.color });
+    links.push({ source: 'RESEARCH', target: key, distance: 110 });
     val.methods.forEach(m => {
-      nodes.push({ id: m, name: m, r: 10, type: 'method', color: '#FFA502' });
-      links.push({ source: key, target: m, distance: 60 });
+      nodes.push({ id: m, name: m, r: 12, type: 'method', color: '#FFA502' });
+      links.push({ source: key, target: m, distance: 65 });
     });
   });
 
   // 3. 基礎科目ノードの展開
   Object.entries(SUBJECTS).forEach(([id, s]) => {
-    nodes.push({ id: id, name: s.name, r: 20, type: 'subj', color: s.color });
-    // 科目からその下の学習項目(BANK)へ
+    nodes.push({ id: id, name: s.name, r: 18, type: 'subj', color: s.color });
     BANK.filter(b => b.cat === id).forEach((k, i) => {
       const kid = `k_${id}_${i}`;
-      nodes.push({ id: kid, name: k.q.slice(0, 10), detail: k.a, r: 6, type: 'fact', color: s.color });
-      links.push({ source: id, target: kid, distance: 50 });
+      nodes.push({ id: kid, name: k.q, detail: k.a, r: 7, type: 'fact', color: s.color, area: k.area || '' });
+      links.push({ source: id, target: kid, distance: 55 });
     });
   });
 
@@ -1076,10 +1245,10 @@ function initGalaxy() {
 
   // エッジ（線）の描画
   const link = g.append('g').selectAll('line').data(links).join('line')
-    .attr('stroke', d => d.type === 'bridge' ? '#666' : '#333')
-    .attr('stroke-dasharray', d => d.type === 'bridge' ? '4 2' : '0')
-    .attr('stroke-width', d => d.type === 'bridge' ? 2 : 1)
-    .attr('stroke-opacity', 0.6);
+    .attr('stroke', d => d.type === 'bridge' ? 'rgba(255,200,50,0.7)' : 'rgba(100,100,160,0.45)')
+    .attr('stroke-dasharray', d => d.type === 'bridge' ? '6 3' : '0')
+    .attr('stroke-width', d => d.type === 'bridge' ? 2.5 : 1)
+    .attr('stroke-opacity', 1);
 
   // ノード（点）の描画
   const node = g.append('g').selectAll('g').data(nodes).join('g')
@@ -1113,13 +1282,51 @@ function initGalaxy() {
     });
 
   node.append('text')
-    .text(d => d.name)
-    .attr('fill', '#fff')
-    .attr('font-size', d => d.type === 'core' ? '14px' : '10px')
-    .attr('dx', d => d.r + 5)
+    .text(d => d.type === 'fact' ? '' : d.name)
+    .attr('fill', '#eee')
+    .attr('font-size', d => ({core:'14px', subj:'12px', res_area:'11px', method:'10px', fact:'0px'})[d.type] || '10px')
+    .attr('font-weight', d => (d.type === 'core' || d.type === 'subj') ? '700' : '500')
+    .attr('dx', d => d.r + 6)
     .attr('dy', '4px')
     .style('pointer-events', 'none')
-    .style('text-shadow', '0 0 4px #000');
+    .style('text-shadow', '1px 1px 0 #000,-1px 1px 0 #000,0 2px 4px #000');
+
+  // fact ノード用 SVG tooltip
+  const tooltip = svg.append('g').attr('id','gx-tip').style('display','none').style('pointer-events','none');
+  const tipRect = tooltip.append('rect').attr('rx',6).attr('ry',6).attr('fill','rgba(15,12,35,0.96)').attr('stroke','rgba(124,95,212,0.8)').attr('stroke-width',1);
+  const tipText = tooltip.append('text').attr('fill','#eee').attr('font-size','11').attr('x',10).attr('y',20);
+
+  node.on('mouseover', (e, d) => {
+    if (d.type !== 'fact' && d.type !== 'method') return;
+    const label = d.type === 'fact' ? d.name : d.name;
+    tipText.text(label);
+    const bb = tipText.node().getBBox();
+    tipRect.attr('width', bb.width + 20).attr('height', 32);
+    const t = d3.zoomTransform(svg.node());
+    const tx = t.applyX(d.x) + d.r + 6;
+    const ty = t.applyY(d.y) - 16;
+    tooltip.attr('transform', `translate(${tx},${ty})`).style('display','block');
+  }).on('mouseout', () => tooltip.style('display','none'));
+
+  // 固定レジェンド（zoom追従しない）
+  const legend = svg.append('g').attr('transform','translate(14,14)');
+  const lgItems = [
+    {label:'研究テーマ中心', color:RESEARCH_THEME.color, r:9},
+    {label:'研究手法領域',   color:RESEARCH_THEME.color, r:6, op:0.65},
+    {label:'基礎科目',       color:'#7C5FD4', r:6},
+    {label:'手法・概念',     color:'#FFA502', r:5},
+    {label:'学習項目',       color:'#888', r:4, op:0.8},
+    {label:'── 知識の架け橋', color:'rgba(255,200,50,0.9)', r:0, dash:true}
+  ];
+  lgItems.forEach((item, i) => {
+    const row = legend.append('g').attr('transform',`translate(0,${i*20})`);
+    if (item.dash) {
+      row.append('line').attr('x1',0).attr('y1',0).attr('x2',16).attr('y2',0).attr('stroke',item.color).attr('stroke-width',2.5).attr('stroke-dasharray','5 2');
+    } else {
+      row.append('circle').attr('r',item.r).attr('cy',0).attr('cx',item.r).attr('fill',item.color).attr('fill-opacity',item.op||1);
+    }
+    row.append('text').attr('x',22).attr('y',4).attr('fill','#bbb').attr('font-size','10').text(item.label);
+  });
 
   sim.on('tick', () => {
     link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
@@ -1137,7 +1344,109 @@ function initGalaxy() {
 ══════════════════════════════════════ */
 
 let lastAIRes = '';
-let lastUsedTopic = ''; // 生成されたトピックを保存時に使うために記憶する
+let lastUsedTopic = '';
+
+/* ══════════════════════════════════════
+   TOPIC_LIBRARY — 科目別トピック体系
+══════════════════════════════════════ */
+const TOPIC_LIBRARY = {
+  '変化点検出': [
+    'CUSUMアルゴリズムの原理と閾値設定',
+    'PELT法と動的計画法による複数変化点検出',
+    'BOCPD：ランレングス分布の逐次更新',
+    'MMD（最大平均偏差）の定義とRKHS',
+    'KCP（カーネル変化点）の最適化定式化',
+    'DTW（動的時間伸縮）と距離ベース検出',
+    'SST（部分空間追跡）とSVDの関係',
+    'LSTMを用いた異常検知と変化点',
+    'AutoEncoderの再構成誤差による変化点',
+    'オンライン vs オフライン検出の設計原則',
+    '変化点検出の評価指標：F1スコアとTolerance',
+    '時系列の定常性とADF検定'
+  ],
+  '線形代数': [
+    '行列の積と基本変換（回転・反射・拡大縮小）',
+    '行列式の幾何学的意味と計算',
+    '逆行列の存在条件とLU分解',
+    '固有値・固有ベクトルの定義と計算',
+    '対称行列の固有値分解（スペクトル定理）',
+    '特異値分解（SVD）の定義と手順',
+    'PCA（主成分分析）とSVDの関係',
+    '正定値行列の定義と判定条件',
+    '核空間・像空間と次元定理',
+    '直交行列・ユニタリ行列とQR分解',
+    'グラム行列と正規方程式（最小二乗法）',
+    'テンソルと多重線形写像の基礎'
+  ],
+  '微積分': [
+    '極限の定義（ε-δ論法）と連続性',
+    '微分の定義・連鎖律・積の微分',
+    '偏微分とヤコビ行列',
+    'ヘッセ行列と多変数関数の最適化',
+    '勾配・発散・回転（ベクトル解析）',
+    'テイラー展開・マクローリン展開',
+    '1変数の定積分・不定積分と基本定理',
+    '重積分と変数変換（ヤコビアン）',
+    '微分方程式の基礎（変数分離・線形1階）',
+    'ラグランジュ乗数法と制約付き最適化',
+    'フーリエ変換の定義と性質',
+    'ラプラス変換と微分方程式への応用'
+  ],
+  '機械学習': [
+    '確率的勾配降下法（SGD）とAdamの比較',
+    'バイアス・バリアンストレードオフ',
+    '正則化（L1/L2）の効果と罰則項',
+    'クロスバリデーションとホールドアウト法',
+    'SVM（サポートベクトルマシン）と最大マージン',
+    'カーネルトリックとフィーチャーマップ',
+    '決定木・ランダムフォレスト・XGBoost',
+    '多層ニューラルネットワークの誤差逆伝播',
+    'バッチ正規化とドロップアウトの役割',
+    'CNNのコンボリューション演算と受容野',
+    'RNN・LSTM・GRUのゲート機構',
+    'Self-Attentionと Transformerアーキテクチャ',
+    'VAE・GANの生成モデルの原理',
+    'ベイズ最適化とガウス過程回帰'
+  ],
+  'アルゴリズム': [
+    '動的計画法：メモ化と逐次計算の使い分け',
+    'グラフ探索：BFS・DFSとその応用',
+    '最短経路：ダイクストラ法とベルマン-フォード',
+    '最小全域木：クラスカル法とプリム法',
+    '計算量：O記法とP・NP・NP完全',
+    'ソートアルゴリズムの比較と安定性',
+    '二分探索とその変形（lower_bound等）',
+    'ハッシュテーブルの衝突解決と計算量',
+    'トポロジカルソートとDAG',
+    'ネットワークフロー：最大流・最小カット'
+  ],
+  '複素関数論': [
+    'コーシー・リーマン方程式と正則性',
+    'コーシーの積分定理と積分公式',
+    'ローラン展開と特異点の分類',
+    '留数定理と実積分への応用',
+    '等角写像とメビウス変換'
+  ],
+  '常微分方程式': [
+    '1階線形ODE：積分因子法',
+    '2階線形ODE：特性方程式と一般解',
+    'ラプラス変換による初期値問題の解法',
+    '連立ODEと行列指数関数',
+    '安定性解析とリアプノフ関数'
+  ],
+  '英語(TOEIC)': [
+    'Part 5：品詞識別と文法（名詞・動詞・形容詞）',
+    'Part 5：接続詞と前置詞の使い分け',
+    'Part 6：文脈理解と接続表現',
+    'Part 7：ビジネスメール・メモの読解',
+    'Part 7：広告・告知文の読解',
+    'TOEIC頻出動詞フレーズ（submit, negotiate, accommodate）',
+    'TOEIC頻出形容詞・副詞（innovative, substantially）',
+    '論文表現：比較・対照のフレーズ',
+    '論文表現：提案・結論のフレーズ',
+    '学術語彙：統計・機械学習関連英語'
+  ]
+};
 
 // プロンプト生成ロジック
 const buildStudyPrompt = (subj, type) => {
@@ -1272,6 +1581,20 @@ window.updateSubtopics = () => {
     });
   }
 };
+
+window.setTopicMode = (mode, btn) => {
+  document.querySelectorAll('#panel-ai .mode-tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const sel = document.getElementById('ai-topic-sel');
+  if (!sel) return;
+  if (mode === 'rand') {
+    sel.style.display = 'none';
+    sel.value = 'ランダム';
+  } else {
+    sel.style.display = 'block';
+    updateSubtopics();
+  }
+};
   
 window.saveAI = () => {
   if(!lastAIRes){ toast('まず問題を生成してください','err'); return; }
@@ -1295,7 +1618,7 @@ window.saveAI = () => {
     area: lastUsedTopic
   });
 
-  localStorage.setItem('study_v29_bank', JSON.stringify(BANK));
+  localStorage.setItem('study_v30_bank', JSON.stringify(BANK));
   toast(`${lastUsedTopic}をAIストックに追加しました！`);
   
   // 専門演習タブのAIストックモードへ移動
