@@ -277,6 +277,7 @@ svg.ring{transform:rotate(-90deg)}
     <div class="mode-tabs">
       <button class="mode-tab active" onclick="setEnMode('card',this)">🃏 カード</button>
       <button class="mode-tab" onclick="setEnMode('quiz',this)">📝 4択</button>
+      <button class="mode-tab" onclick="setEnMode('test',this)">📋 確認テスト</button>
       <button class="mode-tab" onclick="setEnMode('add',this)">➕ 追加</button>
     </div>
     <div id="en-content"></div>
@@ -558,7 +559,7 @@ let accuracy = JSON.parse(localStorage.getItem('study_v29_acc')) || {};
 let logs = JSON.parse(localStorage.getItem('study_v29_logs')) || [];
 let enWords = JSON.parse(localStorage.getItem('study_v29_en')) || [...EN_WORDS_DEFAULT];
 let studyMode = 'fc', studySubj = 'la', studyIdx = 0;
-let enMode = 'card', enIdx = 0, enTagFilter = null;
+let enMode = 'card', enIdx = 0, enTagFilter = null, enTestState = null;
 let fbLogs = {}, fbEnWords = {};
 
   /* ══════════════════════════════════════
@@ -917,6 +918,7 @@ window.answerQuiz_New = (sel, correct, btn) => {
 ══════════════════════════════════════ */
 window.setEnMode = (m, btn) => {
   enMode=m; enIdx=0;
+  if(m==='test') enTestState=null;
   document.querySelectorAll('#panel-english .mode-tab').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   renderEnContent();
@@ -925,6 +927,7 @@ window.setEnMode = (m, btn) => {
 function renderEnContent() {
   const cont = document.getElementById('en-content');
   if(enMode==='add') { renderEnAdd(cont); return; }
+  if(enMode==='test') { renderEnTest(cont); return; }
   if(!enWords.length){cont.innerHTML='<div class="card">単語がありません。</div>';return;}
   if(enMode==='card') renderEnCard(cont);
   else renderEnQuiz(cont);
@@ -1014,6 +1017,132 @@ window.enQuizAns = (sel, correct) => {
   const ok=sel===correct;
   recordAcc('en',ok);
   toast(ok?'✓ 正解！':'✗ 不正解',ok?'ok':'err');
+};
+
+/* ══════════════════════════════════════
+   確認テスト機能
+══════════════════════════════════════ */
+function renderEnTest(cont) {
+  if(!enTestState) { renderEnTestSetup(cont); return; }
+  if(enTestState.current >= enTestState.questions.length) { renderEnTestResult(cont); return; }
+  renderEnTestQuestion(cont);
+}
+
+function renderEnTestSetup(cont) {
+  const av = enWords.length;
+  const counts = [10, 25, 50, 100];
+  if(av < 4) {
+    cont.innerHTML = `<div class="card" style="text-align:center;padding:32px">
+      <div style="font-size:36px;margin-bottom:12px">📚</div>
+      <div style="font-weight:700;margin-bottom:8px">単語が足りません</div>
+      <div style="font-size:13px;color:var(--text3)">テストには最低4語必要です（現在 ${av}語）</div>
+    </div>`; return;
+  }
+  cont.innerHTML = `
+    <div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px">📋 確認テスト</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:22px">
+        登録単語 <b style="color:var(--accent)">${av}語</b> から出題します
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:280px;margin:0 auto 18px">
+        ${counts.map(n => {
+          const actual = Math.min(n, av);
+          const note = av < n ? `<div style="font-size:10px;opacity:.65;margin-top:2px">全${av}語</div>` : '';
+          return `<button class="btn-p btn-g"
+            style="font-size:16px;font-weight:700;padding:16px 0;display:flex;flex-direction:column;align-items:center;justify-content:center"
+            onclick="startEnTest(${n})">${n}問${note}</button>`;
+        }).join('')}
+      </div>
+      <div style="font-size:11px;color:var(--text3)">登録単語数より多い場合は全単語から出題</div>
+    </div>`;
+}
+
+window.startEnTest = (n) => {
+  const pool = [...enWords].sort(() => Math.random() - .5);
+  const count = Math.min(n, pool.length);
+  const questions = pool.slice(0, count).map(w => {
+    const others = enWords.filter(x => x !== w).sort(() => Math.random() - .5).slice(0, 3);
+    const opts = [w, ...others].sort(() => Math.random() - .5);
+    return { w, correctIdx: opts.indexOf(w), opts, selectedIdx: -1 };
+  });
+  enTestState = { questions, current: 0, score: 0, answered: false };
+  renderEnContent();
+};
+
+function renderEnTestQuestion(cont) {
+  const { questions, current, score, answered } = enTestState;
+  const { w, correctIdx, opts, selectedIdx } = questions[current];
+  const total = questions.length;
+  const pct = Math.round((current / total) * 100);
+
+  const optsHtml = opts.map((o, i) => {
+    let cls = 'quiz-opt';
+    let dis = '';
+    if(answered) {
+      dis = 'disabled';
+      if(i === correctIdx) cls += ' correct';
+      else if(i === selectedIdx) cls += ' wrong';
+    }
+    return `<button class="${cls}" ${dis} onclick="enTestAns(${i})">${o.meaning}</button>`;
+  }).join('');
+
+  cont.innerHTML = `
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--text3)">${current + 1} / ${total}問</span>
+        <span style="font-size:12px;color:var(--green);font-weight:700">✓ ${score}問正解</span>
+      </div>
+      <div style="height:5px;background:var(--border,#333);border-radius:3px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width .3s"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="quiz-q" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;margin-bottom:4px">${w.word}</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:18px">${w.phonetic || ''}</div>
+      <div class="quiz-opts">${optsHtml}</div>
+    </div>
+    ${answered ? `<div class="btn-row" style="margin-top:10px;justify-content:center">
+      <button class="btn-p btn-g" onclick="enTestNext()">
+        ${current + 1 < total ? '次の問題 →' : '結果を見る 🏁'}
+      </button>
+    </div>` : ''}`;
+}
+
+function renderEnTestResult(cont) {
+  const { questions, score } = enTestState;
+  const total = questions.length;
+  const pct = Math.round((score / total) * 100);
+  const icon  = pct >= 90 ? '🏆' : pct >= 70 ? '✅' : pct >= 50 ? '📚' : '💪';
+  const grade = pct >= 90 ? '優秀！' : pct >= 70 ? '良好' : pct >= 50 ? '要復習' : '再学習推奨';
+  cont.innerHTML = `
+    <div class="card" style="text-align:center;padding:36px">
+      <div style="font-size:52px;margin-bottom:10px">${icon}</div>
+      <div style="font-size:22px;font-weight:800;margin-bottom:4px">${score} / ${total} 問正解</div>
+      <div style="font-size:44px;font-weight:900;color:var(--accent);margin:8px 0;line-height:1">${pct}%</div>
+      <div style="font-size:15px;color:var(--text3);margin-bottom:28px">${grade}</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn-p btn-g" onclick="startEnTest(${total})">🔄 再挑戦（${total}問）</button>
+        <button class="btn-p" style="background:var(--text3)" onclick="enTestState=null;renderEnContent()">⬅ 問題数を選び直す</button>
+      </div>
+    </div>`;
+}
+
+window.enTestAns = (sel) => {
+  if(enTestState.answered) return;
+  enTestState.answered = true;
+  const q = enTestState.questions[enTestState.current];
+  q.selectedIdx = sel;
+  const ok = sel === q.correctIdx;
+  if(ok) enTestState.score++;
+  recordAcc('en', ok);
+  toast(ok ? '✓ 正解！' : '✗ 不正解', ok ? 'ok' : 'err');
+  renderEnTestQuestion(document.getElementById('en-content'));
+};
+
+window.enTestNext = () => {
+  enTestState.current++;
+  enTestState.answered = false;
+  renderEnContent();
 };
 
 function renderEnAdd(cont) {
